@@ -27,6 +27,11 @@ namespace Pilgrims.PersonalFinances.Models
 
         public bool IsActive { get; set; } = true;
 
+        [StringLength(7)]
+        public string ColorCode { get; set; } = "#3B82F6"; // Default blue color
+
+        public AccountStatus Status { get; set; } = AccountStatus.Active;
+
         [StringLength(50)]
         public string? AccountNumber { get; set; }
 

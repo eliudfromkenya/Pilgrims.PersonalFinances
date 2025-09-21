@@ -1,0 +1,546 @@
+@page "/accounts/{AccountId:int}/reconcile"
+@using Pilgrims.PersonalFinances.Models
+@using Pilgrims.PersonalFinances.Models.Enums
+@using Pilgrims.PersonalFinances.Services
+@using System.ComponentModel.DataAnnotations
+@inject IAccountService AccountService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Reconcile Account - Personal Finance</PageTitle>
+
+<div class="min-h-screen relative overflow-hidden" style="background: var(--primary-bg);">
+    <!-- Animated Background -->
+    <div class="absolute inset-0 overflow-hidden">
+        <div class="particles"></div>
+        <div class="absolute inset-0" style="background: linear-gradient(135deg, var(--accent-color)/5 0%, var(--secondary-color)/5 100%);"></div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="relative z-10 container mx-auto px-4 py-8">
+        @if (isLoading)
+        {
+            <div class="flex justify-center items-center py-20">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2" style="border-color: var(--accent-color);"></div>
+            </div>
+        }
+        else if (account == null)
+        {
+            <div class="text-center py-20">
+                <div class="text-6xl mb-4">❌</div>
+                <h3 class="text-2xl font-bold mb-2" style="color: var(--text-primary);">Account Not Found</h3>
+                <p class="mb-6" style="color: var(--text-secondary);">
+                    The account you're trying to reconcile doesn't exist or has been deleted.
+                </p>
+                <button @onclick="GoBack" 
+                        class="px-6 py-3 rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-lg font-semibold"
+                        style="background: var(--accent-color); color: white;">
+                    Go Back to Accounts
+                </button>
+            </div>
+        }
+        else
+        {
+            <!-- Header -->
+            <div class="mb-8">
+                <div class="flex items-center justify-between mb-6">
+                    <button @onclick="GoBack" 
+                            class="flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 hover:scale-105"
+                            style="background: var(--card-bg); color: var(--text-primary); border: 1px solid var(--border-color);">
+                        <span>←</span> Back to Account Details
+                    </button>
+                </div>
+
+                <div class="text-center">
+                    <div class="inline-flex items-center gap-3 mb-4">
+                        <div class="w-16 h-16 rounded-full flex items-center justify-center text-3xl transition-transform duration-300 hover:scale-110"
+                             style="background-color: @account.ColorCode; color: white;">
+                            ⚖️
+                        </div>
+                        <h1 class="text-4xl font-bold" style="color: var(--text-primary);">
+                            Reconcile Account
+                        </h1>
+                    </div>
+                    <p class="text-lg mb-2" style="color: var(--text-secondary);">
+                        @account.Name
+                    </p>
+                    <p class="text-sm" style="color: var(--text-secondary);">
+                        Compare your records with your bank statement to ensure accuracy
+                    </p>
+                </div>
+            </div>
+
+            <!-- Reconciliation Form -->
+            <div class="max-w-4xl mx-auto">
+                <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-8 mb-8"
+                     style="background: var(--card-bg); border-color: var(--border-color);">
+                    
+                    <!-- Current Balance Display -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div class="text-center p-6 rounded-lg" style="background: var(--accent-color)/10;">
+                            <div class="text-sm mb-2" style="color: var(--text-secondary);">Current Balance (Our Records)</div>
+                            <div class="text-2xl font-bold" style="color: var(--accent-color);">
+                                @account.CurrentBalance.ToString("C")
+                            </div>
+                        </div>
+                        <div class="text-center p-6 rounded-lg" style="background: var(--secondary-color)/10;">
+                            <div class="text-sm mb-2" style="color: var(--text-secondary);">Statement Balance</div>
+                            <div class="text-2xl font-bold" style="color: var(--secondary-color);">
+                                @reconciliationModel.StatementBalance.ToString("C")
+                            </div>
+                        </div>
+                        <div class="text-center p-6 rounded-lg @(GetDifferenceClass())">
+                            <div class="text-sm mb-2" style="color: var(--text-secondary);">Difference</div>
+                            <div class="text-2xl font-bold @(GetDifferenceTextClass())">
+                                @GetDifference().ToString("C")
+                            </div>
+                        </div>
+                    </div>
+
+                    <EditForm Model="@reconciliationModel" OnValidSubmit="@HandleValidSubmit" OnInvalidSubmit="@HandleInvalidSubmit">
+                        <DataAnnotationsValidator />
+                        
+                        <!-- Statement Information -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div>
+                                <label class="block text-sm font-semibold mb-2" style="color: var(--text-primary);">
+                                    Statement Date *
+                                </label>
+                                <InputDate @bind-Value="reconciliationModel.StatementDate" 
+                                           class="w-full px-4 py-3 rounded-lg border transition-all duration-300 focus:scale-105 focus:shadow-lg"
+                                           style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);" />
+                                <ValidationMessage For="@(() => reconciliationModel.StatementDate)" class="text-red-500 text-sm mt-1" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-2" style="color: var(--text-primary);">
+                                    Statement Balance *
+                                </label>
+                                <InputNumber @bind-Value="reconciliationModel.StatementBalance" 
+                                             class="w-full px-4 py-3 rounded-lg border transition-all duration-300 focus:scale-105 focus:shadow-lg"
+                                             style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);"
+                                             placeholder="0.00" 
+                                             step="0.01" />
+                                <ValidationMessage For="@(() => reconciliationModel.StatementBalance)" class="text-red-500 text-sm mt-1" />
+                            </div>
+                        </div>
+
+                        <!-- Reconciliation Notes -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-semibold mb-2" style="color: var(--text-primary);">
+                                Reconciliation Notes
+                            </label>
+                            <InputTextArea @bind-Value="reconciliationModel.Notes" 
+                                           rows="4"
+                                           class="w-full px-4 py-3 rounded-lg border transition-all duration-300 focus:scale-105 focus:shadow-lg"
+                                           style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);"
+                                           placeholder="Add any notes about discrepancies or adjustments..." />
+                        </div>
+
+                        <!-- Reconciliation Status -->
+                        @if (Math.Abs(GetDifference()) < 0.01m)
+                        {
+                            <div class="mb-6 p-4 rounded-lg flex items-center gap-3" style="background: var(--success-color)/10; border: 1px solid var(--success-color)/30;">
+                                <span class="text-2xl">✅</span>
+                                <div>
+                                    <div class="font-semibold" style="color: var(--success-color);">Account is Balanced!</div>
+                                    <div class="text-sm" style="color: var(--text-secondary);">Your records match the statement balance.</div>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="mb-6 p-4 rounded-lg flex items-center gap-3" style="background: var(--warning-color)/10; border: 1px solid var(--warning-color)/30;">
+                                <span class="text-2xl">⚠️</span>
+                                <div>
+                                    <div class="font-semibold" style="color: var(--warning-color);">Balance Discrepancy Detected</div>
+                                    <div class="text-sm" style="color: var(--text-secondary);">
+                                        There's a difference of @GetDifference().ToString("C") between your records and the statement.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Adjustment Options -->
+                            <div class="mb-6">
+                                <label class="block text-sm font-semibold mb-2" style="color: var(--text-primary);">
+                                    Reconciliation Action
+                                </label>
+                                <InputRadioGroup @bind-Value="reconciliationModel.ReconciliationAction">
+                                    <div class="space-y-3">
+                                        <label class="flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-300 hover:scale-105"
+                                               style="background: var(--input-bg); border: 1px solid var(--border-color);">
+                                            <InputRadio Value="ReconciliationAction.CreateAdjustment" />
+                                            <div>
+                                                <div class="font-semibold" style="color: var(--text-primary);">Create Adjustment Transaction</div>
+                                                <div class="text-sm" style="color: var(--text-secondary);">Add a transaction to match the statement balance</div>
+                                            </div>
+                                        </label>
+                                        <label class="flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-300 hover:scale-105"
+                                               style="background: var(--input-bg); border: 1px solid var(--border-color);">
+                                            <InputRadio Value="ReconciliationAction.MarkAsReconciled" />
+                                            <div>
+                                                <div class="font-semibold" style="color: var(--text-primary);">Mark as Reconciled (Accept Difference)</div>
+                                                <div class="text-sm" style="color: var(--text-secondary);">Record the reconciliation with the current difference</div>
+                                            </div>
+                                        </label>
+                                        <label class="flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-300 hover:scale-105"
+                                               style="background: var(--input-bg); border: 1px solid var(--border-color);">
+                                            <InputRadio Value="ReconciliationAction.ReviewTransactions" />
+                                            <div>
+                                                <div class="font-semibold" style="color: var(--text-primary);">Review Transactions First</div>
+                                                <div class="text-sm" style="color: var(--text-secondary);">Check for missing or incorrect transactions before reconciling</div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </InputRadioGroup>
+                            </div>
+
+                            @if (reconciliationModel.ReconciliationAction == ReconciliationAction.CreateAdjustment)
+                            {
+                                <div class="mb-6 p-4 rounded-lg" style="background: var(--accent-color)/5; border: 1px solid var(--accent-color)/30;">
+                                    <h4 class="font-semibold mb-3" style="color: var(--text-primary);">Adjustment Transaction Details</h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-semibold mb-2" style="color: var(--text-primary);">
+                                                Adjustment Amount
+                                            </label>
+                                            <input type="text" 
+                                                   value="@GetDifference().ToString("C")" 
+                                                   readonly
+                                                   class="w-full px-4 py-3 rounded-lg border"
+                                                   style="background: var(--disabled-bg); border-color: var(--border-color); color: var(--text-secondary);" />
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-semibold mb-2" style="color: var(--text-primary);">
+                                                Adjustment Description
+                                            </label>
+                                            <InputText @bind-Value="reconciliationModel.AdjustmentDescription" 
+                                                       class="w-full px-4 py-3 rounded-lg border transition-all duration-300 focus:scale-105 focus:shadow-lg"
+                                                       style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);"
+                                                       placeholder="e.g., Bank fee, Interest earned, Reconciliation adjustment" />
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+
+                        <!-- Form Actions -->
+                        <div class="flex gap-4 pt-6 border-t" style="border-color: var(--border-color);">
+                            <button type="button" 
+                                    @onclick="Cancel"
+                                    class="flex-1 py-3 px-6 rounded-lg font-semibold transition-all duration-300 hover:scale-105"
+                                    style="background: var(--card-bg); color: var(--text-primary); border: 2px solid var(--border-color);">
+                                Cancel
+                            </button>
+                            @if (reconciliationModel.ReconciliationAction == ReconciliationAction.ReviewTransactions)
+                            {
+                                <button type="button" 
+                                        @onclick="ReviewTransactions"
+                                        class="flex-1 py-3 px-6 rounded-lg font-semibold transition-all duration-300 hover:scale-105"
+                                        style="background: var(--secondary-color); color: white;">
+                                    Review Transactions
+                                </button>
+                            }
+                            else
+                            {
+                                <button type="submit" 
+                                        disabled="@isSubmitting"
+                                        class="flex-1 py-3 px-6 rounded-lg font-semibold transition-all duration-300 hover:scale-105 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                                        style="background: var(--accent-color); color: white;">
+                                    @if (isSubmitting)
+                                    {
+                                        <span class="flex items-center justify-center gap-2">
+                                            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                            Processing...
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span>Complete Reconciliation</span>
+                                    }
+                                </button>
+                            }
+                        </div>
+                    </EditForm>
+                </div>
+
+                <!-- Recent Reconciliations -->
+                <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-6"
+                     style="background: var(--card-bg); border-color: var(--border-color);">
+                    <h3 class="text-xl font-bold mb-4" style="color: var(--text-primary);">
+                        Recent Reconciliations
+                    </h3>
+                    
+                    @if (recentReconciliations.Any())
+                    {
+                        <div class="space-y-3">
+                            @foreach (var reconciliation in recentReconciliations.Take(5))
+                            {
+                                <div class="flex items-center justify-between p-4 rounded-lg"
+                                     style="background: var(--input-bg); border: 1px solid var(--border-color);">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg"
+                                             style="background: var(--success-color)/20; color: var(--success-color);">
+                                            ✅
+                                        </div>
+                                        <div>
+                                            <div class="font-semibold" style="color: var(--text-primary);">
+                                                @reconciliation.StatementDate.ToString("MMM dd, yyyy")
+                                            </div>
+                                            <div class="text-sm" style="color: var(--text-secondary);">
+                                                Statement Balance: @reconciliation.StatementBalance.ToString("C")
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="font-semibold" style="color: var(--text-primary);">
+                                            @(reconciliation.Difference == 0 ? "Balanced" : $"Diff: {reconciliation.Difference:C}")
+                                        </div>
+                                        <div class="text-sm" style="color: var(--text-secondary);">
+                                            @reconciliation.ReconciliationDate.ToString("MMM dd, yyyy")
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-8" style="color: var(--text-secondary);">
+                            <div class="text-4xl mb-4">📊</div>
+                            <p>No previous reconciliations found</p>
+                            <p class="text-sm mt-2">This will be your first reconciliation for this account</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Particles CSS -->
+<style>
+    .particles {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .particles::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background-image: 
+            radial-gradient(2px 2px at 20px 30px, rgba(255,255,255,0.1), transparent),
+            radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.1), transparent),
+            radial-gradient(1px 1px at 90px 40px, rgba(255,255,255,0.1), transparent),
+            radial-gradient(1px 1px at 130px 80px, rgba(255,255,255,0.1), transparent);
+        background-repeat: repeat;
+        background-size: 200px 200px;
+        animation: particles 20s linear infinite;
+    }
+
+    @@keyframes particles {
+        0% { transform: translate(0, 0); }
+        100% { transform: translate(-200px, -200px); }
+    }
+</style>
+
+@code {
+    [Parameter] public string? AccountId { get; set; }
+    
+    private Account? account;
+    private ReconciliationModel reconciliationModel = new();
+    private List<ReconciliationRecord> recentReconciliations = new();
+    private bool isLoading = true;
+    private bool isSubmitting = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAccountAndReconciliations();
+    }
+
+    private async Task LoadAccountAndReconciliations()
+    {
+        try
+        {
+            isLoading = true;
+            account = await AccountService.GetAccountByIdAsync(AccountId);
+            
+            if (account != null)
+            {
+                // Initialize reconciliation model
+                reconciliationModel.StatementDate = DateTime.Today;
+                reconciliationModel.StatementBalance = account.CurrentBalance;
+                
+                // Load recent reconciliations (placeholder - would need reconciliation service)
+                // recentReconciliations = await ReconciliationService.GetRecentReconciliationsAsync(AccountId, 10);
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error loading account: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private decimal GetDifference()
+    {
+        if (account == null) return 0;
+        return reconciliationModel.StatementBalance - account.CurrentBalance;
+    }
+
+    private string GetDifferenceClass()
+    {
+        var diff = GetDifference();
+        if (Math.Abs(diff) < 0.01m) return "style=\"background: var(--success-color)/10;\"";
+        return "style=\"background: var(--warning-color)/10;\"";
+    }
+
+    private string GetDifferenceTextClass()
+    {
+        var diff = GetDifference();
+        if (Math.Abs(diff) < 0.01m) return "style=\"color: var(--success-color);\"";
+        return "style=\"color: var(--warning-color);\"";
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (account == null) return;
+
+        isSubmitting = true;
+        try
+        {
+            var difference = GetDifference();
+            
+            switch (reconciliationModel.ReconciliationAction)
+            {
+                case ReconciliationAction.CreateAdjustment:
+                    if (Math.Abs(difference) > 0.01m)
+                    {
+                        // Create adjustment transaction
+                        await CreateAdjustmentTransaction(difference);
+                        
+                        // Update account balance
+                        account.CurrentBalance = reconciliationModel.StatementBalance;
+                        await AccountService.UpdateAccountAsync(account);
+                    }
+                    break;
+                    
+                case ReconciliationAction.MarkAsReconciled:
+                    // Just record the reconciliation with the difference
+                    break;
+            }
+            
+            // Record the reconciliation
+            await RecordReconciliation(difference);
+            
+            await JSRuntime.InvokeVoidAsync("alert", "Account reconciliation completed successfully!");
+            NavigationManager.NavigateTo($"/accounts/{AccountId}");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error completing reconciliation: {ex.Message}");
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private async Task HandleInvalidSubmit()
+    {
+        await JSRuntime.InvokeVoidAsync("alert", "Please fix the validation errors before submitting.");
+    }
+
+    private async Task CreateAdjustmentTransaction(decimal amount)
+    {
+        // This would create an adjustment transaction in the database
+        // Placeholder implementation
+        var description = string.IsNullOrEmpty(reconciliationModel.AdjustmentDescription) 
+            ? "Reconciliation adjustment" 
+            : reconciliationModel.AdjustmentDescription;
+            
+        // await TransactionService.CreateAdjustmentTransactionAsync(AccountId, amount, description, reconciliationModel.StatementDate);
+    }
+
+    private async Task RecordReconciliation(decimal difference)
+    {
+        // This would record the reconciliation in the database
+        // Placeholder implementation
+        var reconciliation = new ReconciliationRecord
+        {
+            AccountId = AccountId,
+            StatementDate = reconciliationModel.StatementDate,
+            StatementBalance = reconciliationModel.StatementBalance,
+            BookBalance = account!.CurrentBalance,
+            Difference = difference,
+            ReconciliationDate = DateTime.UtcNow,
+            Notes = reconciliationModel.Notes,
+            ReconciliationAction = reconciliationModel.ReconciliationAction.ToString()
+        };
+        
+        // await ReconciliationService.CreateReconciliationAsync(reconciliation);
+    }
+
+    private void ReviewTransactions()
+    {
+        NavigationManager.NavigateTo($"/transactions?accountId={AccountId}&reconciliation=true");
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo($"/accounts/{AccountId}");
+    }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo($"/accounts/{AccountId}");
+    }
+
+    public class ReconciliationModel
+    {
+        [Required(ErrorMessage = "Statement date is required")]
+        public DateTime StatementDate { get; set; } = DateTime.Today;
+
+        [Required(ErrorMessage = "Statement balance is required")]
+        [Range(-999999999.99, 999999999.99, ErrorMessage = "Statement balance must be a valid amount")]
+        public decimal StatementBalance { get; set; }
+
+        [StringLength(500, ErrorMessage = "Notes cannot exceed 500 characters")]
+        public string? Notes { get; set; }
+
+        public ReconciliationAction ReconciliationAction { get; set; } = ReconciliationAction.CreateAdjustment;
+
+        [StringLength(200, ErrorMessage = "Adjustment description cannot exceed 200 characters")]
+        public string? AdjustmentDescription { get; set; }
+    }
+
+    public enum ReconciliationAction
+    {
+        CreateAdjustment,
+        MarkAsReconciled,
+        ReviewTransactions
+    }
+
+    public class ReconciliationRecord
+    {
+        public string? Id { get; set; }
+        public string? AccountId { get; set; }
+        public DateTime StatementDate { get; set; }
+        public decimal StatementBalance { get; set; }
+        public decimal BookBalance { get; set; }
+        public decimal Difference { get; set; }
+        public DateTime ReconciliationDate { get; set; }
+        public string? Notes { get; set; }
+        public string ReconciliationAction { get; set; } = string.Empty;
+    }
+}

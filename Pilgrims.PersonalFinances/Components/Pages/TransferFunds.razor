@@ -1,0 +1,588 @@
+@page "/accounts/transfer"
+@using Pilgrims.PersonalFinances.Models
+@using Pilgrims.PersonalFinances.Models.Enums
+@using Pilgrims.PersonalFinances.Services
+@using System.ComponentModel.DataAnnotations
+@inject IAccountService AccountService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Transfer Funds - Personal Finance</PageTitle>
+
+<div class="min-h-screen relative overflow-hidden" style="background: var(--primary-bg);">
+    <!-- Animated Background -->
+    <div class="absolute inset-0 overflow-hidden">
+        <div class="particles"></div>
+        <div class="absolute inset-0" style="background: linear-gradient(135deg, var(--accent-color)/5 0%, var(--secondary-color)/5 100%);"></div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="relative z-10 container mx-auto px-4 py-8">
+        @if (isLoading)
+        {
+            <div class="flex justify-center items-center py-20">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2" style="border-color: var(--accent-color);"></div>
+            </div>
+        }
+        else
+        {
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center gap-3 mb-4">
+                    <div class="w-16 h-16 rounded-full flex items-center justify-center text-3xl transition-transform duration-300 hover:scale-110"
+                         style="background: var(--accent-color); color: white;">
+                        🔄
+                    </div>
+                    <h1 class="text-4xl font-bold" style="color: var(--text-primary);">
+                        Transfer Funds
+                    </h1>
+                </div>
+                <p class="text-lg" style="color: var(--text-secondary);">
+                    Move money between your accounts instantly
+                </p>
+            </div>
+
+            <!-- Transfer Form -->
+            <div class="max-w-2xl mx-auto">
+                <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-8 mb-8"
+                     style="background: var(--card-bg); border-color: var(--border-color);">
+                    
+                    <EditForm Model="@transferModel" OnValidSubmit="@HandleValidSubmit" OnInvalidSubmit="@HandleInvalidSubmit">
+                        <DataAnnotationsValidator />
+                        
+                        <!-- From Account -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-semibold mb-2" style="color: var(--text-primary);">
+                                From Account *
+                            </label>
+                            <InputSelect @bind-Value="transferModel.FromAccountId" 
+                                         @onchange="OnFromAccountChanged"
+                                         class="w-full px-4 py-3 rounded-lg border transition-all duration-300 focus:scale-105 focus:shadow-lg"
+                                         style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);">
+                                <option value="">Select source account...</option>
+                                @foreach (var account in availableAccounts)
+                                {
+                                    <option value="@account.Id">
+                                        @GetAccountTypeIcon(account.AccountType) @account.Name (@account.CurrentBalance.ToString("C"))
+                                    </option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="@(() => transferModel.FromAccountId)" class="text-red-500 text-sm mt-1" />
+                            
+                            @if (fromAccount != null)
+                            {
+                                <div class="mt-2 p-3 rounded-lg flex items-center justify-between"
+                                     style="background: var(--accent-color)/10; border: 1px solid var(--accent-color)/30;">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm"
+                                             style="background-color: @fromAccount.ColorCode; color: white;">
+                                            @GetAccountTypeIcon(fromAccount.AccountType)
+                                        </div>
+                                        <div>
+                                            <div class="font-semibold" style="color: var(--text-primary);">@fromAccount.Name</div>
+                                            <div class="text-sm" style="color: var(--text-secondary);">@GetAccountTypeDisplay(fromAccount.AccountType)</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="font-bold" style="color: var(--accent-color);">
+                                            @fromAccount.CurrentBalance.ToString("C")
+                                        </div>
+                                        <div class="text-xs" style="color: var(--text-secondary);">Available</div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Transfer Arrow -->
+                        <div class="flex justify-center mb-6">
+                            <div class="w-12 h-12 rounded-full flex items-center justify-center text-2xl transition-transform duration-300 hover:scale-110"
+                                 style="background: var(--secondary-color); color: white;">
+                                ⬇️
+                            </div>
+                        </div>
+
+                        <!-- To Account -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-semibold mb-2" style="color: var(--text-primary);">
+                                To Account *
+                            </label>
+                            <InputSelect @bind-Value="transferModel.ToAccountId" 
+                                         @onchange="OnToAccountChanged"
+                                         class="w-full px-4 py-3 rounded-lg border transition-all duration-300 focus:scale-105 focus:shadow-lg"
+                                         style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);">
+                                <option value="">Select destination account...</option>
+                                @foreach (var account in GetAvailableToAccounts())
+                                {
+                                    <option value="@account.Id">
+                                        @GetAccountTypeIcon(account.AccountType) @account.Name (@account.CurrentBalance.ToString("C"))
+                                    </option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="@(() => transferModel.ToAccountId)" class="text-red-500 text-sm mt-1" />
+                            
+                            @if (toAccount != null)
+                            {
+                                <div class="mt-2 p-3 rounded-lg flex items-center justify-between"
+                                     style="background: var(--secondary-color)/10; border: 1px solid var(--secondary-color)/30;">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm"
+                                             style="background-color: @toAccount.ColorCode; color: white;">
+                                            @GetAccountTypeIcon(toAccount.AccountType)
+                                        </div>
+                                        <div>
+                                            <div class="font-semibold" style="color: var(--text-primary);">@toAccount.Name</div>
+                                            <div class="text-sm" style="color: var(--text-secondary);">@GetAccountTypeDisplay(toAccount.AccountType)</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="font-bold" style="color: var(--secondary-color);">
+                                            @toAccount.CurrentBalance.ToString("C")
+                                        </div>
+                                        <div class="text-xs" style="color: var(--text-secondary);">Current</div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Transfer Amount -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-semibold mb-2" style="color: var(--text-primary);">
+                                Transfer Amount *
+                            </label>
+                            <div class="relative">
+                                <InputNumber @bind-Value="transferModel.Amount" 
+                                             class="w-full px-4 py-3 rounded-lg border transition-all duration-300 focus:scale-105 focus:shadow-lg text-2xl font-bold text-center"
+                                             style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);"
+                                             placeholder="0.00" 
+                                             step="0.01" />
+                                <div class="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm" style="color: var(--text-secondary);">
+                                    @(fromAccount?.Currency ?? "USD")
+                                </div>
+                            </div>
+                            <ValidationMessage For="@(() => transferModel.Amount)" class="text-red-500 text-sm mt-1" />
+                            
+                            @if (fromAccount != null && transferModel.Amount > 0)
+                            {
+                                <div class="mt-2 flex justify-between text-sm">
+                                    <span style="color: var(--text-secondary);">Remaining balance:</span>
+                                    <span class="font-semibold @(GetRemainingBalance() >= 0 ? "" : "text-red-500")" style="color: var(--text-primary);">
+                                        @GetRemainingBalance().ToString("C")
+                                    </span>
+                                </div>
+                                
+                                @if (GetRemainingBalance() < 0)
+                                {
+                                    <div class="mt-2 p-2 rounded-lg flex items-center gap-2" style="background: var(--error-color)/10; border: 1px solid var(--error-color)/30;">
+                                        <span>⚠️</span>
+                                        <span class="text-sm" style="color: var(--error-color);">
+                                            Insufficient funds. This transfer would overdraw the account.
+                                        </span>
+                                    </div>
+                                }
+                            }
+
+                            <!-- Quick Amount Buttons -->
+                            @if (fromAccount != null)
+                            {
+                                <div class="mt-3 flex gap-2 flex-wrap">
+                                    <button type="button" 
+                                            @onclick="() => SetQuickAmount(25)"
+                                            class="px-3 py-1 rounded-lg text-sm transition-all duration-300 hover:scale-105"
+                                            style="background: var(--accent-color)/20; color: var(--accent-color); border: 1px solid var(--accent-color)/30;">
+                                        $25
+                                    </button>
+                                    <button type="button" 
+                                            @onclick="() => SetQuickAmount(50)"
+                                            class="px-3 py-1 rounded-lg text-sm transition-all duration-300 hover:scale-105"
+                                            style="background: var(--accent-color)/20; color: var(--accent-color); border: 1px solid var(--accent-color)/30;">
+                                        $50
+                                    </button>
+                                    <button type="button" 
+                                            @onclick="() => SetQuickAmount(100)"
+                                            class="px-3 py-1 rounded-lg text-sm transition-all duration-300 hover:scale-105"
+                                            style="background: var(--accent-color)/20; color: var(--accent-color); border: 1px solid var(--accent-color)/30;">
+                                        $100
+                                    </button>
+                                    <button type="button" 
+                                            @onclick="() => SetQuickAmount(fromAccount.CurrentBalance)"
+                                            class="px-3 py-1 rounded-lg text-sm transition-all duration-300 hover:scale-105"
+                                            style="background: var(--secondary-color)/20; color: var(--secondary-color); border: 1px solid var(--secondary-color)/30;">
+                                        All (@fromAccount.CurrentBalance.ToString("C"))
+                                    </button>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Transfer Date -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-semibold mb-2" style="color: var(--text-primary);">
+                                Transfer Date *
+                            </label>
+                            <InputDate @bind-Value="transferModel.TransferDate" 
+                                       class="w-full px-4 py-3 rounded-lg border transition-all duration-300 focus:scale-105 focus:shadow-lg"
+                                       style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);" />
+                            <ValidationMessage For="@(() => transferModel.TransferDate)" class="text-red-500 text-sm mt-1" />
+                        </div>
+
+                        <!-- Transfer Description -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-semibold mb-2" style="color: var(--text-primary);">
+                                Description
+                            </label>
+                            <InputText @bind-Value="transferModel.Description" 
+                                       class="w-full px-4 py-3 rounded-lg border transition-all duration-300 focus:scale-105 focus:shadow-lg"
+                                       style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);"
+                                       placeholder="e.g., Emergency fund transfer, Monthly savings" />
+                            <ValidationMessage For="@(() => transferModel.Description)" class="text-red-500 text-sm mt-1" />
+                        </div>
+
+                        <!-- Transfer Summary -->
+                        @if (fromAccount != null && toAccount != null && transferModel.Amount > 0)
+                        {
+                            <div class="mb-6 p-4 rounded-lg" style="background: var(--accent-color)/5; border: 1px solid var(--accent-color)/30;">
+                                <h4 class="font-semibold mb-3" style="color: var(--text-primary);">Transfer Summary</h4>
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex justify-between">
+                                        <span style="color: var(--text-secondary);">From:</span>
+                                        <span style="color: var(--text-primary);">@fromAccount.Name</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span style="color: var(--text-secondary);">To:</span>
+                                        <span style="color: var(--text-primary);">@toAccount.Name</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span style="color: var(--text-secondary);">Amount:</span>
+                                        <span class="font-bold" style="color: var(--accent-color);">@transferModel.Amount.ToString("C")</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span style="color: var(--text-secondary);">Date:</span>
+                                        <span style="color: var(--text-primary);">@transferModel.TransferDate.ToString("MMM dd, yyyy")</span>
+                                    </div>
+                                    <hr style="border-color: var(--border-color);" />
+                                    <div class="flex justify-between">
+                                        <span style="color: var(--text-secondary);">@fromAccount.Name new balance:</span>
+                                        <span class="font-semibold" style="color: var(--text-primary);">@(fromAccount.CurrentBalance - transferModel.Amount).ToString("C")</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span style="color: var(--text-secondary);">@toAccount.Name new balance:</span>
+                                        <span class="font-semibold" style="color: var(--text-primary);">@(toAccount.CurrentBalance + transferModel.Amount).ToString("C")</span>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+
+                        <!-- Form Actions -->
+                        <div class="flex gap-4 pt-6 border-t" style="border-color: var(--border-color);">
+                            <button type="button" 
+                                    @onclick="Cancel"
+                                    class="flex-1 py-3 px-6 rounded-lg font-semibold transition-all duration-300 hover:scale-105"
+                                    style="background: var(--card-bg); color: var(--text-primary); border: 2px solid var(--border-color);">
+                                Cancel
+                            </button>
+                            <button type="submit" 
+                                    disabled="@(isSubmitting || !IsTransferValid())"
+                                    class="flex-1 py-3 px-6 rounded-lg font-semibold transition-all duration-300 hover:scale-105 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                                    style="background: var(--accent-color); color: white;">
+                                @if (isSubmitting)
+                                {
+                                    <span class="flex items-center justify-center gap-2">
+                                        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                        Processing Transfer...
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span>Transfer Funds</span>
+                                }
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+
+                <!-- Recent Transfers -->
+                <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-6"
+                     style="background: var(--card-bg); border-color: var(--border-color);">
+                    <h3 class="text-xl font-bold mb-4" style="color: var(--text-primary);">
+                        Recent Transfers
+                    </h3>
+                    
+                    @if (recentTransfers.Any())
+                    {
+                        <div class="space-y-3">
+                            @foreach (var transfer in recentTransfers.Take(5))
+                            {
+                                <div class="flex items-center justify-between p-4 rounded-lg transition-all duration-300 hover:scale-105"
+                                     style="background: var(--input-bg); border: 1px solid var(--border-color);">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg"
+                                             style="background: var(--accent-color)/20; color: var(--accent-color);">
+                                            🔄
+                                        </div>
+                                        <div>
+                                            <div class="font-semibold" style="color: var(--text-primary);">
+                                                @transfer.FromAccountName → @transfer.ToAccountName
+                                            </div>
+                                            <div class="text-sm" style="color: var(--text-secondary);">
+                                                @transfer.TransferDate.ToString("MMM dd, yyyy") • @transfer.Description
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="font-bold" style="color: var(--accent-color);">
+                                            @transfer.Amount.ToString("C")
+                                        </div>
+                                        <div class="text-sm" style="color: var(--text-secondary);">
+                                            Transfer
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-8" style="color: var(--text-secondary);">
+                            <div class="text-4xl mb-4">🔄</div>
+                            <p>No recent transfers found</p>
+                            <p class="text-sm mt-2">Your transfer history will appear here</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Particles CSS -->
+<style>
+    .particles {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .particles::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background-image: 
+            radial-gradient(2px 2px at 20px 30px, rgba(255,255,255,0.1), transparent),
+            radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.1), transparent),
+            radial-gradient(1px 1px at 90px 40px, rgba(255,255,255,0.1), transparent),
+            radial-gradient(1px 1px at 130px 80px, rgba(255,255,255,0.1), transparent);
+        background-repeat: repeat;
+        background-size: 200px 200px;
+        animation: particles 20s linear infinite;
+    }
+
+    @@keyframes particles {
+        0% { transform: translate(0, 0); }
+        100% { transform: translate(-200px, -200px); }
+    }
+</style>
+
+@code {
+
+
+
+    private List<Account> availableAccounts = new();
+    private Account? fromAccount;
+    private Account? toAccount;
+    private TransferModel transferModel = new();
+    private List<TransferRecord> recentTransfers = new();
+    private bool isLoading = true;
+    private bool isSubmitting = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAccounts();
+
+        // Check for pre-selected from account from query parameters
+        var uri = new Uri(NavigationManager.Uri);
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+
+
+        var fromAccountId = query["fromAccountId"];
+        transferModel.FromAccountId = fromAccountId;
+        await OnFromAccountChanged(new ChangeEventArgs { Value = fromAccountId});
+    }
+
+    private async Task LoadAccounts()
+    {
+        try
+        {
+            isLoading = true;
+            availableAccounts = (await AccountService.GetActiveAccountsAsync()).ToList();
+
+            // Load recent transfers (placeholder - would need transfer service)
+            // recentTransfers = await TransferService.GetRecentTransfersAsync(10);
+
+            // Initialize transfer date to today
+            transferModel.TransferDate = DateTime.Today;
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error loading accounts: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task OnFromAccountChanged(ChangeEventArgs e)
+    {
+        fromAccount = availableAccounts.FirstOrDefault(a => a.Id == e.Value?.ToString());
+
+        // Reset to account if it's the same as from account
+        if (transferModel.ToAccountId == e.Value?.ToString())
+        {
+            transferModel.ToAccountId = null;
+            toAccount = null;
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task OnToAccountChanged(ChangeEventArgs e)
+    {
+        var accountId = e.Value?.ToString();
+        toAccount = availableAccounts.FirstOrDefault(a => a.Id == accountId);
+        StateHasChanged();
+    }
+
+    private List<Account> GetAvailableToAccounts()
+    {
+        return availableAccounts.Where(a => a.Id != transferModel.FromAccountId).ToList();
+    }
+
+    private decimal GetRemainingBalance()
+    {
+        if (fromAccount == null) return 0;
+        return fromAccount.CurrentBalance - transferModel.Amount;
+    }
+
+    private void SetQuickAmount(decimal amount)
+    {
+        transferModel.Amount = amount;
+    }
+
+    private bool IsTransferValid()
+    {
+        return !string.IsNullOrWhiteSpace(transferModel.FromAccountId)
+            && !string.IsNullOrWhiteSpace(transferModel.ToAccountId)
+            && transferModel.Amount > 0 
+            && fromAccount != null 
+            && toAccount != null
+            && GetRemainingBalance() >= 0;
+    }
+
+    private string GetAccountTypeIcon(AccountType accountType)
+    {
+        return accountType switch
+        {
+            AccountType.Checking => "🏦",
+            AccountType.Savings => "💰",
+            AccountType.Cash => "💵",
+            AccountType.CreditCard => "💳",
+            AccountType.Investment => "📈",
+            AccountType.Loan => "🏠",
+            AccountType.Credit => "💳",
+            AccountType.Other => "📋",
+            _ => "📋"
+        };
+    }
+
+    private string GetAccountTypeDisplay(AccountType accountType)
+    {
+        return accountType switch
+        {
+            AccountType.Checking => "Checking Account",
+            AccountType.Savings => "Savings Account",
+            AccountType.Cash => "Cash Account",
+            AccountType.CreditCard => "Credit Card",
+            AccountType.Investment => "Investment Account",
+            AccountType.Loan => "Loan Account",
+            AccountType.Credit => "Credit Account",
+            AccountType.Other => "Other",
+            _ => "Unknown"
+        };
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (!IsTransferValid()) return;
+
+        isSubmitting = true;
+        try
+        {
+            // Perform the transfer
+            await AccountService.TransferFundsAsync(
+                transferModel.FromAccountId, 
+                transferModel.ToAccountId, 
+                transferModel.Amount, 
+                transferModel.Description ?? "Internal transfer",
+                transferModel.TransferDate
+            );
+            
+            await JSRuntime.InvokeVoidAsync("alert", "Transfer completed successfully!");
+            NavigationManager.NavigateTo("/accounts");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error processing transfer: {ex.Message}");
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private async Task HandleInvalidSubmit()
+    {
+        await JSRuntime.InvokeVoidAsync("alert", "Please fix the validation errors before submitting.");
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/accounts");
+    }
+
+    public class TransferModel
+    {
+        [Required(ErrorMessage = "Source account is required")]
+        public string? FromAccountId { get; set; }
+
+        [Required(ErrorMessage = "Destination account is required")]
+        public string? ToAccountId { get; set; }
+
+        [Required(ErrorMessage = "Transfer amount is required")]
+        [Range(0.01, 999999999.99, ErrorMessage = "Transfer amount must be greater than 0")]
+        public decimal Amount { get; set; }
+
+        [Required(ErrorMessage = "Transfer date is required")]
+        public DateTime TransferDate { get; set; } = DateTime.Today;
+
+        [StringLength(200, ErrorMessage = "Description cannot exceed 200 characters")]
+        public string? Description { get; set; }
+    }
+
+    public class TransferRecord
+    {
+        public int Id { get; set; }
+        public int FromAccountId { get; set; }
+        public int ToAccountId { get; set; }
+        public string FromAccountName { get; set; } = string.Empty;
+        public string ToAccountName { get; set; } = string.Empty;
+        public decimal Amount { get; set; }
+        public DateTime TransferDate { get; set; }
+        public string Description { get; set; } = string.Empty;
+        public DateTime CreatedAt { get; set; }
+    }
+}

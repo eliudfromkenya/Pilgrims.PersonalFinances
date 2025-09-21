@@ -30,6 +30,7 @@ namespace Pilgrims.PersonalFinances
             // Add Services
             builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
             builder.Services.AddScoped<IThemeService, ThemeService>();
+            builder.Services.AddScoped<IAccountService, AccountService>();
 
 #if DEBUG
     		builder.Services.AddBlazorWebViewDeveloperTools();

@@ -19,13 +19,36 @@
             </NavLink>
         </div>
 
-        <!-- Accounts -->
+        <!-- Accounts Section -->
         <div class="px-4 mb-2">
-            <NavLink class="flex items-center py-3 px-4 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md" 
-                     href="accounts">
-                <span class="text-xl mr-3 group-hover:scale-110 transition-transform duration-300">🏦</span> 
-                <span class="font-medium">Accounts</span>
-            </NavLink>
+            <!-- Main Accounts Link -->
+            <div class="flex items-center">
+                <NavLink class="flex items-center py-3 px-4 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md flex-1" 
+                         href="accounts">
+                    <span class="text-xl mr-3 group-hover:scale-110 transition-transform duration-300">🏦</span> 
+                    <span class="font-medium">Accounts</span>
+                </NavLink>
+                <button @onclick="ToggleAccountsSubmenu" 
+                        class="p-2 rounded-lg transition-all duration-300 text-gray-500 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400">
+                    <span class="text-sm transition-transform duration-300 @(showAccountsSubmenu ? "rotate-180" : "")">▼</span>
+                </button>
+            </div>
+            
+            <!-- Accounts Submenu -->
+            <div class="overflow-hidden transition-all duration-300 @(showAccountsSubmenu ? "max-h-96 opacity-100" : "max-h-0 opacity-0")">
+                <div class="ml-8 mt-2 space-y-1 border-l-2 border-blue-200 dark:border-blue-800 pl-4">
+                    <NavLink class="flex items-center py-2 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
+                             href="accounts/create">
+                        <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">➕</span> 
+                        <span>Create Account</span>
+                    </NavLink>
+                    <NavLink class="flex items-center py-2 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
+                             href="accounts/transfer">
+                        <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">🔄</span> 
+                        <span>Transfer Funds</span>
+                    </NavLink>
+                </div>
+            </div>
         </div>
 
         <!-- Transactions -->
@@ -110,3 +133,12 @@
         </div>
     </nav>
 </div>
+
+@code {
+    private bool showAccountsSubmenu = false;
+
+    private void ToggleAccountsSubmenu()
+    {
+        showAccountsSubmenu = !showAccountsSubmenu;
+    }
+}
