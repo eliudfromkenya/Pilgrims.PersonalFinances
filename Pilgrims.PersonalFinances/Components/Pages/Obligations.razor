@@ -1,0 +1,381 @@
+@page "/obligations"
+@using Pilgrims.PersonalFinances.Models
+@using Pilgrims.PersonalFinances.Models.Enums
+
+<PageTitle>Obligations - Pilgrims Personal Finance</PageTitle>
+
+<!-- Particle Background -->
+<div class="fixed inset-0 overflow-hidden pointer-events-none">
+    <div class="absolute inset-0 bg-gradient-to-br from-red-50 via-orange-50 to-yellow-50 dark:from-gray-900 dark:via-red-900 dark:to-orange-900"></div>
+    <div class="particles-container">
+        @for (int i = 0; i < 25; i++)
+        {
+            <div class="particle" style="animation-delay: @(i * 0.15)s;"></div>
+        }
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="relative z-10 min-h-screen p-6">
+    <!-- Header Section -->
+    <div class="mb-8">
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h1 class="text-4xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">
+                        📋 Obligations & Debts
+                    </h1>
+                    <p class="text-gray-600 dark:text-gray-300 mt-2">Track and manage your financial obligations</p>
+                </div>
+                <button class="px-6 py-3 bg-gradient-to-r from-red-500 to-orange-600 text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-300">
+                    <span class="mr-2">➕</span> Add Obligation
+                </button>
+            </div>
+            
+            <!-- Debt Overview Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+                <div class="bg-gradient-to-r from-red-400 to-red-600 p-4 rounded-xl text-white">
+                    <div class="text-sm opacity-90">Total Debt</div>
+                    <div class="text-2xl font-bold">$485,750</div>
+                    <div class="text-xs opacity-75 mt-1">📉 Down 2.3% this month</div>
+                </div>
+                <div class="bg-gradient-to-r from-orange-400 to-orange-600 p-4 rounded-xl text-white">
+                    <div class="text-sm opacity-90">Monthly Payments</div>
+                    <div class="text-2xl font-bold">$3,245.00</div>
+                    <div class="text-xs opacity-75 mt-1">Next due: Dec 1</div>
+                </div>
+                <div class="bg-gradient-to-r from-yellow-400 to-yellow-600 p-4 rounded-xl text-white">
+                    <div class="text-sm opacity-90">Credit Utilization</div>
+                    <div class="text-2xl font-bold">28%</div>
+                    <div class="text-xs opacity-75 mt-1">$14,000 / $50,000</div>
+                </div>
+                <div class="bg-gradient-to-r from-amber-400 to-amber-600 p-4 rounded-xl text-white">
+                    <div class="text-sm opacity-90">Debt-to-Income</div>
+                    <div class="text-2xl font-bold">32%</div>
+                    <div class="text-xs opacity-75 mt-1">Healthy ratio</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Debt Breakdown & Payment Schedule -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Debt Breakdown -->
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
+                <span class="mr-2">📊</span> Debt Breakdown
+            </h3>
+            <div class="space-y-4">
+                @{
+                    var debts = new[]
+                    {
+                        new { Name = "Mortgage", Balance = 385000, Payment = 2450, Rate = 3.25, Color = "from-red-400 to-red-600", Percentage = 79, Icon = "🏠" },
+                        new { Name = "Auto Loan", Balance = 28500, Payment = 485, Rate = 4.5, Color = "from-orange-400 to-orange-600", Percentage = 6, Icon = "🚗" },
+                        new { Name = "Student Loan", Balance = 42250, Payment = 310, Rate = 5.8, Color = "from-yellow-400 to-yellow-600", Percentage = 9, Icon = "🎓" },
+                        new { Name = "Credit Cards", Balance = 14000, Payment = 350, Rate = 18.9, Color = "from-pink-400 to-pink-600", Percentage = 3, Icon = "💳" },
+                        new { Name = "Personal Loan", Balance = 16000, Payment = 275, Rate = 8.2, Color = "from-purple-400 to-purple-600", Percentage = 3, Icon = "💰" }
+                    };
+                }
+                @foreach (var debt in debts)
+                {
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center flex-1">
+                            <span class="text-2xl mr-3">@debt.Icon</span>
+                            <span class="text-gray-700 dark:text-gray-300 flex-1">@debt.Name</span>
+                            <div class="w-24 bg-gray-200 dark:bg-gray-600 rounded-full h-2 mx-3">
+                                <div class="bg-gradient-to-r @debt.Color h-2 rounded-full transition-all duration-1000" 
+                                     style="width: @(debt.Percentage)%"></div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-semibold">$@debt.Balance</div>
+                            <div class="text-xs text-gray-500">@debt.Rate% APR</div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Payment Schedule -->
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
+                <span class="mr-2">📅</span> Upcoming Payments
+            </h3>
+            <div class="space-y-3">
+                @{
+                    var upcomingPayments = new[]
+                    {
+                        new { Name = "Mortgage Payment", Amount = 2450, DueDate = "Dec 1", Status = "Due Soon", Icon = "🏠", Color = "text-red-500" },
+                        new { Name = "Auto Loan", Amount = 485, DueDate = "Dec 5", Status = "Scheduled", Icon = "🚗", Color = "text-orange-500" },
+                        new { Name = "Credit Card - Chase", Amount = 150, DueDate = "Dec 8", Status = "Scheduled", Icon = "💳", Color = "text-blue-500" },
+                        new { Name = "Student Loan", Amount = 310, DueDate = "Dec 15", Status = "Scheduled", Icon = "🎓", Color = "text-green-500" },
+                        new { Name = "Credit Card - Amex", Amount = 200, DueDate = "Dec 18", Status = "Scheduled", Icon = "💳", Color = "text-purple-500" },
+                        new { Name = "Personal Loan", Amount = 275, DueDate = "Dec 22", Status = "Scheduled", Icon = "💰", Color = "text-indigo-500" }
+                    };
+                }
+                
+                @foreach (var payment in upcomingPayments)
+                {
+                    <div class="flex items-center justify-between p-3 bg-white/50 dark:bg-gray-700/50 rounded-lg hover:bg-white/70 dark:hover:bg-gray-700/70 transition-all duration-200">
+                        <div class="flex items-center">
+                            <span class="text-xl mr-3">@payment.Icon</span>
+                            <div>
+                                <h4 class="font-medium text-gray-800 dark:text-white">@payment.Name</h4>
+                                <p class="text-sm @payment.Color">@payment.Status • Due @payment.DueDate</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-bold text-gray-800 dark:text-white">$@payment.Amount</div>
+                            <button class="text-xs text-blue-600 hover:underline">Pay Now</button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Debt Payoff Progress & Credit Score -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Debt Payoff Progress -->
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
+                <span class="mr-2">🎯</span> Debt Payoff Progress
+            </h3>
+            <div class="space-y-6">
+                @{
+                    var payoffGoals = new[]
+                    {
+                        new { Name = "Credit Cards", Current = 14000, Original = 25000, Target = 0, Progress = 44, Color = "from-pink-400 to-pink-600" },
+                        new { Name = "Personal Loan", Current = 16000, Original = 20000, Target = 0, Progress = 20, Color = "from-purple-400 to-purple-600" },
+                        new { Name = "Student Loan", Current = 42250, Original = 55000, Target = 30000, Progress = 23, Color = "from-yellow-400 to-yellow-600" }
+                    };
+                }
+                
+                @foreach (var goal in payoffGoals)
+                {
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-medium text-gray-800 dark:text-white">@goal.Name</span>
+                            <span class="text-sm text-gray-600 dark:text-gray-300">@goal.Progress% paid off</span>
+                        </div>
+                        <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-3 mb-2">
+                            <div class="bg-gradient-to-r @goal.Color h-3 rounded-full transition-all duration-1000" 
+                                 style="width: @(goal.Progress)%"></div>
+                        </div>
+                        <div class="flex justify-between text-sm text-gray-500">
+                            <span>$@goal.Current remaining</span>
+                            <span>Target: $@goal.Target</span>
+                        </div>
+                    </div>
+                }
+            </div>
+            
+            <div class="mt-6 p-4 bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg">
+                <h4 class="font-semibold text-green-800 dark:text-green-300 mb-2">💡 Payoff Strategy</h4>
+                <p class="text-sm text-green-700 dark:text-green-400">Focus on high-interest credit cards first. You could save $2,340 in interest by paying an extra $100/month.</p>
+            </div>
+        </div>
+
+        <!-- Credit Score & Utilization -->
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
+                <span class="mr-2">📈</span> Credit Health
+            </h3>
+            
+            <!-- Credit Score Gauge -->
+            <div class="text-center mb-6">
+                <div class="relative w-48 h-24 mx-auto mb-4">
+                    <svg class="w-full h-full" viewBox="0 0 200 100">
+                        <path d="M 20 80 A 80 80 0 0 1 180 80" stroke="#e5e7eb" stroke-width="8" fill="none"/>
+                        <path d="M 20 80 A 80 80 0 0 1 140 40" stroke="url(#creditGradient)" stroke-width="8" fill="none" stroke-linecap="round"/>
+                        <defs>
+                            <linearGradient id="creditGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" style="stop-color:#ef4444"/>
+                                <stop offset="50%" style="stop-color:#f59e0b"/>
+                                <stop offset="100%" style="stop-color:#10b981"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="text-center">
+                            <div class="text-3xl font-bold text-gray-800 dark:text-white">742</div>
+                            <div class="text-sm text-gray-600 dark:text-gray-300">Good</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-sm text-gray-600 dark:text-gray-300">+12 points this month</div>
+            </div>
+            
+            <!-- Credit Factors -->
+            <div class="space-y-3">
+                @{
+                    var creditFactors = new[]
+                    {
+                        new { Factor = "Payment History", Score = 95, Color = "text-green-500", Icon = "✅" },
+                        new { Factor = "Credit Utilization", Score = 72, Color = "text-yellow-500", Icon = "⚠️" },
+                        new { Factor = "Credit Age", Score = 88, Color = "text-green-500", Icon = "✅" },
+                        new { Factor = "Credit Mix", Score = 80, Color = "text-blue-500", Icon = "ℹ️" },
+                        new { Factor = "New Credit", Score = 85, Color = "text-green-500", Icon = "✅" }
+                    };
+                }
+                
+                @foreach (var factor in creditFactors)
+                {
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <span class="mr-2">@factor.Icon</span>
+                            <span class="text-sm text-gray-700 dark:text-gray-300">@factor.Factor</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-16 bg-gray-200 dark:bg-gray-600 rounded-full h-2 mr-2">
+                                <div class="bg-gradient-to-r from-red-400 to-green-500 h-2 rounded-full" 
+                                     style="width: @(factor.Score)%"></div>
+                            </div>
+                            <span class="text-sm @factor.Color font-medium">@factor.Score</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Obligations List -->
+    <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 mb-8">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-white flex items-center">
+                <span class="mr-2">📋</span> All Obligations
+            </h3>
+            <div class="flex items-center space-x-2">
+                <button class="px-3 py-1 text-sm bg-red-100 text-red-800 rounded-full">All</button>
+                <button class="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded-full">Loans</button>
+                <button class="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded-full">Credit Cards</button>
+                <button class="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded-full">Subscriptions</button>
+            </div>
+        </div>
+        
+        <div class="space-y-3">
+            @{
+                var obligations = new[]
+                {
+                    new { Name = "Primary Mortgage", Type = "Mortgage", Balance = 385000.0, Payment = 2450.0, Rate = 3.25, NextDue = "Dec 1, 2023", Status = "Current", Icon = "🏠" },
+                    new { Name = "Student Loan - Federal", Type = "Education", Balance = 42250.0, Payment = 310.0, Rate = 5.8, NextDue = "Dec 15, 2023", Status = "Current", Icon = "🎓" },
+                    new { Name = "Tesla Model 3 Loan", Type = "Auto", Balance = 28500.0, Payment = 485.0, Rate = 4.5, NextDue = "Dec 5, 2023", Status = "Current", Icon = "🚗" },
+                    new { Name = "Personal Loan - SoFi", Type = "Personal", Balance = 16000.0, Payment = 275.0, Rate = 8.2, NextDue = "Dec 22, 2023", Status = "Current", Icon = "💰" },
+                    new { Name = "Chase Sapphire Preferred", Type = "Credit Card", Balance = 8500.0, Payment = 200.0, Rate = 18.9, NextDue = "Dec 18, 2023", Status = "Current", Icon = "💳" },
+                    new { Name = "American Express Gold", Type = "Credit Card", Balance = 5500.0, Payment = 150.0, Rate = 19.9, NextDue = "Dec 8, 2023", Status = "Current", Icon = "💳" },
+                    new { Name = "Netflix Subscription", Type = "Subscription", Balance = 0.0, Payment = 15.99, Rate = 0.0, NextDue = "Dec 3, 2023", Status = "Active", Icon = "📺" },
+                    new { Name = "Spotify Premium", Type = "Subscription", Balance = 0.0, Payment = 9.99, Rate = 0.0, NextDue = "Dec 12, 2023", Status = "Active", Icon = "🎵" }
+                };
+            }
+            
+            @foreach (var obligation in obligations)
+            {
+                <div class="flex items-center justify-between p-4 bg-white/50 dark:bg-gray-700/50 rounded-xl hover:bg-white/70 dark:hover:bg-gray-700/70 transition-all duration-200 cursor-pointer group">
+                    <div class="flex items-center flex-1">
+                        <div class="w-12 h-12 bg-gradient-to-r from-red-100 to-orange-200 dark:from-red-600 dark:to-orange-700 rounded-full flex items-center justify-center text-2xl mr-4 group-hover:scale-110 transition-transform duration-200">
+                            @obligation.Icon
+                        </div>
+                        <div class="flex-1">
+                            <div class="font-medium text-gray-800 dark:text-white">@obligation.Name</div>
+                            <div class="text-sm text-gray-500">@obligation.Type @(obligation.Rate > 0 ? $"• {obligation.Rate}% APR" : "")</div>
+                        </div>
+                        @if (obligation.Balance > 0)
+                        {
+                            <div class="text-sm text-gray-600 dark:text-gray-300 mr-4">
+                                <div>Balance: $@obligation.Balance</div>
+                                <div class="text-xs">Payment: $@obligation.Payment</div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-sm text-gray-600 dark:text-gray-300 mr-4">
+                                <div>Monthly: $@obligation.Payment</div>
+                                <div class="text-xs">Recurring</div>
+                            </div>
+                        }
+                        <div class="text-sm text-gray-600 dark:text-gray-300 mr-4">
+                            <div>Due: @obligation.NextDue</div>
+                            <div class="text-xs text-green-500">@obligation.Status</div>
+                        </div>
+                    </div>
+                    <div class="ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <button class="p-2 text-gray-400 hover:text-gray-600">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 text-center hover:shadow-xl transition-all duration-300 cursor-pointer">
+            <div class="text-4xl mb-3">💳</div>
+            <h4 class="font-semibold text-gray-800 dark:text-white mb-2">Make Payment</h4>
+            <p class="text-sm text-gray-600 dark:text-gray-300">Pay bills and obligations</p>
+        </div>
+        
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 text-center hover:shadow-xl transition-all duration-300 cursor-pointer">
+            <div class="text-4xl mb-3">📊</div>
+            <h4 class="font-semibold text-gray-800 dark:text-white mb-2">Debt Calculator</h4>
+            <p class="text-sm text-gray-600 dark:text-gray-300">Plan your payoff strategy</p>
+        </div>
+        
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 text-center hover:shadow-xl transition-all duration-300 cursor-pointer">
+            <div class="text-4xl mb-3">🔄</div>
+            <h4 class="font-semibold text-gray-800 dark:text-white mb-2">Refinance</h4>
+            <p class="text-sm text-gray-600 dark:text-gray-300">Explore refinancing options</p>
+        </div>
+        
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 text-center hover:shadow-xl transition-all duration-300 cursor-pointer">
+            <div class="text-4xl mb-3">📈</div>
+            <h4 class="font-semibold text-gray-800 dark:text-white mb-2">Credit Report</h4>
+            <p class="text-sm text-gray-600 dark:text-gray-300">View detailed credit report</p>
+        </div>
+    </div>
+</div>
+
+<style>
+    .particles-container {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .particle {
+        position: absolute;
+        width: 3px;
+        height: 3px;
+        background: linear-gradient(45deg, #ef4444, #f97316);
+        border-radius: 50%;
+        animation: float 8s ease-in-out infinite;
+        opacity: 0.7;
+    }
+
+    .particle:nth-child(odd) {
+        left: 15%;
+        animation-duration: 10s;
+    }
+
+    .particle:nth-child(even) {
+        right: 15%;
+        animation-duration: 12s;
+    }
+
+    @@keyframes float {
+        0%, 100% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+        10% { opacity: 0.7; }
+        90% { opacity: 0.7; }
+        50% { transform: translateY(-10vh) rotate(180deg); }
+    }
+
+    .glass-card {
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    }
+</style>

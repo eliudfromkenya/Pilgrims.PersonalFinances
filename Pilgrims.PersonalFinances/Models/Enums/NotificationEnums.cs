@@ -10,7 +10,14 @@ namespace Pilgrims.PersonalFinances.Models.Enums
         DebtPayment = 3,
         IncomeExpectation = 4,
         ReconciliationReminder = 5,
-        SystemAlert = 6
+        SystemAlert = 6,
+        InsurancePremiumDue = 7,
+        InsuranceClaimUpdate = 8,
+        InsurancePolicyExpiry = 9,
+        ObligationPaymentDue = 10,
+        ObligationArrears = 11,
+        ObligationBenefitAvailable = 12,
+        GroupContributionReminder = 13
     }
 
     /// <summary>

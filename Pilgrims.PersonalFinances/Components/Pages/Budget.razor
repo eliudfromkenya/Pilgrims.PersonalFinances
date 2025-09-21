@@ -1,0 +1,336 @@
+@page "/budget"
+@using Pilgrims.PersonalFinances.Models
+@using Pilgrims.PersonalFinances.Models.Enums
+
+<PageTitle>Budget - Pilgrims Personal Finance</PageTitle>
+
+<!-- Particle Background -->
+<div class="fixed inset-0 overflow-hidden pointer-events-none">
+    <div class="absolute inset-0 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900"></div>
+    <div class="particles-container">
+        @for (int i = 0; i < 25; i++)
+        {
+            <div class="particle" style="animation-delay: @(i * 0.15)s;"></div>
+        }
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="relative z-10 min-h-screen p-6">
+    <!-- Header Section -->
+    <div class="mb-8">
+        <div class="glass-card p-6 rounded-2xl border border-[var(--border-color)] backdrop-blur-lg bg-[var(--card-bg)]">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                        💰 Budget Manager
+                    </h1>
+                    <p class="text-gray-600 dark:text-gray-300 mt-2">Plan, track, and optimize your spending</p>
+                </div>
+                <button class="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-300">
+                    <span class="mr-2">➕</span> Create Budget
+                </button>
+            </div>
+            
+            <!-- Budget Overview Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+                <div class="bg-gradient-to-r from-green-400 to-green-600 p-4 rounded-xl text-white">
+                    <div class="text-sm opacity-90">Monthly Budget</div>
+                    <div class="text-2xl font-bold">$6,500.00</div>
+                    <div class="text-xs opacity-75 mt-1">📈 +5% vs last month</div>
+                </div>
+                <div class="bg-gradient-to-r from-blue-400 to-blue-600 p-4 rounded-xl text-white">
+                    <div class="text-sm opacity-90">Spent So Far</div>
+                    <div class="text-2xl font-bold">$4,230.75</div>
+                    <div class="text-xs opacity-75 mt-1">65% of budget</div>
+                </div>
+                <div class="bg-gradient-to-r from-orange-400 to-orange-600 p-4 rounded-xl text-white">
+                    <div class="text-sm opacity-90">Remaining</div>
+                    <div class="text-2xl font-bold">$2,269.25</div>
+                    <div class="text-xs opacity-75 mt-1">35% left</div>
+                </div>
+                <div class="bg-gradient-to-r from-purple-400 to-purple-600 p-4 rounded-xl text-white">
+                    <div class="text-sm opacity-90">Savings Goal</div>
+                    <div class="text-2xl font-bold">$1,200.00</div>
+                    <div class="text-xs opacity-75 mt-1">🎯 On track</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Budget Progress Overview -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Monthly Progress -->
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
+                <span class="mr-2">📊</span> Monthly Progress
+            </h3>
+            <div class="space-y-4">
+                <div class="text-center mb-6">
+                    <div class="relative w-32 h-32 mx-auto">
+                        <svg class="w-32 h-32 transform -rotate-90" viewBox="0 0 36 36">
+                            <path class="text-gray-300 dark:text-gray-600" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"></path>
+                            <path class="text-blue-500" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="65, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"></path>
+                        </svg>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-gray-800 dark:text-white">65%</div>
+                                <div class="text-xs text-gray-500">Used</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="text-sm text-gray-600 dark:text-gray-300">15 days remaining in month</div>
+                        <div class="text-xs text-gray-500">Average daily spend: $141.03</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Budget vs Actual Chart -->
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
+                <span class="mr-2">📈</span> Budget vs Actual (Last 6 Months)
+            </h3>
+            <div class="h-48 flex items-end justify-between space-x-2">
+                @{
+                    var months = new[] { "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+                    var budgetAmounts = new[] { 6000, 6200, 6100, 6300, 6400, 6500 };
+                    var actualAmounts = new[] { 5800, 6100, 6300, 6200, 6350, 4230 };
+                }
+                @for (int i = 0; i < 6; i++)
+                {
+                    var budgetHeight = (budgetAmounts[i] / 7000.0) * 100;
+                    var actualHeight = (actualAmounts[i] / 7000.0) * 100;
+                    <div class="flex-1 flex flex-col items-center">
+                        <div class="w-full flex justify-center space-x-1">
+                            <div class="bg-gradient-to-t from-blue-400 to-blue-600 rounded-t-lg transition-all duration-1000 w-1/2" 
+                                 style="height: @(budgetHeight)%; animation-delay: @(i * 0.1)s;">
+                            </div>
+                            <div class="bg-gradient-to-t from-purple-400 to-purple-600 rounded-t-lg transition-all duration-1000 w-1/2" 
+                                 style="height: @(actualHeight)%; animation-delay: @(i * 0.1 + 0.05)s;">
+                            </div>
+                        </div>
+                        <span class="text-xs text-gray-500 mt-2">@months[i]</span>
+                    </div>
+                }
+            </div>
+            <div class="flex justify-center space-x-4 mt-4">
+                <div class="flex items-center">
+                    <div class="w-3 h-3 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full mr-2"></div>
+                    <span class="text-xs text-gray-600 dark:text-gray-300">Budget</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-3 h-3 bg-gradient-to-r from-purple-400 to-purple-600 rounded-full mr-2"></div>
+                    <span class="text-xs text-gray-600 dark:text-gray-300">Actual</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Budgets -->
+    <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 mb-8">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-white flex items-center">
+                <span class="mr-2">🎯</span> Category Budgets
+            </h3>
+            <button class="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all duration-300 text-sm">
+                Adjust Budgets
+            </button>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            @{
+                var categoryBudgets = new[]
+                {
+                    new { Name = "Food & Dining", Icon = "🍽️", Budget = 1200, Spent = 850, Color = "from-red-400 to-red-600" },
+                    new { Name = "Transportation", Icon = "🚗", Budget = 800, Spent = 650, Color = "from-blue-400 to-blue-600" },
+                    new { Name = "Shopping", Icon = "🛒", Budget = 600, Spent = 720, Color = "from-purple-400 to-purple-600" },
+                    new { Name = "Bills & Utilities", Icon = "💡", Budget = 900, Spent = 875, Color = "from-orange-400 to-orange-600" },
+                    new { Name = "Entertainment", Icon = "🎬", Budget = 400, Spent = 285, Color = "from-green-400 to-green-600" },
+                    new { Name = "Healthcare", Icon = "🏥", Budget = 300, Spent = 150, Color = "from-teal-400 to-teal-600" }
+                };
+            }
+            
+            @foreach (var category in categoryBudgets)
+            {
+                var percentage = (category.Spent / (double)category.Budget) * 100;
+                var isOverBudget = category.Spent > category.Budget;
+                
+                <div class="bg-white/50 dark:bg-gray-700/50 p-4 rounded-xl hover:shadow-lg transition-all duration-300">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center">
+                            <span class="text-2xl mr-3">@category.Icon</span>
+                            <div>
+                                <h4 class="font-medium text-gray-800 dark:text-white">@category.Name</h4>
+                                <p class="text-xs text-gray-500">$@category.Spent / $@category.Budget</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-sm font-bold @(isOverBudget ? "text-red-600" : "text-green-600")">
+                                @Math.Round(percentage, 1)%
+                            </div>
+                            <div class="text-xs text-gray-500">
+                                $@(category.Budget - category.Spent) left
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                        <div class="bg-gradient-to-r @category.Color h-2 rounded-full transition-all duration-1000 @(isOverBudget ? "animate-pulse" : "")" 
+                             style="width: @Math.Min(percentage, 100)%"></div>
+                    </div>
+                    
+                    @if (isOverBudget)
+                    {
+                        <div class="mt-2 text-xs text-red-600 flex items-center">
+                            <span class="mr-1">⚠️</span> Over budget by $@(category.Spent - category.Budget)
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Budget Insights & Recommendations -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Insights -->
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
+                <span class="mr-2">💡</span> Budget Insights
+            </h3>
+            <div class="space-y-4">
+                <div class="flex items-start space-x-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <span class="text-green-600 text-xl">✅</span>
+                    <div>
+                        <h4 class="font-medium text-green-800 dark:text-green-300">Great Progress!</h4>
+                        <p class="text-sm text-green-600 dark:text-green-400">You're 15% under budget in Entertainment this month.</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start space-x-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                    <span class="text-yellow-600 text-xl">⚠️</span>
+                    <div>
+                        <h4 class="font-medium text-yellow-800 dark:text-yellow-300">Watch Out!</h4>
+                        <p class="text-sm text-yellow-600 dark:text-yellow-400">Shopping expenses are 20% over budget. Consider reducing discretionary purchases.</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start space-x-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <span class="text-blue-600 text-xl">📊</span>
+                    <div>
+                        <h4 class="font-medium text-blue-800 dark:text-blue-300">Trend Analysis</h4>
+                        <p class="text-sm text-blue-600 dark:text-blue-400">Your average monthly spending has decreased by 8% over the last 3 months.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Bills -->
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
+                <span class="mr-2">📅</span> Upcoming Bills
+            </h3>
+            <div class="space-y-3">
+                @{
+                    var upcomingBills = new[]
+                    {
+                        new { Name = "Rent", Amount = 1200, DueDate = "Dec 1", DaysLeft = 2, Icon = "🏠" },
+                        new { Name = "Electric Bill", Amount = 125, DueDate = "Dec 5", DaysLeft = 6, Icon = "💡" },
+                        new { Name = "Internet", Amount = 80, DueDate = "Dec 8", DaysLeft = 9, Icon = "🌐" },
+                        new { Name = "Phone Bill", Amount = 65, DueDate = "Dec 12", DaysLeft = 13, Icon = "📱" },
+                        new { Name = "Insurance", Amount = 150, DueDate = "Dec 15", DaysLeft = 16, Icon = "🛡️" }
+                    };
+                }
+                
+                @foreach (var bill in upcomingBills)
+                {
+                    <div class="flex items-center justify-between p-3 bg-white/50 dark:bg-gray-700/50 rounded-lg hover:bg-white/70 dark:hover:bg-gray-700/70 transition-all duration-200">
+                        <div class="flex items-center">
+                            <span class="text-xl mr-3">@bill.Icon</span>
+                            <div>
+                                <h4 class="font-medium text-gray-800 dark:text-white">@bill.Name</h4>
+                                <p class="text-sm text-gray-500">Due @bill.DueDate</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-bold text-gray-800 dark:text-white">$@bill.Amount</div>
+                            <div class="text-xs @(bill.DaysLeft <= 3 ? "text-red-500" : "text-gray-500")">
+                                @bill.DaysLeft days left
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 text-center hover:shadow-xl transition-all duration-300 cursor-pointer">
+            <div class="text-4xl mb-3">🎯</div>
+            <h4 class="font-semibold text-gray-800 dark:text-white mb-2">Set Goals</h4>
+            <p class="text-sm text-gray-600 dark:text-gray-300">Create savings and spending goals</p>
+        </div>
+        
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 text-center hover:shadow-xl transition-all duration-300 cursor-pointer">
+            <div class="text-4xl mb-3">📊</div>
+            <h4 class="font-semibold text-gray-800 dark:text-white mb-2">Budget Report</h4>
+            <p class="text-sm text-gray-600 dark:text-gray-300">Generate detailed budget analysis</p>
+        </div>
+        
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 text-center hover:shadow-xl transition-all duration-300 cursor-pointer">
+            <div class="text-4xl mb-3">🔄</div>
+            <h4 class="font-semibold text-gray-800 dark:text-white mb-2">Auto-Budget</h4>
+            <p class="text-sm text-gray-600 dark:text-gray-300">Set up automatic budget allocation</p>
+        </div>
+        
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 text-center hover:shadow-xl transition-all duration-300 cursor-pointer">
+            <div class="text-4xl mb-3">💰</div>
+            <h4 class="font-semibold text-gray-800 dark:text-white mb-2">Emergency Fund</h4>
+            <p class="text-sm text-gray-600 dark:text-gray-300">Build your emergency savings</p>
+        </div>
+    </div>
+</div>
+
+<style>
+    .particles-container {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .particle {
+        position: absolute;
+        width: 3px;
+        height: 3px;
+        background: linear-gradient(45deg, #3b82f6, #8b5cf6);
+        border-radius: 50%;
+        animation: float 8s ease-in-out infinite;
+        opacity: 0.7;
+    }
+
+    .particle:nth-child(odd) {
+        left: 15%;
+        animation-duration: 10s;
+    }
+
+    .particle:nth-child(even) {
+        right: 15%;
+        animation-duration: 12s;
+    }
+
+    @@keyframes float {
+        0%, 100% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+        10% { opacity: 0.7; }
+        90% { opacity: 0.7; }
+        50% { transform: translateY(-10vh) rotate(180deg); }
+    }
+
+    .glass-card {
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    }
+</style>

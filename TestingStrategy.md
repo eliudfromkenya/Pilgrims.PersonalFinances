@@ -191,6 +191,127 @@ public class ValidationTests
 }
 ```
 
+#### Insurance Management Tests
+```csharp
+[TestClass]
+public class InsuranceTests
+{
+    [TestMethod]
+    public void CalculateInsurancePremium_Monthly_ReturnsCorrectAmount()
+    {
+        // Arrange
+        var insurance = new Insurance
+        {
+            AnnualPremium = 1200.00m,
+            PaymentFrequency = PaymentFrequency.Monthly
+        };
+
+        // Act
+        var monthlyPremium = InsuranceCalculator.CalculatePaymentAmount(insurance);
+
+        // Assert
+        monthlyPremium.Should().Be(100.00m);
+    }
+
+    [TestMethod]
+    public void ValidateInsurancePolicy_WithFutureStartDate_IsValid()
+    {
+        // Arrange
+        var insurance = new Insurance
+        {
+            PolicyNumber = "POL-12345",
+            StartDate = DateTime.Now.AddDays(30),
+            EndDate = DateTime.Now.AddYears(1),
+            AnnualPremium = 1200.00m
+        };
+
+        // Act & Assert
+        Assert.DoesNotThrow(() => InsuranceValidator.Validate(insurance));
+    }
+
+    [TestMethod]
+    public void ProcessInsuranceClaim_ValidClaim_UpdatesClaimStatus()
+    {
+        // Arrange
+        var claim = new InsuranceClaim
+        {
+            ClaimAmount = 5000.00m,
+            ClaimDate = DateTime.Now,
+            Status = ClaimStatus.Submitted
+        };
+
+        // Act
+        var result = InsuranceService.ProcessClaim(claim);
+
+        // Assert
+        result.Status.Should().Be(ClaimStatus.UnderReview);
+    }
+}
+```
+
+#### Obligation Management Tests
+```csharp
+[TestClass]
+public class ObligationTests
+{
+    [TestMethod]
+    public void CalculateObligationBalance_WithPayments_ReturnsCorrectBalance()
+    {
+        // Arrange
+        var obligation = new Obligation
+        {
+            OriginalAmount = 10000.00m,
+            CurrentBalance = 8500.00m
+        };
+        var payments = new List<ObligationPayment>
+        {
+            new ObligationPayment { Amount = 500.00m, PaymentDate = DateTime.Now.AddDays(-30) },
+            new ObligationPayment { Amount = 500.00m, PaymentDate = DateTime.Now.AddDays(-60) }
+        };
+
+        // Act
+        var balance = ObligationCalculator.CalculateCurrentBalance(obligation, payments);
+
+        // Assert
+        balance.Should().Be(7500.00m);
+    }
+
+    [TestMethod]
+    public void ValidateObligation_WithNegativeAmount_ThrowsException()
+    {
+        // Arrange
+        var obligation = new Obligation
+        {
+            OriginalAmount = -1000.00m,
+            Type = ObligationType.Loan
+        };
+
+        // Act & Assert
+        Assert.ThrowsException<ValidationException>(() => 
+            ObligationValidator.Validate(obligation));
+    }
+
+    [TestMethod]
+    public void CalculatePayoffDate_WithRegularPayments_ReturnsCorrectDate()
+    {
+        // Arrange
+        var obligation = new Obligation
+        {
+            CurrentBalance = 5000.00m,
+            InterestRate = 0.05m
+        };
+        var monthlyPayment = 200.00m;
+
+        // Act
+        var payoffDate = ObligationCalculator.CalculatePayoffDate(obligation, monthlyPayment);
+
+        // Assert
+        payoffDate.Should().BeAfter(DateTime.Now);
+        payoffDate.Should().BeBefore(DateTime.Now.AddYears(3));
+    }
+}
+```
+
 ### Database Layer Tests
 ```csharp
 [TestClass]

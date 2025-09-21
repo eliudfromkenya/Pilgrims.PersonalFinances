@@ -77,6 +77,16 @@ public class PersonalFinanceContext : DbContext
     public DbSet<NotificationHistory> NotificationHistory { get; set; }
     public DbSet<NotificationSettings> NotificationSettings { get; set; }
 
+    // Insurance & Obligations
+    public DbSet<Insurance> Insurances { get; set; }
+    public DbSet<InsuranceClaim> InsuranceClaims { get; set; }
+    public DbSet<InsuranceNotification> InsuranceNotifications { get; set; }
+    public DbSet<Obligation> Obligations { get; set; }
+    public DbSet<ObligationPayment> ObligationPayments { get; set; }
+    public DbSet<ObligationBenefit> ObligationBenefits { get; set; }
+    public DbSet<ObligationDocument> ObligationDocuments { get; set; }
+    public DbSet<ObligationNotification> ObligationNotifications { get; set; }
+
     // Reporting System
     public DbSet<Report> Reports { get; set; }
     public DbSet<ReportTemplate> ReportTemplates { get; set; }
@@ -807,6 +817,165 @@ public class PersonalFinanceContext : DbContext
                   .WithMany()
                   .HasForeignKey(e => e.UserId)
                   .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Configure Insurance entity
+        modelBuilder.Entity<Insurance>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.PolicyNumber).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.InsuranceCompany).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.PolicyType).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.CoverageAmount).HasPrecision(18, 2).IsRequired();
+            entity.Property(e => e.PremiumAmount).HasPrecision(18, 2).IsRequired();
+            entity.Property(e => e.DeductibleAmount).HasPrecision(18, 2);
+            entity.Property(e => e.BeneficiaryName).HasMaxLength(200);
+            entity.Property(e => e.BeneficiaryRelationship).HasMaxLength(100);
+            entity.Property(e => e.Notes).HasMaxLength(1000);
+
+            entity.HasIndex(e => e.PolicyNumber).IsUnique();
+            entity.HasIndex(e => e.PolicyEndDate);
+            entity.HasIndex(e => e.Status);
+        });
+
+        // Configure InsuranceClaim entity
+        modelBuilder.Entity<InsuranceClaim>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.ClaimNumber).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.ClaimAmount).HasPrecision(18, 2).IsRequired();
+            entity.Property(e => e.ApprovedAmount).HasPrecision(18, 2);
+            entity.Property(e => e.Description).IsRequired().HasMaxLength(1000);
+            entity.Property(e => e.Notes).HasMaxLength(1000);
+
+            entity.HasOne(e => e.Insurance)
+                  .WithMany(i => i.Claims)
+                  .HasForeignKey(e => e.InsuranceId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(e => e.ClaimNumber).IsUnique();
+            entity.HasIndex(e => e.ClaimDate);
+            entity.HasIndex(e => e.Status);
+        });
+
+        // Configure InsuranceNotification entity
+        modelBuilder.Entity<InsuranceNotification>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Title).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Message).IsRequired().HasMaxLength(1000);
+            entity.Property(e => e.AdditionalData).HasMaxLength(500);
+
+            entity.HasOne(e => e.Insurance)
+                  .WithMany()
+                  .HasForeignKey(e => e.InsuranceId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.InsuranceClaim)
+                  .WithMany()
+                  .HasForeignKey(e => e.InsuranceClaimId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasIndex(e => e.ScheduledDate);
+            entity.HasIndex(e => e.IsSent);
+        });
+
+        // Configure Obligation entity
+        modelBuilder.Entity<Obligation>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Description).HasMaxLength(1000);
+            entity.Property(e => e.ContributionAmount).HasPrecision(18, 2).IsRequired();
+            entity.Property(e => e.OrganizationName).HasMaxLength(200);
+            entity.Property(e => e.ContactPerson).HasMaxLength(100);
+            entity.Property(e => e.MembershipNumber).HasMaxLength(100);
+            entity.Property(e => e.Notes).HasMaxLength(1000);
+
+            entity.HasIndex(e => e.Name);
+            entity.HasIndex(e => e.Type);
+            entity.HasIndex(e => e.Status);
+        });
+
+        // Configure ObligationPayment entity
+        modelBuilder.Entity<ObligationPayment>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Amount).HasPrecision(18, 2).IsRequired();
+            entity.Property(e => e.PaymentMethod).HasMaxLength(100);
+            entity.Property(e => e.TransactionReference).HasMaxLength(100);
+            entity.Property(e => e.Notes).HasMaxLength(500);
+
+            entity.HasOne(e => e.Obligation)
+                  .WithMany(o => o.Payments)
+                  .HasForeignKey(e => e.ObligationId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(e => e.PaymentDate);
+            entity.HasIndex(e => new { e.ObligationId, e.PaymentDate });
+        });
+
+        // Configure ObligationBenefit entity
+        modelBuilder.Entity<ObligationBenefit>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.BenefitType).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Amount).HasPrecision(18, 2).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(1000);
+            entity.Property(e => e.Notes).HasMaxLength(500);
+
+            entity.HasOne(e => e.Obligation)
+                  .WithMany(o => o.Benefits)
+                  .HasForeignKey(e => e.ObligationId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(e => e.ReceivedDate);
+            entity.HasIndex(e => e.Status);
+        });
+
+        // Configure ObligationDocument entity
+        modelBuilder.Entity<ObligationDocument>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.DocumentName).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.DocumentType).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.FilePath).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.FileType).HasMaxLength(50);
+            entity.Property(e => e.Description).HasMaxLength(1000);
+
+            entity.HasOne(e => e.Obligation)
+                  .WithMany(o => o.Documents)
+                  .HasForeignKey(e => e.ObligationId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(e => e.ObligationId);
+        });
+
+        // Configure ObligationNotification entity
+        modelBuilder.Entity<ObligationNotification>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Title).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Message).IsRequired().HasMaxLength(1000);
+            entity.Property(e => e.AdditionalData).HasMaxLength(500);
+
+            entity.HasOne(e => e.Obligation)
+                  .WithMany()
+                  .HasForeignKey(e => e.ObligationId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.ObligationPayment)
+                  .WithMany()
+                  .HasForeignKey(e => e.ObligationPaymentId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.ObligationBenefit)
+                  .WithMany()
+                  .HasForeignKey(e => e.ObligationBenefitId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasIndex(e => e.ScheduledDate);
+            entity.HasIndex(e => e.IsSent);
         });
 
         // Seed data for categories if needed
