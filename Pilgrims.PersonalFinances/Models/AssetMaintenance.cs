@@ -7,7 +7,7 @@ namespace Pilgrims.PersonalFinances.Models
     {
         // Asset relationship
         [Required]
-        public int AssetId { get; set; }
+        public string AssetId { get; set; } = string.Empty;
         public virtual Asset Asset { get; set; } = null!;
 
         [Required]
@@ -69,7 +69,7 @@ namespace Pilgrims.PersonalFinances.Models
         public decimal? LaborCost { get; set; }
 
         // Link to transaction if payment was recorded
-        public int? TransactionId { get; set; }
+        public string? TransactionId { get; set; }
         public virtual Transaction? Transaction { get; set; }
 
         // Calculated properties

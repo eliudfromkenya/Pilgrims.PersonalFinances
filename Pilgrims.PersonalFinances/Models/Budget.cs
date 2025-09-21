@@ -83,12 +83,12 @@ namespace Pilgrims.PersonalFinances.Models
         /// <summary>
         /// Category ID for category-based budgets
         /// </summary>
-        public int? CategoryId { get; set; }
+        public string? CategoryId { get; set; }
 
         /// <summary>
         /// Account ID for account-based budgets
         /// </summary>
-        public int? AccountId { get; set; }
+        public string? AccountId { get; set; }
 
         /// <summary>
         /// Tag for tag-based budgets
@@ -232,7 +232,7 @@ namespace Pilgrims.PersonalFinances.Models
             if (StartDate >= EndDate)
                 errors.Add("End date must be after start date");
 
-            if (BudgetType == BudgetType.Category && CategoryId == null)
+            if (BudgetType == BudgetType.Category && string.IsNullOrEmpty(CategoryId))
                 errors.Add("Category is required for category-based budgets");
 
             if (BudgetType == BudgetType.Account && AccountId == null)

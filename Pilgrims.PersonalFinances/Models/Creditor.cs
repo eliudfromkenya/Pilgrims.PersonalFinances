@@ -5,13 +5,8 @@ namespace Pilgrims.PersonalFinances.Models
     /// <summary>
     /// Represents a creditor or lender
     /// </summary>
-    public class Creditor
+    public class Creditor: BaseEntity
     {
-        /// <summary>
-        /// Unique identifier for the creditor
-        /// </summary>
-        public int Id { get; set; }
-
         /// <summary>
         /// Name of the creditor
         /// </summary>

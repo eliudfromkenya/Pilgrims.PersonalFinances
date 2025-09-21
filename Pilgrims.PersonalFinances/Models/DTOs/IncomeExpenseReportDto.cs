@@ -30,7 +30,7 @@ namespace Pilgrims.PersonalFinances.Models.DTOs
     /// </summary>
     public class CategorySummaryDto
     {
-        public int CategoryId { get; set; }
+        public string CategoryId { get; set; } = string.Empty;
         public string CategoryName { get; set; } = string.Empty;
         
         [Column(TypeName = "decimal(18,2)")]
@@ -45,7 +45,7 @@ namespace Pilgrims.PersonalFinances.Models.DTOs
     /// </summary>
     public class AccountSummaryDto
     {
-        public int AccountId { get; set; }
+        public string? AccountId { get; set; }
         public string AccountName { get; set; } = string.Empty;
         
         [Column(TypeName = "decimal(18,2)")]

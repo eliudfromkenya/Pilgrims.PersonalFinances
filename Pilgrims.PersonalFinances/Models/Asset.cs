@@ -13,7 +13,7 @@ namespace Pilgrims.PersonalFinances.Models
         public string? Description { get; set; }
 
         // Category relationship
-        public int? AssetCategoryId { get; set; }
+        public string? AssetCategoryId { get; set; }
         public virtual AssetCategory? AssetCategory { get; set; }
 
         [Required]
@@ -38,7 +38,7 @@ namespace Pilgrims.PersonalFinances.Models
         public decimal? SalvageValue { get; set; } // Estimated value at end of useful life
 
         // Linking to purchase transaction
-        public int? PurchaseTransactionId { get; set; }
+        public string? PurchaseTransactionId { get; set; }
         public virtual Transaction? PurchaseTransaction { get; set; }
 
         // Asset status
@@ -70,7 +70,7 @@ namespace Pilgrims.PersonalFinances.Models
         public DateTime? UpdatedAt { get; set; }
 
         // Data Linking Relationships
-        public int? AssetRegisterId { get; set; }
+        public string? AssetRegisterId { get; set; }
         public virtual AssetRegister? AssetRegister { get; set; }
 
         // Navigation properties

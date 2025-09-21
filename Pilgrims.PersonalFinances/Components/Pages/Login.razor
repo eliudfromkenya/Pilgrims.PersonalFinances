@@ -1,0 +1,236 @@
+@page "/login"
+@using Pilgrims.PersonalFinances.Services
+@using System.ComponentModel.DataAnnotations
+@inject IAuthenticationService AuthService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Login - Personal Finance</PageTitle>
+
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-500 to-purple-600 p-5 font-sans">
+    <div class="bg-white rounded-2xl shadow-2xl p-10 w-full max-w-md animate-slide-up">
+        <div class="text-center mb-8">
+            <div class="flex items-center justify-center gap-3 mb-4">
+                <div class="text-primary-500 flex items-center justify-center">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                        <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                        <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <h1 class="text-slate-800 text-2xl font-bold m-0">Personal Finance</h1>
+            </div>
+            <h2 class="text-slate-800 text-3xl font-bold m-0 mb-2">Welcome Back</h2>
+            <p class="text-slate-600 text-base m-0">Sign in to your account to continue managing your finances</p>
+        </div>
+
+        <EditForm Model="@loginModel" OnValidSubmit="@HandleLogin" class="flex flex-col gap-5">
+            <DataAnnotationsValidator />
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="p-3 px-4 rounded-lg flex items-center gap-3 text-sm font-medium bg-red-50 text-red-700 border border-red-200">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                        <line x1="15" y1="9" x2="9" y2="15" stroke="currentColor" stroke-width="2"/>
+                        <line x1="9" y1="9" x2="15" y2="15" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    @errorMessage
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(successMessage))
+            {
+                <div class="p-3 px-4 rounded-lg flex items-center gap-3 text-sm font-medium bg-green-50 text-green-700 border border-green-200">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    @successMessage
+                </div>
+            }
+
+            <div class="flex flex-col gap-2">
+                <label for="email" class="text-slate-800 font-semibold text-sm">Email Address</label>
+                <div class="relative flex items-center">
+                    <svg class="absolute left-3 text-slate-400 w-5 h-5" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M4 4H20C21.1 4 22 4.9 22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6C2 4.9 2.9 4 4 4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <polyline points="22,6 12,13 2,6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <InputText id="email" @bind-Value="loginModel.Email" class="form-input pl-10" placeholder="Enter your email address" type="email" />
+                </div>
+                <ValidationMessage For="@(() => loginModel.Email)" class="text-red-600 text-xs font-medium" />
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <label for="password" class="text-slate-800 font-semibold text-sm">Password</label>
+                <div class="relative flex items-center">
+                    <svg class="absolute left-3 text-slate-400 w-5 h-5" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="12" cy="16" r="1" stroke="currentColor" stroke-width="2"/>
+                        <path d="M7 11V7A5 5 0 0 1 17 7V11" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    <InputText id="password" @bind-Value="loginModel.Password" class="form-input pl-10 pr-12" placeholder="Enter your password" type="@(showPassword ? "text" : "password")" />
+                    <button type="button" class="absolute right-3 bg-none border-none text-slate-500 cursor-pointer p-1 rounded transition-colors duration-200 hover:text-slate-800" @onclick="TogglePasswordVisibility">
+                        @if (showPassword)
+                        {
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20C7 20 2.73 16.39 1 12A18.45 18.45 0 0 1 5.06 5.06L17.94 17.94Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M1 1L23 23" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4C17 4 21.27 7.61 23 12A18.5 18.5 0 0 1 19.42 16.42" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        }
+                        else
+                        {
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M1 12S5 4 12 4S23 12 23 12S19 20 12 20S1 12 1 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+                            </svg>
+                        }
+                    </button>
+                </div>
+                <ValidationMessage For="@(() => loginModel.Password)" class="text-red-600 text-xs font-medium" />
+            </div>
+
+            <div class="flex items-center justify-between">
+                <label class="flex items-center gap-2 cursor-pointer text-sm">
+                    <InputCheckbox @bind-Value="loginModel.RememberMe" class="sr-only" />
+                    <span class="w-4 h-4 border-2 border-slate-300 rounded flex items-center justify-center flex-shrink-0 transition-all duration-200 @(loginModel.RememberMe ? "bg-primary-500 border-primary-500" : "")">
+                        @if (loginModel.RememberMe)
+                        {
+                            <span class="text-white text-xs font-bold">✓</span>
+                        }
+                    </span>
+                    <span class="text-slate-700">Remember me</span>
+                </label>
+                <a href="/forgot-password" class="text-primary-500 no-underline text-sm font-medium hover:underline">Forgot password?</a>
+            </div>
+
+            <button type="submit" class="bg-gradient-to-r from-primary-500 to-purple-600 text-white border-none py-4 px-6 rounded-lg text-base font-semibold cursor-pointer transition-all duration-200 flex items-center justify-center gap-2 mt-2 hover:transform hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none" disabled="@isLoading">
+                @if (isLoading)
+                {
+                    <div class="w-5 h-5 border-2 border-white/30 rounded-full border-t-white animate-spin"></div>
+                    <span>Signing In...</span>
+                }
+                else
+                {
+                    <span>Sign In</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <polyline points="12,5 19,12 12,19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                }
+            </button>
+        </EditForm>
+
+        <div class="relative my-6">
+            <div class="absolute inset-0 flex items-center">
+                <div class="w-full border-t border-slate-200"></div>
+            </div>
+            <div class="relative flex justify-center text-sm">
+                <span class="px-2 bg-white text-slate-500">or</span>
+            </div>
+        </div>
+
+        <div class="flex flex-col gap-3">
+            <button class="flex items-center justify-center gap-3 w-full py-3 px-4 border-2 border-slate-200 rounded-lg text-slate-700 font-medium transition-all duration-200 hover:bg-slate-50 hover:border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22.56 12.25C22.56 11.47 22.49 10.72 22.36 10H12V14.26H17.92C17.66 15.63 16.9 16.79 15.82 17.57V20.34H19.27C21.1 18.66 22.56 15.66 22.56 12.25Z" fill="#4285F4"/>
+                    <path d="M12 23C15.24 23 17.95 21.92 19.27 20.34L15.82 17.57C14.94 18.2 13.82 18.58 12 18.58C8.87 18.58 6.22 16.89 5.4 14.43H1.85V17.29C3.16 19.9 7.31 23 12 23Z" fill="#34A853"/>
+                    <path d="M5.4 14.43C5.18 13.8 5.06 13.12 5.06 12.4C5.06 11.68 5.18 11 5.4 10.37V7.51H1.85C1.12 8.96 0.72 10.64 0.72 12.4C0.72 14.16 1.12 15.84 1.85 17.29L5.4 14.43Z" fill="#FBBC05"/>
+                    <path d="M12 5.38C13.62 5.38 15.06 5.94 16.21 7.02L19.36 3.87C17.95 2.61 15.24 1.78 12 1.78C7.31 1.78 3.16 4.88 1.85 7.51L5.4 10.37C6.22 7.91 8.87 5.38 12 5.38Z" fill="#EA4335"/>
+                </svg>
+                Continue with Google
+            </button>
+            <button class="flex items-center justify-center gap-3 w-full py-3 px-4 border-2 border-slate-200 rounded-lg text-slate-700 font-medium transition-all duration-200 hover:bg-slate-50 hover:border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="1" y="1" width="10" height="10" fill="#F25022"/>
+                    <rect x="13" y="1" width="10" height="10" fill="#7FBA00"/>
+                    <rect x="1" y="13" width="10" height="10" fill="#00A4EF"/>
+                    <rect x="13" y="13" width="10" height="10" fill="#FFB900"/>
+                </svg>
+                Continue with Microsoft
+            </button>
+        </div>
+
+        <div class="text-center mt-6 pt-6 border-t border-slate-200">
+            <p class="text-slate-500 m-0">Don't have an account? <a href="/register" class="text-primary-500 no-underline font-semibold hover:underline">Create one here</a></p>
+        </div>
+    </div>
+</div>
+
+
+
+@code {
+    private LoginModel loginModel = new();
+    private bool isLoading = false;
+    private bool showPassword = false;
+    private string errorMessage = string.Empty;
+    private string successMessage = string.Empty;
+
+    protected override Task OnInitializedAsync()
+    {
+        // Check if user came from registration
+        var uri = new Uri(Navigation.Uri);
+        if (uri.Query.Contains("registered=true"))
+        {
+            successMessage = "Registration successful! Please sign in with your credentials.";
+        }
+        
+        return Task.CompletedTask;
+    }
+
+    private async Task HandleLogin()
+    {
+        isLoading = true;
+        errorMessage = string.Empty;
+        successMessage = string.Empty;
+
+        try
+        {
+            var result = await AuthService.AuthenticateAsync(loginModel.Email, loginModel.Password);
+
+            if (result.IsSuccess)
+            {
+                // Store authentication token (you might want to use a proper state management solution)
+                await JSRuntime.InvokeVoidAsync("localStorage.setItem", "authToken", result.SessionToken);
+                await JSRuntime.InvokeVoidAsync("localStorage.setItem", "refreshToken", result.RefreshToken);
+                
+                successMessage = $"Welcome back, {result.User?.FirstName}!";
+                
+                // Redirect to dashboard after a brief delay
+                await Task.Delay(1000);
+                Navigation.NavigateTo("/");
+            }
+            else
+            {
+                errorMessage = result.ErrorMessage ?? "Login failed. Please check your credentials and try again.";
+            }
+        }
+        catch (Exception)
+        {
+            errorMessage = "An unexpected error occurred. Please try again.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void TogglePasswordVisibility()
+    {
+        showPassword = !showPassword;
+    }
+
+    public class LoginModel
+    {
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Please enter a valid email address")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Password is required")]
+        public string Password { get; set; } = string.Empty;
+
+        public bool RememberMe { get; set; } = false;
+    }
+}

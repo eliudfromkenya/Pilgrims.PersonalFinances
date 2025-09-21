@@ -12,7 +12,7 @@ namespace Pilgrims.PersonalFinances.Models
         /// <summary>
         /// Reference to the report template used
         /// </summary>
-        public int? ReportTemplateId { get; set; }
+        public string? ReportTemplateId { get; set; }
 
         /// <summary>
         /// Report title/name

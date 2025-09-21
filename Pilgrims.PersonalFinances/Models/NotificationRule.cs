@@ -35,7 +35,7 @@ namespace Pilgrims.PersonalFinances.Models
         /// Reference to the notification settings
         /// </summary>
         [Required]
-        public int NotificationSettingsId { get; set; }
+        public string? NotificationSettingsId { get; set; }
         public virtual NotificationSettings NotificationSettings { get; set; } = null!;
 
         // Entity-specific foreign keys (nullable - only one should be set per rule)
@@ -43,31 +43,31 @@ namespace Pilgrims.PersonalFinances.Models
         /// <summary>
         /// For scheduled transaction reminders
         /// </summary>
-        public int? ScheduledTransactionId { get; set; }
+        public string? ScheduledTransactionId { get; set; }
         public virtual ScheduledTransaction? ScheduledTransaction { get; set; }
 
         /// <summary>
         /// For budget alerts
         /// </summary>
-        public int? BudgetId { get; set; }
+        public string? BudgetId { get; set; }
         public virtual Budget? Budget { get; set; }
 
         /// <summary>
         /// For debt payment reminders
         /// </summary>
-        public int? DebtId { get; set; }
+        public string? DebtId { get; set; }
         public virtual Debt? Debt { get; set; }
 
         /// <summary>
         /// For account-specific notifications
         /// </summary>
-        public int? AccountId { get; set; }
+        public string? AccountId { get; set; }
         public virtual Account? Account { get; set; }
 
         /// <summary>
         /// For category-specific notifications
         /// </summary>
-        public int? CategoryId { get; set; }
+        public string? CategoryId { get; set; }
         public virtual Category? Category { get; set; }
 
         // Rule conditions
@@ -143,11 +143,11 @@ namespace Pilgrims.PersonalFinances.Models
         {
             get
             {
-                if (ScheduledTransactionId.HasValue) return $"ScheduledTransaction:{ScheduledTransactionId}";
-                if (BudgetId.HasValue) return $"Budget:{BudgetId}";
-                if (DebtId.HasValue) return $"Debt:{DebtId}";
-                if (AccountId.HasValue) return $"Account:{AccountId}";
-                if (CategoryId.HasValue) return $"Category:{CategoryId}";
+                if (!string.IsNullOrEmpty(ScheduledTransactionId)) return $"ScheduledTransaction:{ScheduledTransactionId}";
+                if (!string.IsNullOrEmpty(BudgetId)) return $"Budget:{BudgetId}";
+                if (!string.IsNullOrEmpty(DebtId)) return $"Debt:{DebtId}";
+                if (!string.IsNullOrEmpty(AccountId)) return $"Account:{AccountId}";
+                if (!string.IsNullOrEmpty(CategoryId)) return $"Category:{CategoryId}";
                 return "System";
             }
         }
@@ -162,12 +162,17 @@ namespace Pilgrims.PersonalFinances.Models
             if (string.IsNullOrWhiteSpace(Name))
                 errors.Add("Rule name is required");
 
-            if (NotificationSettingsId <= 0)
+            if (string.IsNullOrEmpty(NotificationSettingsId))
                 errors.Add("Notification settings reference is required");
 
             // Ensure only one entity reference is set
-            var entityReferences = new[] { ScheduledTransactionId, BudgetId, DebtId, AccountId, CategoryId }
-                .Count(id => id.HasValue);
+            var entityReferences = new object?[] { ScheduledTransactionId, BudgetId, DebtId, AccountId, CategoryId }
+                .Count(id => 
+                {
+                    if (id is int intId) return intId > 0;
+                    if (id is string strId) return !string.IsNullOrEmpty(strId);
+                    return false;
+                });
 
             if (entityReferences > 1)
                 errors.Add("Only one entity reference can be set per rule");

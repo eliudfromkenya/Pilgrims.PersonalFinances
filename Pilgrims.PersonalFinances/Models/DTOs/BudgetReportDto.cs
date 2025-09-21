@@ -7,7 +7,7 @@ namespace Pilgrims.PersonalFinances.Models.DTOs
     /// </summary>
     public class BudgetReportDto
     {
-        public int BudgetId { get; set; }
+        public string BudgetId { get; set; } = string.Empty;
         public string BudgetName { get; set; } = string.Empty;
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
@@ -32,7 +32,7 @@ namespace Pilgrims.PersonalFinances.Models.DTOs
     /// </summary>
     public class BudgetCategoryPerformanceDto
     {
-        public int CategoryId { get; set; }
+        public string CategoryId { get; set; } = string.Empty;
         public string CategoryName { get; set; } = string.Empty;
         
         [Column(TypeName = "decimal(18,2)")]
@@ -76,7 +76,7 @@ namespace Pilgrims.PersonalFinances.Models.DTOs
     /// </summary>
     public class BudgetVarianceReportDto
     {
-        public int BudgetId { get; set; }
+        public string BudgetId { get; set; } = string.Empty;
         public string BudgetName { get; set; } = string.Empty;
         public DateTime ReportDate { get; set; }
         

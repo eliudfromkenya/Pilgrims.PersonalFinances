@@ -1,41 +1,207 @@
-﻿/*#if (SampleContent)*/
-html, body {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom base styles */
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  
+  body {
+    @apply bg-slate-50 text-slate-900;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold text-slate-900;
+  }
+  
+  h1 { @apply text-3xl; }
+  h2 { @apply text-2xl; }
+  h3 { @apply text-xl; }
+  h4 { @apply text-lg; }
+  h5 { @apply text-base; }
+  h6 { @apply text-sm; }
 }
 
-a, .btn-link {
-    color: #006bb7;
+/* Custom component styles */
+@layer components {
+  /* Card components */
+  .card {
+    @apply bg-white rounded-lg shadow-soft border border-slate-200 p-6;
+  }
+  
+  .card-header {
+    @apply border-b border-slate-200 pb-4 mb-4;
+  }
+  
+  .card-title {
+    @apply text-lg font-semibold text-slate-900;
+  }
+  
+  .card-subtitle {
+    @apply text-sm text-slate-600 mt-1;
+  }
+  
+  /* Button components */
+  .btn {
+    @apply inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+  }
+  
+  .btn-primary {
+    @apply btn bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500;
+  }
+  
+  .btn-secondary {
+    @apply btn bg-slate-600 text-white hover:bg-slate-700 focus:ring-slate-500;
+  }
+  
+  .btn-success {
+    @apply btn bg-green-600 text-white hover:bg-green-700 focus:ring-green-500;
+  }
+  
+  .btn-warning {
+    @apply btn bg-yellow-600 text-white hover:bg-yellow-700 focus:ring-yellow-500;
+  }
+  
+  .btn-danger {
+    @apply btn bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
+  }
+  
+  .btn-outline {
+    @apply btn bg-transparent border-slate-300 text-slate-700 hover:bg-slate-50 focus:ring-blue-500;
+  }
+  
+  .btn-ghost {
+    @apply btn bg-transparent border-transparent text-slate-700 hover:bg-slate-100 focus:ring-blue-500;
+  }
+  
+  /* Form components */
+  .form-input {
+    @apply block w-full px-4 py-3 border-2 border-slate-300 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 text-slate-900 bg-white;
+  }
+  
+  .form-label {
+    @apply block text-sm font-medium text-slate-700 mb-1;
+  }
+  
+  .form-error {
+    @apply text-sm text-red-600 mt-1;
+  }
+  
+  .form-help {
+    @apply text-sm text-slate-500 mt-1;
+  }
+  
+  /* Navigation components */
+  .nav-link {
+    @apply flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200;
+  }
+  
+  .nav-link-active {
+    @apply nav-link bg-blue-100 text-blue-700;
+  }
+  
+  .nav-link-inactive {
+    @apply nav-link text-slate-600 hover:bg-slate-100 hover:text-slate-900;
+  }
+  
+  /* Dashboard components */
+  .stat-card {
+    @apply card p-4;
+  }
+  
+  .stat-value {
+    @apply text-2xl font-bold text-slate-900;
+  }
+  
+  .stat-label {
+    @apply text-sm text-slate-600;
+  }
+  
+  .stat-change {
+    @apply text-xs font-medium;
+  }
+  
+  .stat-change-positive {
+    @apply stat-change text-green-600;
+  }
+  
+  .stat-change-negative {
+    @apply stat-change text-red-600;
+  }
+  
+  /* Table components */
+  .table {
+    @apply w-full border-collapse bg-white shadow-sm rounded-lg overflow-hidden;
+  }
+  
+  .table th {
+    @apply bg-slate-50 px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider border-b border-slate-200;
+  }
+  
+  .table td {
+    @apply px-6 py-4 whitespace-nowrap text-sm text-slate-900 border-b border-slate-200;
+  }
+  
+  .table tbody tr:hover {
+    @apply bg-slate-50;
+  }
+  
+  /* Modal components */
+  .modal-overlay {
+    @apply fixed inset-0 bg-slate-600 bg-opacity-50 flex items-center justify-center z-50;
+  }
+  
+  .modal-content {
+    @apply bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6;
+  }
+  
+  .modal-header {
+    @apply flex justify-between items-center mb-4;
+  }
+  
+  .modal-title {
+    @apply text-lg font-semibold text-slate-900;
+  }
+  
+  .modal-close {
+    @apply text-slate-400 hover:text-slate-600 transition-colors duration-200;
+  }
+  
+  /* Alert components */
+  .alert {
+    @apply p-4 rounded-md border-l-4;
+  }
+  
+  .alert-success {
+    @apply alert bg-green-50 border-green-400 text-green-800;
+  }
+  
+  .alert-warning {
+    @apply alert bg-yellow-50 border-yellow-400 text-yellow-800;
+  }
+  
+  .alert-danger {
+    @apply alert bg-red-50 border-red-400 text-red-800;
+  }
+  
+  .alert-info {
+    @apply alert bg-blue-50 border-blue-400 text-blue-800;
+  }
 }
 
-.btn-primary {
-    color: #fff;
-    background-color: #1b6ec2;
-    border-color: #1861ac;
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-.content {
-    padding-top: 1.1rem;
-}
-
-/*#endif*/
-h1:focus {
-    outline: none;
-}
-
+/* Legacy form validation styles */
 .valid.modified:not([type=checkbox]) {
-    outline: 1px solid #26b050;
+  @apply border-green-500 focus:border-green-500 focus:ring-green-500;
 }
 
 .invalid {
-    outline: 1px solid #e50000;
+  @apply border-red-500 focus:border-red-500 focus:ring-red-500;
 }
 
 .validation-message {
-    color: #e50000;
+  @apply text-red-600 text-sm mt-1;
 }
 
 #blazor-error-ui {

@@ -12,7 +12,7 @@ namespace Pilgrims.PersonalFinances.Models
         /// Foreign key to the debt
         /// </summary>
         [Required]
-        public int DebtId { get; set; }
+        public string? DebtId { get; set; }
 
         /// <summary>
         /// Navigation property to the debt
@@ -76,7 +76,7 @@ namespace Pilgrims.PersonalFinances.Models
         /// <summary>
         /// Foreign key to scheduled transaction (if applicable)
         /// </summary>
-        public int? ScheduledTransactionId { get; set; }
+        public string? ScheduledTransactionId { get; set; }
 
         /// <summary>
         /// Navigation property to the scheduled transaction

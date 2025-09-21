@@ -61,7 +61,7 @@ namespace Pilgrims.PersonalFinances.Models.DTOs
     /// </summary>
     public class CategoryComparisonDto
     {
-        public int CategoryId { get; set; }
+        public string CategoryId { get; set; } = string.Empty;
         public string CategoryName { get; set; } = string.Empty;
         public string TransactionType { get; set; } = string.Empty;
         
@@ -89,7 +89,7 @@ namespace Pilgrims.PersonalFinances.Models.DTOs
     /// </summary>
     public class AccountComparisonDto
     {
-        public int AccountId { get; set; }
+        public string? AccountId { get; set; }
         public string AccountName { get; set; } = string.Empty;
         public string AccountType { get; set; } = string.Empty;
         

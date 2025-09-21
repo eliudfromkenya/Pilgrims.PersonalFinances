@@ -8,7 +8,7 @@ namespace Pilgrims.PersonalFinances.Models.DTOs
         /// <summary>
         /// Debt ID for this projection
         /// </summary>
-        public int DebtId { get; set; }
+        public string? DebtId { get; set; }
 
         /// <summary>
         /// Debt name

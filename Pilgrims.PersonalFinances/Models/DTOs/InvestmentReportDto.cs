@@ -9,7 +9,7 @@ namespace Pilgrims.PersonalFinances.Models.DTOs
     {
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
-        public int? PortfolioId { get; set; }
+        public string? PortfolioId { get; set; }
         public string? PortfolioName { get; set; }
         
         [Column(TypeName = "decimal(18,2)")]
@@ -41,7 +41,7 @@ namespace Pilgrims.PersonalFinances.Models.DTOs
     /// </summary>
     public class InvestmentPerformanceDto
     {
-        public int InvestmentId { get; set; }
+        public string? InvestmentId { get; set; }
         public string InvestmentName { get; set; } = string.Empty;
         public string Symbol { get; set; } = string.Empty;
         public string AssetType { get; set; } = string.Empty;

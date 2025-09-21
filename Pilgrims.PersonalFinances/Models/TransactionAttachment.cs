@@ -7,7 +7,7 @@ namespace Pilgrims.PersonalFinances.Models;
 /// </summary>
 public class TransactionAttachment : BaseEntity
 {
-    private int _transactionId;
+    private string _transactionId = string.Empty;
     private Transaction? _transaction;
     private string _fileName = string.Empty;
     private string _originalFileName = string.Empty;
@@ -21,7 +21,7 @@ public class TransactionAttachment : BaseEntity
     /// ID of the associated transaction
     /// </summary>
     [Required]
-    public int TransactionId
+    public string TransactionId
     {
         get => _transactionId;
         set => SetProperty(ref _transactionId, value);
@@ -159,7 +159,7 @@ public class TransactionAttachment : BaseEntity
     {
         var errors = new List<string>();
 
-        if (TransactionId <= 0)
+        if (string.IsNullOrEmpty(TransactionId))
             errors.Add("Transaction ID is required");
 
         if (string.IsNullOrWhiteSpace(FileName))

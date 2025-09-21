@@ -3,10 +3,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Pilgrims.PersonalFinances.Models;
 
-public class Income
+public class Income: BaseEntity
 {
-    public int Id { get; set; }
-
     [Required]
     [StringLength(200)]
     public string Name { get; set; } = string.Empty;
@@ -59,7 +57,7 @@ public class Income
     public DateTime? UpdatedAt { get; set; }
 
     // Foreign Keys
-    public int? IncomeCategoryId { get; set; }
+    public string? IncomeCategoryId { get; set; }
 
     // Navigation Properties
     public virtual IncomeCategory? IncomeCategory { get; set; }

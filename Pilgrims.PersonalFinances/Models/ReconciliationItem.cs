@@ -4,18 +4,15 @@ using Pilgrims.PersonalFinances.Models.Enums;
 
 namespace Pilgrims.PersonalFinances.Models
 {
-    public class ReconciliationItem
+    public class ReconciliationItem: BaseEntity
     {
-        [Key]
-        public int Id { get; set; }
-
         [Required]
-        public int ReconciliationSessionId { get; set; }
+        public string? ReconciliationSessionId { get; set; }
 
         [ForeignKey("ReconciliationSessionId")]
-        public virtual ReconciliationSession ReconciliationSession { get; set; }
+        public virtual ReconciliationSession ReconciliationSession { get; set; } = null!;
 
-        public int? TransactionId { get; set; }
+        public string? TransactionId { get; set; }
 
         [ForeignKey("TransactionId")]
         public virtual Transaction? Transaction { get; set; }
@@ -25,7 +22,7 @@ namespace Pilgrims.PersonalFinances.Models
 
         [Required]
         [StringLength(500)]
-        public string Description { get; set; }
+        public string Description { get; set; } = string.Empty;
 
         [Required]
         [Column(TypeName = "decimal(18,2)")]

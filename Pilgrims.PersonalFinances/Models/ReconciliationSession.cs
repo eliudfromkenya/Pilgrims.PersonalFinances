@@ -4,13 +4,10 @@ using Pilgrims.PersonalFinances.Models.Enums;
 
 namespace Pilgrims.PersonalFinances.Models
 {
-    public class ReconciliationSession
+    public class ReconciliationSession: BaseEntity
     {
-        [Key]
-        public int Id { get; set; }
-
         [Required]
-        public int AccountId { get; set; }
+        public string AccountId { get; set; } = string.Empty;
 
         [ForeignKey("AccountId")]
         public virtual Account Account { get; set; }

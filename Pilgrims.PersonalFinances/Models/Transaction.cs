@@ -12,11 +12,11 @@ public class Transaction : BaseEntity
     private DateTime _date = DateTime.Today;
     private TransactionType _type = TransactionType.Expense;
     private TransactionStatus _status = TransactionStatus.Pending;
-    private int _accountId;
+    private string _accountId = string.Empty;
     private Account? _account;
-    private int? _categoryId;
+    private string? _categoryId;
     private Category? _category;
-    private int? _transferToAccountId;
+    private string? _transferToAccountId;
     private Account? _transferToAccount;
     private string? _payee;
     private string? _description;
@@ -28,7 +28,7 @@ public class Transaction : BaseEntity
     private bool _isRecurring = false;
     private string? _recurringPattern;
     private bool _isSplit = false;
-    private int? _parentTransactionId;
+    private string? _parentTransactionId;
     private Transaction? _parentTransaction;
     private List<Transaction> _splitTransactions = new();
     private List<TransactionAttachment> _attachments = new();
@@ -78,7 +78,7 @@ public class Transaction : BaseEntity
     /// ID of the source account for this transaction
     /// </summary>
     [Required]
-    public int AccountId
+    public string AccountId
     {
         get => _accountId;
         set => SetProperty(ref _accountId, value);
@@ -96,7 +96,7 @@ public class Transaction : BaseEntity
     /// <summary>
     /// ID of the category for this transaction (optional for transfers)
     /// </summary>
-    public int? CategoryId
+    public string? CategoryId
     {
         get => _categoryId;
         set => SetProperty(ref _categoryId, value);
@@ -114,7 +114,7 @@ public class Transaction : BaseEntity
     /// <summary>
     /// ID of the destination account for transfer transactions
     /// </summary>
-    public int? TransferToAccountId
+    public string? TransferToAccountId
     {
         get => _transferToAccountId;
         set => SetProperty(ref _transferToAccountId, value);
@@ -226,7 +226,7 @@ public class Transaction : BaseEntity
     /// <summary>
     /// ID of the parent transaction (for split transaction children)
     /// </summary>
-    public int? ParentTransactionId
+    public string? ParentTransactionId
     {
         get => _parentTransactionId;
         set => SetProperty(ref _parentTransactionId, value);
@@ -339,7 +339,7 @@ public class Transaction : BaseEntity
         if (Amount <= 0)
             errors.Add("Amount must be greater than 0");
 
-        if (AccountId <= 0)
+        if (string.IsNullOrEmpty(AccountId))
             errors.Add("Account is required");
 
         if (Type == TransactionType.Transfer && TransferToAccountId == null)
@@ -348,7 +348,7 @@ public class Transaction : BaseEntity
         if (Type == TransactionType.Transfer && TransferToAccountId == AccountId)
             errors.Add("Cannot transfer to the same account");
 
-        if (Type != TransactionType.Transfer && CategoryId == null)
+        if (Type != TransactionType.Transfer && string.IsNullOrEmpty(CategoryId))
             errors.Add("Category is required for non-transfer transactions");
 
         if (Payee?.Length > 200)

@@ -7,13 +7,8 @@ namespace Pilgrims.PersonalFinances.Models
     /// <summary>
     /// Represents a debt or loan obligation
     /// </summary>
-    public class Debt
+    public class Debt: BaseEntity
     {
-        /// <summary>
-        /// Unique identifier for the debt
-        /// </summary>
-        public int Id { get; set; }
-
         /// <summary>
         /// Name or description of the debt
         /// </summary>
@@ -30,7 +25,7 @@ namespace Pilgrims.PersonalFinances.Models
         /// <summary>
         /// Foreign key to the creditor
         /// </summary>
-        public int CreditorId { get; set; }
+        public string? CreditorId { get; set; }
 
         /// <summary>
         /// Navigation property to the creditor

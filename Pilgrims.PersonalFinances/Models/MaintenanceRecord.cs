@@ -4,20 +4,17 @@ using Pilgrims.PersonalFinances.Models.Enums;
 
 namespace Pilgrims.PersonalFinances.Models
 {
-    public class MaintenanceRecord
+    public class MaintenanceRecord: BaseEntity
     {
-        [Key]
-        public int Id { get; set; }
-
         [Required]
-        public int AssetRegisterId { get; set; }
+        public string AssetRegisterId { get; set; } = string.Empty;
 
         [ForeignKey("AssetRegisterId")]
-        public virtual AssetRegister AssetRegister { get; set; }
+        public virtual AssetRegister AssetRegister { get; set; } = null!;
 
         [Required]
         [StringLength(255)]
-        public string MaintenanceType { get; set; }
+        public string MaintenanceType { get; set; } = string.Empty;
 
         [StringLength(1000)]
         public string? Description { get; set; }

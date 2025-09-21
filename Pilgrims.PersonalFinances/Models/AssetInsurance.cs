@@ -3,14 +3,11 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Pilgrims.PersonalFinances.Models
 {
-    public class AssetInsurance
+    public class AssetInsurance: BaseEntity
     {
-        [Key]
-        public int Id { get; set; }
-
         // Asset relationship
         [Required]
-        public int AssetId { get; set; }
+        public string AssetId { get; set; } = string.Empty;
         public virtual Asset Asset { get; set; } = null!;
 
         [Required]
@@ -94,7 +91,7 @@ namespace Pilgrims.PersonalFinances.Models
         public string? Notes { get; set; }
 
         // Link to scheduled transactions for premium payments
-        public int? ScheduledTransactionId { get; set; }
+        public string? ScheduledTransactionId { get; set; }
         public virtual ScheduledTransaction? ScheduledTransaction { get; set; }
 
         // Audit fields

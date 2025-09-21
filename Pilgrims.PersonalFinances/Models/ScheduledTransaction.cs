@@ -39,17 +39,17 @@ namespace Pilgrims.PersonalFinances.Models
         /// Account for this transaction
         /// </summary>
         [Required]
-        public int AccountId { get; set; }
+        public string AccountId { get; set; } = string.Empty;
 
         /// <summary>
         /// Category for this transaction
         /// </summary>
-        public int? CategoryId { get; set; }
+        public string? CategoryId { get; set; }
 
         /// <summary>
         /// Transfer destination account (for Transfer transactions)
         /// </summary>
-        public int? TransferToAccountId { get; set; }
+        public string? TransferToAccountId { get; set; }
 
         /// <summary>
         /// Payee information
@@ -270,7 +270,7 @@ namespace Pilgrims.PersonalFinances.Models
             if (Amount <= 0)
                 errors.Add("Amount must be greater than 0");
 
-            if (AccountId <= 0)
+            if (string.IsNullOrEmpty(AccountId))
                 errors.Add("Account is required");
 
             if (TransactionType == TransactionType.Transfer && TransferToAccountId == null)

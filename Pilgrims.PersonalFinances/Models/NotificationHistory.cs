@@ -7,15 +7,12 @@ namespace Pilgrims.PersonalFinances.Models
     /// <summary>
     /// Tracks the history of all notifications sent to users
     /// </summary>
-    public class NotificationHistory
+    public class NotificationHistory: BaseEntity
     {
-        [Key]
-        public int Id { get; set; }
-
         /// <summary>
         /// Reference to the notification rule that triggered this notification
         /// </summary>
-        public int? NotificationRuleId { get; set; }
+        public string? NotificationRuleId { get; set; }
         public virtual NotificationRule? NotificationRule { get; set; }
 
         [Required]
@@ -129,31 +126,31 @@ namespace Pilgrims.PersonalFinances.Models
         /// <summary>
         /// Related transaction ID
         /// </summary>
-        public int? TransactionId { get; set; }
+        public string? TransactionId { get; set; }
         public virtual Transaction? Transaction { get; set; }
 
         /// <summary>
         /// Related scheduled transaction ID
         /// </summary>
-        public int? ScheduledTransactionId { get; set; }
+        public string? ScheduledTransactionId { get; set; }
         public virtual ScheduledTransaction? ScheduledTransaction { get; set; }
 
         /// <summary>
         /// Related budget ID
         /// </summary>
-        public int? BudgetId { get; set; }
+        public string? BudgetId { get; set; }
         public virtual Budget? Budget { get; set; }
 
         /// <summary>
         /// Related debt ID
         /// </summary>
-        public int? DebtId { get; set; }
+        public string? DebtId { get; set; }
         public virtual Debt? Debt { get; set; }
 
         /// <summary>
         /// Related account ID
         /// </summary>
-        public int? AccountId { get; set; }
+        public string? AccountId { get; set; }
         public virtual Account? Account { get; set; }
 
         // Audit fields
@@ -194,11 +191,11 @@ namespace Pilgrims.PersonalFinances.Models
         {
             get
             {
-                if (TransactionId.HasValue) return $"Transaction:{TransactionId}";
-                if (ScheduledTransactionId.HasValue) return $"ScheduledTransaction:{ScheduledTransactionId}";
-                if (BudgetId.HasValue) return $"Budget:{BudgetId}";
-                if (DebtId.HasValue) return $"Debt:{DebtId}";
-                if (AccountId.HasValue) return $"Account:{AccountId}";
+                if (!string.IsNullOrEmpty(TransactionId)) return $"Transaction:{TransactionId}";
+                if (!string.IsNullOrEmpty(ScheduledTransactionId)) return $"ScheduledTransaction:{ScheduledTransactionId}";
+                if (!string.IsNullOrEmpty(BudgetId)) return $"Budget:{BudgetId}";
+                if (!string.IsNullOrEmpty(DebtId)) return $"Debt:{DebtId}";
+                if (!string.IsNullOrEmpty(AccountId)) return $"Account:{AccountId}";
                 return "System";
             }
         }

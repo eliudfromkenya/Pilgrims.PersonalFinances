@@ -1,0 +1,92 @@
+@using Pilgrims.PersonalFinances.Services
+@inject IThemeService ThemeService
+@implements IDisposable
+
+<div class="flex items-center gap-4">
+    <div class="flex items-center gap-3 p-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+        <div class="flex gap-2">
+            @foreach (var color in ThemeService.GetAvailableColors())
+            {
+                <button class="w-8 h-8 md:w-7 md:h-7 border-2 border-transparent rounded-lg bg-transparent cursor-pointer transition-all duration-300 ease-out flex items-center justify-center relative hover:scale-110 hover:border-blue-500 @(IsCurrentColor(color) ? "border-blue-500 ring-2 ring-blue-500" : "") @(GetColorClass(color))"
+                        @onclick="() => SetThemeColor(color)"
+                        title="@(color.Substring(0, 1).ToUpper() + color.Substring(1)) Theme">
+                    <div class="w-5 h-5 md:w-4 md:h-4 rounded border border-gray-200 dark:border-gray-600" style="background: @GetColorPreview(color)"></div>
+                </button>
+            }
+        </div>
+        
+        <button class="w-10 h-10 md:w-9 md:h-9 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 cursor-pointer transition-all duration-300 ease-out flex items-center justify-center hover:bg-blue-500 hover:text-white hover:scale-105 @(IsDarkMode() ? "bg-blue-500 text-white" : "")"
+                @onclick="ToggleDarkMode"
+                title="Toggle Dark Mode">
+            @if (IsDarkMode())
+            {
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+                </svg>
+            }
+            else
+            {
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                </svg>
+            }
+        </button>
+    </div>
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        ThemeService.ThemeChanged += OnThemeChanged;
+        await ((ThemeService)ThemeService).InitializeAsync();
+    }
+
+    private void OnThemeChanged(string theme)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task SetThemeColor(string color)
+    {
+        var mode = IsDarkMode() ? "dark" : "light";
+        var newTheme = $"{color}-{mode}";
+        await ThemeService.SetThemeAsync(newTheme);
+    }
+
+    private async Task ToggleDarkMode()
+    {
+        await ThemeService.ToggleDarkModeAsync();
+    }
+
+    private bool IsCurrentColor(string color)
+    {
+        return ThemeService.CurrentTheme.StartsWith(color);
+    }
+
+    private bool IsDarkMode()
+    {
+        return ThemeService.CurrentTheme.EndsWith("-dark");
+    }
+
+    private string GetColorClass(string color)
+    {
+        return $"theme-{color}";
+    }
+
+    private string GetColorPreview(string color)
+    {
+        return color switch
+        {
+            "blue" => "#87CEEB",
+            "green" => "#90EE90",
+            "pink" => "#FFB6C1",
+            "white" => "#F5F5F5",
+            _ => "#87CEEB"
+        };
+    }
+
+    public void Dispose()
+    {
+        ThemeService.ThemeChanged -= OnThemeChanged;
+    }
+}

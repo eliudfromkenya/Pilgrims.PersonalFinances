@@ -9,17 +9,17 @@ namespace Pilgrims.PersonalFinances.Models
         /// Budget ID this category belongs to
         /// </summary>
         [Required]
-        public int BudgetId { get; set; }
+        public string BudgetId { get; set; } = string.Empty;
 
         /// <summary>
         /// Category ID for category-based budgets
         /// </summary>
-        public int? CategoryId { get; set; }
+        public string? CategoryId { get; set; }
 
         /// <summary>
         /// Account ID for account-based budgets
         /// </summary>
-        public int? AccountId { get; set; }
+        public string? AccountId { get; set; }
 
         /// <summary>
         /// Tag name for tag-based budgets
@@ -118,9 +118,9 @@ namespace Pilgrims.PersonalFinances.Models
         {
             get
             {
-                if (CategoryId.HasValue)
+                if (!string.IsNullOrEmpty(CategoryId))
                     return "Category";
-                if (AccountId.HasValue)
+                if (!string.IsNullOrEmpty(AccountId))
                     return "Account";
                 if (!string.IsNullOrEmpty(TagName))
                     return "Tag";
@@ -158,8 +158,8 @@ namespace Pilgrims.PersonalFinances.Models
 
             // Must have exactly one target (category, account, or tag)
             var targetCount = 0;
-            if (CategoryId.HasValue) targetCount++;
-            if (AccountId.HasValue) targetCount++;
+            if (!string.IsNullOrEmpty(CategoryId)) targetCount++;
+            if (!string.IsNullOrEmpty(AccountId)) targetCount++;
             if (!string.IsNullOrEmpty(TagName)) targetCount++;
 
             if (targetCount == 0)
@@ -185,7 +185,7 @@ namespace Pilgrims.PersonalFinances.Models
         /// <param name="categoryId">Category ID</param>
         /// <param name="allocatedAmount">Allocated amount</param>
         /// <returns>Budget category instance</returns>
-        public static BudgetCategory ForCategory(int budgetId, int categoryId, decimal allocatedAmount)
+        public static BudgetCategory ForCategory(string budgetId, string categoryId, decimal allocatedAmount)
         {
             return new BudgetCategory
             {
@@ -202,7 +202,7 @@ namespace Pilgrims.PersonalFinances.Models
         /// <param name="accountId">Account ID</param>
         /// <param name="allocatedAmount">Allocated amount</param>
         /// <returns>Budget category instance</returns>
-        public static BudgetCategory ForAccount(int budgetId, int accountId, decimal allocatedAmount)
+        public static BudgetCategory ForAccount(string budgetId, string accountId, decimal allocatedAmount)
         {
             return new BudgetCategory
             {
@@ -219,7 +219,7 @@ namespace Pilgrims.PersonalFinances.Models
         /// <param name="tagName">Tag name</param>
         /// <param name="allocatedAmount">Allocated amount</param>
         /// <returns>Budget category instance</returns>
-        public static BudgetCategory ForTag(int budgetId, string tagName, decimal allocatedAmount)
+        public static BudgetCategory ForTag(string budgetId, string tagName, decimal allocatedAmount)
         {
             return new BudgetCategory
             {

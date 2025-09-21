@@ -7,7 +7,7 @@ namespace Pilgrims.PersonalFinances.Models
     public class AssetDocument : BaseEntity
     {
         [Required]
-        public int AssetRegisterId { get; set; }
+        public string AssetRegisterId { get; set; } = string.Empty;
 
         [ForeignKey("AssetRegisterId")]
         public virtual AssetRegister AssetRegister { get; set; }

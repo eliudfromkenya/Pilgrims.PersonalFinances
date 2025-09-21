@@ -12,7 +12,7 @@ public class Category : BaseEntity
     private string _colorCode = "#6366F1";
     private string? _iconName;
     private bool _isActive = true;
-    private int? _parentCategoryId;
+    private string? _parentCategoryId;
     private Category? _parentCategory;
     private List<Category> _subCategories = new();
     private List<Transaction> _transactions = new();
@@ -71,7 +71,7 @@ public class Category : BaseEntity
     /// <summary>
     /// ID of the parent category (null for root categories)
     /// </summary>
-    public int? ParentCategoryId
+    public string? ParentCategoryId
     {
         get => _parentCategoryId;
         set => SetProperty(ref _parentCategoryId, value);
@@ -121,7 +121,7 @@ public class Category : BaseEntity
     /// <summary>
     /// Gets whether this is a root category (has no parent)
     /// </summary>
-    public bool IsRootCategory => ParentCategoryId == null;
+    public bool IsRootCategory => string.IsNullOrEmpty(ParentCategoryId);
 
     /// <summary>
     /// Gets whether this category has child categories
@@ -166,7 +166,7 @@ public class Category : BaseEntity
             errors.Add("Icon name cannot exceed 50 characters");
 
         // Prevent circular references
-        if (ParentCategoryId?.ToString() == Id)
+        if (ParentCategoryId == Id)
             errors.Add("Category cannot be its own parent");
 
         return errors;

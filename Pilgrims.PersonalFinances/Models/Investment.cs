@@ -4,14 +4,11 @@ using Pilgrims.PersonalFinances.Models.Enums;
 
 namespace Pilgrims.PersonalFinances.Models
 {
-    public class Investment
+    public class Investment: BaseEntity
     {
-        [Key]
-        public int Id { get; set; }
-
         [Required]
         [StringLength(255)]
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
 
         [StringLength(50)]
         public string? Symbol { get; set; }
@@ -20,10 +17,10 @@ namespace Pilgrims.PersonalFinances.Models
         public InvestmentType InvestmentType { get; set; }
 
         [Required]
-        public int AccountId { get; set; }
+        public string AccountId { get; set; } = string.Empty;
 
         [ForeignKey("AccountId")]
-        public virtual Account Account { get; set; }
+        public virtual Account Account { get; set; } = null!;
 
         [Column(TypeName = "decimal(18,6)")]
         public decimal Quantity { get; set; }

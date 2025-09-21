@@ -12,7 +12,7 @@ namespace Pilgrims.PersonalFinances.Models
         /// Reference to the parent transaction
         /// </summary>
         [Required]
-        public int TransactionId { get; set; }
+        public string? TransactionId { get; set; }
 
         /// <summary>
         /// Amount for this split portion
@@ -26,7 +26,7 @@ namespace Pilgrims.PersonalFinances.Models
         /// Category for this split portion
         /// </summary>
         [Required]
-        public int CategoryId { get; set; }
+        public string CategoryId { get; set; } = string.Empty;
 
         /// <summary>
         /// Optional description for this split portion
@@ -105,7 +105,7 @@ namespace Pilgrims.PersonalFinances.Models
             if (Amount <= 0)
                 errors.Add("Split amount must be greater than 0");
 
-            if (CategoryId <= 0)
+            if (string.IsNullOrEmpty(CategoryId))
                 errors.Add("Category is required");
 
             if (!string.IsNullOrEmpty(Description) && Description.Length > 200)
