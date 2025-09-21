@@ -1,0 +1,338 @@
+@page "/assets"
+@using Pilgrims.PersonalFinances.Models
+@using Pilgrims.PersonalFinances.Models.Enums
+
+<PageTitle>Assets - Pilgrims Personal Finance</PageTitle>
+
+<!-- Particle Background -->
+<div class="fixed inset-0 overflow-hidden pointer-events-none">
+    <div class="absolute inset-0 bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 dark:from-gray-900 dark:via-amber-900 dark:to-orange-900"></div>
+    <div class="particles-container">
+        @for (int i = 0; i < 25; i++)
+        {
+            <div class="particle" style="animation-delay: @(i * 0.15)s;"></div>
+        }
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="relative z-10 min-h-screen p-6">
+    <!-- Header Section -->
+    <div class="mb-8">
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h1 class="text-4xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
+                        🏠 Asset Manager
+                    </h1>
+                    <p class="text-gray-600 dark:text-gray-300 mt-2">Track and manage your valuable assets</p>
+                </div>
+                <button class="px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-300">
+                    <span class="mr-2">➕</span> Add Asset
+                </button>
+            </div>
+            
+            <!-- Asset Overview Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+                <div class="bg-gradient-to-r from-amber-400 to-amber-600 p-4 rounded-xl text-white">
+                    <div class="text-sm opacity-90">Total Value</div>
+                    <div class="text-2xl font-bold">$485,750.00</div>
+                    <div class="text-xs opacity-75 mt-1">📈 +3.2% this year</div>
+                </div>
+                <div class="bg-gradient-to-r from-orange-400 to-orange-600 p-4 rounded-xl text-white">
+                    <div class="text-sm opacity-90">Real Estate</div>
+                    <div class="text-2xl font-bold">$350,000.00</div>
+                    <div class="text-xs opacity-75 mt-1">72% of total assets</div>
+                </div>
+                <div class="bg-gradient-to-r from-yellow-400 to-yellow-600 p-4 rounded-xl text-white">
+                    <div class="text-sm opacity-90">Vehicles</div>
+                    <div class="text-2xl font-bold">$85,500.00</div>
+                    <div class="text-xs opacity-75 mt-1">18% of total assets</div>
+                </div>
+                <div class="bg-gradient-to-r from-red-400 to-red-600 p-4 rounded-xl text-white">
+                    <div class="text-sm opacity-90">Other Assets</div>
+                    <div class="text-2xl font-bold">$50,250.00</div>
+                    <div class="text-xs opacity-75 mt-1">10% of total assets</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Asset Categories & Performance -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Asset Categories -->
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
+                <span class="mr-2">📊</span> Asset Categories
+            </h3>
+            <div class="space-y-4">
+                @{
+                    var categories = new[]
+                    {
+                        new { Name = "Real Estate", Amount = 350000, Color = "from-blue-400 to-blue-600", Percentage = 72, Icon = "🏠" },
+                        new { Name = "Vehicles", Amount = 85500, Color = "from-green-400 to-green-600", Percentage = 18, Icon = "🚗" },
+                        new { Name = "Electronics", Amount = 25000, Color = "from-purple-400 to-purple-600", Percentage = 5, Icon = "💻" },
+                        new { Name = "Jewelry", Amount = 15250, Color = "from-pink-400 to-pink-600", Percentage = 3, Icon = "💎" },
+                        new { Name = "Collectibles", Amount = 10000, Color = "from-indigo-400 to-indigo-600", Percentage = 2, Icon = "🎨" }
+                    };
+                }
+                @foreach (var category in categories)
+                {
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center flex-1">
+                            <span class="text-2xl mr-3">@category.Icon</span>
+                            <span class="text-gray-700 dark:text-gray-300 flex-1">@category.Name</span>
+                            <div class="w-24 bg-gray-200 dark:bg-gray-600 rounded-full h-2 mx-3">
+                                <div class="bg-gradient-to-r @category.Color h-2 rounded-full transition-all duration-1000" 
+                                     style="width: @(category.Percentage)%"></div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-semibold">$@category.Amount</div>
+                            <div class="text-xs text-gray-500">@category.Percentage%</div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Asset Value Trend -->
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
+                <span class="mr-2">📈</span> Asset Value Trend (12 Months)
+            </h3>
+            <div class="h-48 flex items-end justify-between space-x-2">
+                @{
+                    var months = new[] { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+                    var values = new[] { 465000, 468000, 472000, 475000, 478000, 480000, 482000, 484000, 485000, 486000, 485500, 485750 };
+                    var maxValue = values.Max();
+                }
+                @for (int i = 0; i < 12; i++)
+                {
+                    var height = (values[i] / (double)maxValue) * 100;
+                    
+                    <div class="flex-1 flex flex-col items-center">
+                        <div class="bg-gradient-to-t from-amber-500 to-orange-600 rounded-t-lg transition-all duration-1000 hover:shadow-lg w-full" 
+                             style="height: @(height)%; animation-delay: @(i * 0.05)s;">
+                        </div>
+                        <span class="text-xs text-gray-500 mt-2">@months[i]</span>
+                        <span class="text-xs font-medium text-gray-700 dark:text-gray-300">$@(values[i]/1000)k</span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Asset List -->
+    <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 mb-8">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-white flex items-center">
+                <span class="mr-2">📋</span> Asset Portfolio
+            </h3>
+            <div class="flex items-center space-x-2">
+                <button class="px-3 py-1 text-sm bg-amber-100 text-amber-800 rounded-full">All</button>
+                <button class="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded-full">Real Estate</button>
+                <button class="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded-full">Vehicles</button>
+                <button class="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded-full">Electronics</button>
+            </div>
+        </div>
+        
+        <div class="space-y-3">
+            @{
+                var assets = new[]
+                {
+                    new { Name = "Primary Residence", Category = "Real Estate", Value = 350000m, PurchasePrice = 320000m, PurchaseDate = "2020", Location = "123 Main St", Icon = "🏠", Appreciation = 9.4m },
+                    new { Name = "2023 Tesla Model Y", Category = "Vehicle", Value = 52000m, PurchasePrice = 58000m, PurchaseDate = "2023", Location = "Garage", Icon = "🚗", Appreciation = -10.3m },
+                    new { Name = "2021 Honda Civic", Category = "Vehicle", Value = 33500m, PurchasePrice = 35000m, PurchaseDate = "2021", Location = "Driveway", Icon = "🚙", Appreciation = -4.3m },
+                    new { Name = "MacBook Pro 16\"", Category = "Electronics", Value = 2800m, PurchasePrice = 3200m, PurchaseDate = "2023", Location = "Home Office", Icon = "💻", Appreciation = -12.5m },
+                    new { Name = "Gaming Setup", Category = "Electronics", Value = 4500m, PurchasePrice = 5000m, PurchaseDate = "2022", Location = "Gaming Room", Icon = "🎮", Appreciation = -10.0m },
+                    new { Name = "Diamond Ring", Category = "Jewelry", Value = 8500m, PurchasePrice = 7500m, PurchaseDate = "2019", Location = "Safe", Icon = "💍", Appreciation = 13.3m },
+                    new { Name = "Watch Collection", Category = "Jewelry", Value = 6750m, PurchasePrice = 6000m, PurchaseDate = "2021", Location = "Safe", Icon = "⌚", Appreciation = 12.5m },
+                    new { Name = "Art Collection", Category = "Collectibles", Value = 10000m, PurchasePrice = 8500m, PurchaseDate = "2020", Location = "Living Room", Icon = "🎨", Appreciation = 17.6m }
+                };
+            }
+            
+            @foreach (var asset in assets)
+            {
+                <div class="flex items-center justify-between p-4 bg-white/50 dark:bg-gray-700/50 rounded-xl hover:bg-white/70 dark:hover:bg-gray-700/70 transition-all duration-200 cursor-pointer group">
+                    <div class="flex items-center flex-1">
+                        <div class="w-12 h-12 bg-gradient-to-r from-amber-100 to-orange-200 dark:from-amber-600 dark:to-orange-700 rounded-full flex items-center justify-center text-2xl mr-4 group-hover:scale-110 transition-transform duration-200">
+                            @asset.Icon
+                        </div>
+                        <div class="flex-1">
+                            <div class="font-medium text-gray-800 dark:text-white">@asset.Name</div>
+                            <div class="text-sm text-gray-500">@asset.Category • @asset.Location</div>
+                        </div>
+                        <div class="text-sm text-gray-600 dark:text-gray-300 mr-4">
+                            <div>Purchased: @asset.PurchaseDate</div>
+                            <div class="text-xs">Cost: $@asset.PurchasePrice</div>
+                        </div>
+                        <div class="text-sm mr-4 @(asset.Appreciation >= 0 ? "text-green-600" : "text-red-600")">
+                            @(asset.Appreciation >= 0 ? "+" : "")@asset.Appreciation%
+                            <br />
+                            <span class="text-xs">@(asset.Appreciation >= 0 ? "Gain" : "Loss")</span>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-bold text-gray-800 dark:text-white">$@asset.Value</div>
+                            <div class="text-xs text-gray-500">Current Value</div>
+                        </div>
+                    </div>
+                    <div class="ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <button class="p-2 text-gray-400 hover:text-gray-600">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Asset Insights & Maintenance -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Asset Insights -->
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
+                <span class="mr-2">💡</span> Asset Insights
+            </h3>
+            <div class="space-y-4">
+                <div class="flex items-start space-x-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <span class="text-green-600 text-xl">📈</span>
+                    <div>
+                        <h4 class="font-medium text-green-800 dark:text-green-300">Strong Appreciation</h4>
+                        <p class="text-sm text-green-600 dark:text-green-400">Your real estate has appreciated by $30,000 since purchase.</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start space-x-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <span class="text-blue-600 text-xl">🛡️</span>
+                    <div>
+                        <h4 class="font-medium text-blue-800 dark:text-blue-300">Insurance Review</h4>
+                        <p class="text-sm text-blue-600 dark:text-blue-400">Consider updating insurance coverage for your Tesla Model Y.</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start space-x-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                    <span class="text-yellow-600 text-xl">⚠️</span>
+                    <div>
+                        <h4 class="font-medium text-yellow-800 dark:text-yellow-300">Depreciation Alert</h4>
+                        <p class="text-sm text-yellow-600 dark:text-yellow-400">Electronics are depreciating faster than expected. Consider upgrading strategy.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Maintenance Schedule -->
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
+                <span class="mr-2">🔧</span> Maintenance Schedule
+            </h3>
+            <div class="space-y-3">
+                @{
+                    var maintenanceItems = new[]
+                    {
+                        new { Asset = "Tesla Model Y", Task = "Annual Service", DueDate = "Jan 15, 2024", Cost = 450, Priority = "Medium", Icon = "🚗" },
+                        new { Asset = "Honda Civic", Task = "Oil Change", DueDate = "Dec 20, 2023", Cost = 75, Priority = "High", Icon = "🚙" },
+                        new { Asset = "Primary Residence", Task = "HVAC Maintenance", DueDate = "Feb 1, 2024", Cost = 200, Priority = "Medium", Icon = "🏠" },
+                        new { Asset = "Gaming Setup", Task = "Deep Cleaning", DueDate = "Dec 31, 2023", Cost = 0, Priority = "Low", Icon = "🎮" }
+                    };
+                }
+                
+                @foreach (var item in maintenanceItems)
+                {
+                    <div class="flex items-center justify-between p-3 bg-white/50 dark:bg-gray-700/50 rounded-lg hover:bg-white/70 dark:hover:bg-gray-700/70 transition-all duration-200">
+                        <div class="flex items-center">
+                            <span class="text-xl mr-3">@item.Icon</span>
+                            <div>
+                                <h4 class="font-medium text-gray-800 dark:text-white">@item.Task</h4>
+                                <p class="text-sm text-gray-500">@item.Asset</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-bold text-gray-800 dark:text-white">@item.DueDate</div>
+                            <div class="text-xs flex items-center justify-end space-x-2">
+                                <span class="@(item.Priority == "High" ? "text-red-500" : item.Priority == "Medium" ? "text-yellow-500" : "text-green-500")">
+                                    @item.Priority Priority
+                                </span>
+                                @if (item.Cost > 0)
+                                {
+                                    <span class="text-gray-500">• $@item.Cost</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 text-center hover:shadow-xl transition-all duration-300 cursor-pointer">
+            <div class="text-4xl mb-3">📊</div>
+            <h4 class="font-semibold text-gray-800 dark:text-white mb-2">Asset Report</h4>
+            <p class="text-sm text-gray-600 dark:text-gray-300">Generate detailed asset analysis</p>
+        </div>
+        
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 text-center hover:shadow-xl transition-all duration-300 cursor-pointer">
+            <div class="text-4xl mb-3">🛡️</div>
+            <h4 class="font-semibold text-gray-800 dark:text-white mb-2">Insurance Manager</h4>
+            <p class="text-sm text-gray-600 dark:text-gray-300">Manage asset insurance policies</p>
+        </div>
+        
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 text-center hover:shadow-xl transition-all duration-300 cursor-pointer">
+            <div class="text-4xl mb-3">📸</div>
+            <h4 class="font-semibold text-gray-800 dark:text-white mb-2">Document Scanner</h4>
+            <p class="text-sm text-gray-600 dark:text-gray-300">Scan and store asset documents</p>
+        </div>
+        
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 text-center hover:shadow-xl transition-all duration-300 cursor-pointer">
+            <div class="text-4xl mb-3">🔧</div>
+            <h4 class="font-semibold text-gray-800 dark:text-white mb-2">Maintenance Tracker</h4>
+            <p class="text-sm text-gray-600 dark:text-gray-300">Schedule and track maintenance</p>
+        </div>
+    </div>
+</div>
+
+<style>
+    .particles-container {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .particle {
+        position: absolute;
+        width: 3px;
+        height: 3px;
+        background: linear-gradient(45deg, #f59e0b, #ea580c);
+        border-radius: 50%;
+        animation: float 8s ease-in-out infinite;
+        opacity: 0.7;
+    }
+
+    .particle:nth-child(odd) {
+        left: 15%;
+        animation-duration: 10s;
+    }
+
+    .particle:nth-child(even) {
+        right: 15%;
+        animation-duration: 12s;
+    }
+
+    @@keyframes float {
+        0%, 100% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+        10% { opacity: 0.7; }
+        90% { opacity: 0.7; }
+        50% { transform: translateY(-10vh) rotate(180deg); }
+    }
+
+    .glass-card {
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    }
+</style>

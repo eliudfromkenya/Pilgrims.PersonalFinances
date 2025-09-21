@@ -1,4 +1,7 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
+using Pilgrims.PersonalFinances.Data;
+using Pilgrims.PersonalFinances.Services;
 
 namespace Pilgrims.PersonalFinances
 {
@@ -15,6 +18,18 @@ namespace Pilgrims.PersonalFinances
                 });
 
             builder.Services.AddMauiBlazorWebView();
+
+            // Add Entity Framework with encrypted SQLite
+            builder.Services.AddDbContext<PersonalFinanceContext>(options =>
+            {
+                var dbPath = Path.Combine(FileSystem.AppDataDirectory, "PersonalFinance.db");
+                var connectionString = $"Data Source={dbPath};";
+                options.UseSqlite(connectionString);
+            });
+
+            // Add Services
+            builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+            builder.Services.AddScoped<IThemeService, ThemeService>();
 
 #if DEBUG
     		builder.Services.AddBlazorWebViewDeveloperTools();

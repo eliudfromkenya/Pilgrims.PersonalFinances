@@ -1,10 +1,20 @@
-﻿@page "/counter"
+@page "/counter"
 
-<h1>Counter</h1>
+<div class="max-w-4xl mx-auto p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-8">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-6">Counter</h1>
 
-<p role="status">Current count: @currentCount</p>
+        <div class="mb-8">
+            <p role="status" class="text-lg text-gray-700 dark:text-gray-300 mb-4">
+                Current count: <span class="font-bold text-blue-600 dark:text-blue-400 text-2xl">@currentCount</span>
+            </p>
+        </div>
 
-<button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+        <button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 hover:shadow-lg" @onclick="IncrementCount">
+            Click me
+        </button>
+    </div>
+</div>
 
 @code {
     private int currentCount = 0;

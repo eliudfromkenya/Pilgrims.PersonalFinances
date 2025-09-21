@@ -494,6 +494,176 @@ public enum NotificationType
 }
 ```
 
+### 4.6 Insurance Table
+
+```sql
+CREATE TABLE Insurance (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    PolicyNumber NVARCHAR(100) NOT NULL,
+    InsuranceType INTEGER NOT NULL,
+    ProviderName NVARCHAR(200) NOT NULL,
+    PolicyHolderName NVARCHAR(200) NOT NULL,
+    CoverageAmount DECIMAL(18,2) NOT NULL,
+    PremiumAmount DECIMAL(18,2) NOT NULL,
+    PremiumFrequency INTEGER NOT NULL DEFAULT 3,
+    StartDate DATE NOT NULL,
+    EndDate DATE NOT NULL,
+    DeductibleAmount DECIMAL(18,2) NULL,
+    BeneficiaryName NVARCHAR(200) NULL,
+    AgentName NVARCHAR(200) NULL,
+    AgentContact NVARCHAR(100) NULL,
+    IsActive BOOLEAN NOT NULL DEFAULT 1,
+    Notes NVARCHAR(500) NULL,
+    CreatedDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ModifiedDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    
+    CONSTRAINT CK_Insurance_CoverageAmount CHECK (CoverageAmount > 0),
+    CONSTRAINT CK_Insurance_PremiumAmount CHECK (PremiumAmount > 0),
+    CONSTRAINT CK_Insurance_DeductibleAmount CHECK (DeductibleAmount IS NULL OR DeductibleAmount >= 0),
+    CONSTRAINT CK_Insurance_PolicyNumber CHECK (LENGTH(TRIM(PolicyNumber)) > 0),
+    CONSTRAINT CK_Insurance_DateRange CHECK (EndDate > StartDate)
+);
+```
+
+**Insurance Types Enum:**
+```csharp
+public enum InsuranceType
+{
+    Life = 1,           // Life insurance
+    Health = 2,         // Health/medical insurance
+    Auto = 3,           // Vehicle insurance
+    Home = 4,           // Home/property insurance
+    Disability = 5,     // Disability insurance
+    Travel = 6,         // Travel insurance
+    Business = 7,       // Business insurance
+    Other = 8           // Other insurance types
+}
+```
+
+### 4.7 InsuranceClaim Table
+
+```sql
+CREATE TABLE InsuranceClaim (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    InsuranceId INTEGER NOT NULL,
+    ClaimNumber NVARCHAR(100) NOT NULL,
+    ClaimDate DATE NOT NULL,
+    IncidentDate DATE NOT NULL,
+    ClaimAmount DECIMAL(18,2) NOT NULL,
+    ApprovedAmount DECIMAL(18,2) NULL,
+    ClaimStatus INTEGER NOT NULL DEFAULT 1,
+    Description NVARCHAR(1000) NOT NULL,
+    AdjusterName NVARCHAR(200) NULL,
+    AdjusterContact NVARCHAR(100) NULL,
+    SettlementDate DATE NULL,
+    CreatedDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ModifiedDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (InsuranceId) REFERENCES Insurance(Id) ON DELETE CASCADE,
+    
+    CONSTRAINT CK_InsuranceClaim_ClaimAmount CHECK (ClaimAmount > 0),
+    CONSTRAINT CK_InsuranceClaim_ApprovedAmount CHECK (ApprovedAmount IS NULL OR ApprovedAmount >= 0),
+    CONSTRAINT CK_InsuranceClaim_ClaimNumber CHECK (LENGTH(TRIM(ClaimNumber)) > 0),
+    CONSTRAINT CK_InsuranceClaim_DateRange CHECK (ClaimDate >= IncidentDate)
+);
+```
+
+**Claim Status Enum:**
+```csharp
+public enum ClaimStatus
+{
+    Submitted = 1,      // Claim submitted
+    UnderReview = 2,    // Under review
+    Approved = 3,       // Claim approved
+    Denied = 4,         // Claim denied
+    Settled = 5,        // Claim settled
+    Closed = 6          // Claim closed
+}
+```
+
+### 4.8 Obligation Table
+
+```sql
+CREATE TABLE Obligation (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    Name NVARCHAR(200) NOT NULL,
+    ObligationType INTEGER NOT NULL,
+    GroupName NVARCHAR(200) NULL,
+    ContributionAmount DECIMAL(18,2) NOT NULL,
+    ContributionFrequency INTEGER NOT NULL DEFAULT 3,
+    StartDate DATE NOT NULL,
+    EndDate DATE NULL,
+    TotalContributed DECIMAL(18,2) NOT NULL DEFAULT 0.00,
+    ExpectedReturn DECIMAL(18,2) NULL,
+    InterestRate DECIMAL(7,4) NULL,
+    MembershipNumber NVARCHAR(100) NULL,
+    ContactPerson NVARCHAR(200) NULL,
+    ContactPhone NVARCHAR(50) NULL,
+    ContactEmail NVARCHAR(200) NULL,
+    MeetingSchedule NVARCHAR(200) NULL,
+    IsActive BOOLEAN NOT NULL DEFAULT 1,
+    Notes NVARCHAR(1000) NULL,
+    CreatedDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ModifiedDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    
+    CONSTRAINT CK_Obligation_ContributionAmount CHECK (ContributionAmount > 0),
+    CONSTRAINT CK_Obligation_TotalContributed CHECK (TotalContributed >= 0),
+    CONSTRAINT CK_Obligation_ExpectedReturn CHECK (ExpectedReturn IS NULL OR ExpectedReturn >= 0),
+    CONSTRAINT CK_Obligation_Name CHECK (LENGTH(TRIM(Name)) > 0)
+);
+```
+
+**Obligation Types Enum:**
+```csharp
+public enum ObligationType
+{
+    Chama = 1,          // Investment group/chama
+    SACCO = 2,          // Savings and Credit Cooperative
+    Welfare = 3,        // Welfare group
+    Merry_Go_Round = 4, // Rotating savings group
+    Investment_Club = 5, // Investment club
+    Burial_Society = 6, // Burial/funeral society
+    Other = 7           // Other group obligations
+}
+```
+
+### 4.9 ObligationPayment Table
+
+```sql
+CREATE TABLE ObligationPayment (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ObligationId INTEGER NOT NULL,
+    PaymentDate DATE NOT NULL,
+    Amount DECIMAL(18,2) NOT NULL,
+    PaymentType INTEGER NOT NULL DEFAULT 1,
+    TransactionId INTEGER NULL,
+    ReceiptNumber NVARCHAR(100) NULL,
+    PaymentMethod NVARCHAR(50) NULL,
+    Notes NVARCHAR(500) NULL,
+    CreatedDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ModifiedDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (ObligationId) REFERENCES Obligation(Id) ON DELETE CASCADE,
+    FOREIGN KEY (TransactionId) REFERENCES Transactions(Id) ON DELETE SET NULL,
+    
+    CONSTRAINT CK_ObligationPayment_Amount CHECK (Amount > 0)
+);
+```
+
+**Payment Types Enum:**
+```csharp
+public enum PaymentType
+{
+    Regular = 1,        // Regular contribution
+    Penalty = 2,        // Penalty payment
+    Loan_Repayment = 3, // Loan repayment
+    Share_Purchase = 4, // Share purchase
+    Special_Levy = 5,   // Special assessment
+    Dividend = 6,       // Dividend payment
+    Other = 7           // Other payment types
+}
+```
+
 ---
 
 ## 5. Database Indexes

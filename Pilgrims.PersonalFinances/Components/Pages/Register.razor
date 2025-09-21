@@ -1,0 +1,262 @@
+@page "/register"
+@using Pilgrims.PersonalFinances.Services
+@using System.ComponentModel.DataAnnotations
+@inject IAuthenticationService AuthService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Register - Personal Finance</PageTitle>
+
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-500 to-purple-600 p-5 font-sans">
+    <div class="bg-white rounded-2xl shadow-2xl p-10 w-full max-w-lg animate-slide-up">
+        <div class="text-center mb-8">
+            <div class="flex items-center justify-center gap-3 mb-4">
+                <div class="text-primary-500 flex items-center justify-center">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                        <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                        <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <h1 class="text-slate-800 text-2xl font-bold m-0">Personal Finance</h1>
+            </div>
+            <h2 class="text-slate-800 text-3xl font-bold m-0 mb-2">Create Your Account</h2>
+            <p class="text-slate-600 text-base m-0">Join thousands of users managing their finances smarter</p>
+        </div>
+
+        <EditForm Model="@registerModel" OnValidSubmit="@HandleRegistration" class="flex flex-col gap-5">
+            <DataAnnotationsValidator />
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="p-3 px-4 rounded-lg flex items-center gap-3 text-sm font-medium bg-red-50 text-red-700 border border-red-200">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                        <line x1="15" y1="9" x2="9" y2="15" stroke="currentColor" stroke-width="2"/>
+                        <line x1="9" y1="9" x2="15" y2="15" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    @errorMessage
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(successMessage))
+            {
+                <div class="p-3 px-4 rounded-lg flex items-center gap-3 text-sm font-medium bg-green-50 text-green-700 border border-green-200">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    @successMessage
+                </div>
+            }
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="flex flex-col gap-2">
+                    <label for="firstName" class="text-slate-800 font-semibold text-sm">First Name</label>
+                    <InputText id="firstName" @bind-Value="registerModel.FirstName" class="form-input" placeholder="Enter your first name" />
+                    <ValidationMessage For="@(() => registerModel.FirstName)" class="text-red-600 text-xs font-medium" />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label for="lastName" class="text-slate-800 font-semibold text-sm">Last Name</label>
+                    <InputText id="lastName" @bind-Value="registerModel.LastName" class="form-input" placeholder="Enter your last name" />
+                    <ValidationMessage For="@(() => registerModel.LastName)" class="text-red-600 text-xs font-medium" />
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <label for="email" class="text-slate-800 font-semibold text-sm">Email Address</label>
+                <InputText id="email" @bind-Value="registerModel.Email" class="form-input" placeholder="Enter your email address" type="email" />
+                <ValidationMessage For="@(() => registerModel.Email)" class="text-red-600 text-xs font-medium" />
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <label for="password" class="text-slate-800 font-semibold text-sm">Password</label>
+                <div class="relative flex items-center">
+                    <InputText id="password" @bind-Value="registerModel.Password" class="form-input pr-12" placeholder="Create a strong password" type="@(showPassword ? "text" : "password")" />
+                    <button type="button" class="absolute right-3 bg-none border-none text-slate-500 cursor-pointer p-1 rounded transition-colors duration-200 hover:text-slate-800" @onclick="TogglePasswordVisibility">
+                        @if (showPassword)
+                        {
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20C7 20 2.73 16.39 1 12A18.45 18.45 0 0 1 5.06 5.06L17.94 17.94Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M1 1L23 23" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4C17 4 21.27 7.61 23 12A18.5 18.5 0 0 1 19.42 16.42" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        }
+                        else
+                        {
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M1 12S5 4 12 4S23 12 23 12S19 20 12 20S1 12 1 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+                            </svg>
+                        }
+                    </button>
+                </div>
+                <ValidationMessage For="@(() => registerModel.Password)" class="text-red-600 text-xs font-medium" />
+                <div class="bg-slate-50 border border-slate-200 rounded-md p-3 text-xs">
+                    <p class="m-0 mb-2 text-slate-700 font-semibold">Password must contain:</p>
+                    <ul class="m-0 pl-4 list-none">
+                        <li class="@(HasUppercase(registerModel.Password) ? "text-green-600" : "text-slate-500") mb-1 relative pl-5">
+                            <span class="absolute left-0 font-bold">@(HasUppercase(registerModel.Password) ? "✓" : "✗")</span>
+                            At least one uppercase letter
+                        </li>
+                        <li class="@(HasLowercase(registerModel.Password) ? "text-green-600" : "text-slate-500") mb-1 relative pl-5">
+                            <span class="absolute left-0 font-bold">@(HasLowercase(registerModel.Password) ? "✓" : "✗")</span>
+                            At least one lowercase letter
+                        </li>
+                        <li class="@(HasNumber(registerModel.Password) ? "text-green-600" : "text-slate-500") mb-1 relative pl-5">
+                            <span class="absolute left-0 font-bold">@(HasNumber(registerModel.Password) ? "✓" : "✗")</span>
+                            At least one number
+                        </li>
+                        <li class="@(HasSpecialChar(registerModel.Password) ? "text-green-600" : "text-slate-500") mb-1 relative pl-5">
+                            <span class="absolute left-0 font-bold">@(HasSpecialChar(registerModel.Password) ? "✓" : "✗")</span>
+                            At least one special character
+                        </li>
+                        <li class="@(IsMinLength(registerModel.Password) ? "text-green-600" : "text-slate-500") mb-1 relative pl-5">
+                            <span class="absolute left-0 font-bold">@(IsMinLength(registerModel.Password) ? "✓" : "✗")</span>
+                            At least 8 characters long
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <label for="confirmPassword" class="text-slate-800 font-semibold text-sm">Confirm Password</label>
+                <InputText id="confirmPassword" @bind-Value="registerModel.ConfirmPassword" class="form-input" placeholder="Confirm your password" type="password" />
+                <ValidationMessage For="@(() => registerModel.ConfirmPassword)" class="text-red-600 text-xs font-medium" />
+            </div>
+
+            <div class="flex flex-col gap-2 my-2">
+                <label class="flex items-start gap-3 cursor-pointer text-sm leading-6">
+                    <InputCheckbox @bind-Value="registerModel.AcceptTerms" class="sr-only" />
+                    <span class="w-5 h-5 border-2 border-slate-300 rounded flex items-center justify-center flex-shrink-0 mt-0.5 transition-all duration-200 @(registerModel.AcceptTerms ? "bg-primary-500 border-primary-500" : "")">
+                        @if (registerModel.AcceptTerms)
+                        {
+                            <span class="text-white text-xs font-bold">✓</span>
+                        }
+                    </span>
+                    <span class="text-slate-700">
+                        I agree to the <a href="/terms" target="_blank" class="text-primary-500 no-underline hover:underline">Terms of Service</a> and <a href="/privacy" target="_blank" class="text-primary-500 no-underline hover:underline">Privacy Policy</a>
+                    </span>
+                </label>
+                <ValidationMessage For="@(() => registerModel.AcceptTerms)" class="text-red-600 text-xs font-medium" />
+            </div>
+
+            <button type="submit" class="bg-gradient-to-r from-primary-500 to-purple-600 text-white border-none py-4 px-6 rounded-lg text-base font-semibold cursor-pointer transition-all duration-200 flex items-center justify-center gap-2 mt-2 hover:transform hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none" disabled="@isLoading">
+                @if (isLoading)
+                {
+                    <div class="w-5 h-5 border-2 border-white/30 rounded-full border-t-white animate-spin"></div>
+                    <span>Creating Account...</span>
+                }
+                else
+                {
+                    <span>Create Account</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <polyline points="12,5 19,12 12,19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                }
+            </button>
+        </EditForm>
+
+        <div class="text-center mt-6 pt-6 border-t border-slate-200">
+            <p class="text-slate-500 m-0">Already have an account? <a href="/login" class="text-primary-500 no-underline font-semibold hover:underline">Sign in here</a></p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private RegisterModel registerModel = new();
+    private bool isLoading = false;
+    private bool showPassword = false;
+    private string errorMessage = string.Empty;
+    private string successMessage = string.Empty;
+
+    private async Task HandleRegistration()
+    {
+        if (!registerModel.AcceptTerms)
+        {
+            errorMessage = "You must accept the Terms of Service and Privacy Policy to continue.";
+            return;
+        }
+
+        if (registerModel.Password != registerModel.ConfirmPassword)
+        {
+            errorMessage = "Passwords do not match.";
+            return;
+        }
+
+        isLoading = true;
+        errorMessage = string.Empty;
+        successMessage = string.Empty;
+
+        try
+        {
+            var result = await AuthService.RegisterAsync(
+                registerModel.Email,
+                registerModel.Password,
+                registerModel.FirstName,
+                registerModel.LastName
+            );
+
+            if (result.IsSuccess)
+            {
+                successMessage = "Account created successfully! Please check your email to verify your account.";
+                registerModel = new RegisterModel();
+                
+                // Redirect to login page after a delay
+                await Task.Delay(2000);
+                Navigation.NavigateTo("/login");
+            }
+            else
+            {
+                errorMessage = result.ErrorMessage ?? "Registration failed. Please try again.";
+            }
+        }
+        catch (Exception)
+        {
+            errorMessage = "An unexpected error occurred. Please try again.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void TogglePasswordVisibility()
+    {
+        showPassword = !showPassword;
+    }
+
+    private bool HasUppercase(string? password) => !string.IsNullOrEmpty(password) && password.Any(char.IsUpper);
+    private bool HasLowercase(string? password) => !string.IsNullOrEmpty(password) && password.Any(char.IsLower);
+    private bool HasNumber(string? password) => !string.IsNullOrEmpty(password) && password.Any(char.IsDigit);
+    private bool HasSpecialChar(string? password) => !string.IsNullOrEmpty(password) && password.Any(c => !char.IsLetterOrDigit(c));
+    private bool IsMinLength(string? password) => !string.IsNullOrEmpty(password) && password.Length >= 8;
+
+    public class RegisterModel
+    {
+        [Required(ErrorMessage = "First name is required")]
+        [StringLength(100, ErrorMessage = "First name cannot exceed 100 characters")]
+        public string FirstName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Last name is required")]
+        [StringLength(100, ErrorMessage = "Last name cannot exceed 100 characters")]
+        public string LastName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Please enter a valid email address")]
+        [StringLength(255, ErrorMessage = "Email cannot exceed 255 characters")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Password is required")]
+        [StringLength(100, MinimumLength = 8, ErrorMessage = "Password must be at least 8 characters long")]
+        public string Password { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Please confirm your password")]
+        public string ConfirmPassword { get; set; } = string.Empty;
+
+        [Range(typeof(bool), "true", "true", ErrorMessage = "You must accept the Terms of Service and Privacy Policy")]
+        public bool AcceptTerms { get; set; } = false;
+    }
+}

@@ -1,5 +1,759 @@
-﻿@page "/"
+@page "/"
+@using Pilgrims.PersonalFinances.Services
+@inject IThemeService ThemeService
 
-<h1>Hello, world!</h1>
+<!-- Enhanced Particle Background with Multiple Layers -->
+<div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
+    <!-- Primary particles -->
+    @for (int i = 0; i < 30; i++)
+    {
+        <div class="particle absolute w-1 h-1 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full opacity-20" 
+             style="left: @(Random.Shared.Next(0, 100))%; 
+                    top: @(Random.Shared.Next(0, 100))%; 
+                    animation: float @(Random.Shared.Next(15, 30))s linear infinite;
+                    animation-delay: @(Random.Shared.Next(0, 20))s;"></div>
+    }
+    <!-- Secondary floating elements -->
+    @for (int i = 0; i < 15; i++)
+    {
+        <div class="absolute w-3 h-3 bg-gradient-to-br from-emerald-300 to-blue-300 rounded-full opacity-10 morph" 
+             style="left: @(Random.Shared.Next(0, 100))%; 
+                    top: @(Random.Shared.Next(0, 100))%; 
+                    animation-delay: @(Random.Shared.Next(0, 15))s;"></div>
+    }
+</div>
 
-Welcome to your new app.
+<div class="relative z-10 max-w-7xl mx-auto p-6 min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <!-- Enhanced Welcome Header with Glass Effect -->
+    <div class="mb-8 p-8 rounded-2xl shadow-2xl bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 text-white relative overflow-hidden glass animate-slide-down">
+        <div class="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent"></div>
+        <div class="relative z-10 flex items-center justify-between">
+            <div>
+                <h1 class="text-5xl font-bold mb-3 gradient-text neon-glow">Welcome back! 👋</h1>
+                <p class="text-[var(--text-secondary)] text-xl mb-2">Here's your financial overview for @DateTime.Now.ToString("MMMM dd, yyyy")</p>
+    <div class="flex items-center space-x-4 text-[var(--text-secondary)]">
+        <span class="flex items-center"><span class="w-2 h-2 bg-[var(--success-color)] rounded-full mr-2 pulse"></span>All systems operational</span>
+        <span class="flex items-center"><span class="w-2 h-2 bg-[var(--accent-color)] rounded-full mr-2 pulse"></span>Real-time sync</span>
+                </div>
+            </div>
+            <div class="hidden md:block">
+                <div class="text-8xl opacity-40 float">📊</div>
+            </div>
+        </div>
+        <!-- Animated progress bar -->
+        <div class="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
+            <div class="h-full bg-gradient-to-r from-yellow-400 to-green-400 progress-fill" style="width: 85%;"></div>
+        </div>
+    </div>
+
+    <!-- Enhanced Financial Summary Cards with Advanced Animations and Charts -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Net Worth Card with Mini Chart -->
+        <div class="card card-3d relative p-6 rounded-2xl shadow-2xl bg-gradient-to-br from-emerald-500 via-green-500 to-teal-600 text-white transform hover:scale-105 transition-all duration-500 glow-border animate-slide-up stagger-1">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent rounded-2xl"></div>
+            <div class="relative z-10">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="p-4 rounded-full bg-white/20 backdrop-blur-sm">
+                        <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"></path>
+                        </svg>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-white/80 text-sm font-medium">Net Worth</div>
+                        <div class="counter text-4xl font-bold text-white drop-shadow-lg">$125,430</div>
+                        <div class="text-white/70 text-xs flex items-center justify-end">
+                            <span class="mr-1 animate-bounce">📈</span> +2.5% this month
+                        </div>
+                    </div>
+                </div>
+                <!-- Mini trend chart -->
+                <div class="h-12 flex items-end space-x-1 mb-3">
+                    @for (int i = 0; i < 12; i++)
+                    {
+                        <div class="flex-1 bg-white/30 rounded-t" style="height: @(Random.Shared.Next(20, 100))%; animation-delay: @(i * 0.1)s;"></div>
+                    }
+                </div>
+                <div class="progress-bar bg-white/20">
+                    <div class="progress-fill bg-gradient-to-r from-yellow-300 to-white" style="width: 75%;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Monthly Income Card with Growth Indicator -->
+        <div class="card card-3d relative p-6 rounded-2xl shadow-2xl bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 text-white transform hover:scale-105 transition-all duration-500 glow-border animate-slide-up stagger-2">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent rounded-2xl"></div>
+            <div class="relative z-10">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="p-4 rounded-full bg-white/20 backdrop-blur-sm">
+                        <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-white/80 text-sm font-medium">Monthly Income</div>
+                        <div class="counter text-4xl font-bold text-white">$8,500</div>
+                        <div class="text-white/70 text-xs flex items-center justify-end">
+                            <span class="mr-1 animate-bounce">🚀</span> +5.2% vs last month
+                        </div>
+                    </div>
+                </div>
+                <!-- Income sources breakdown -->
+                <div class="space-y-2 mb-3">
+                    <div class="flex justify-between text-xs text-white/80">
+                        <span>Salary</span><span>$7,200</span>
+                    </div>
+                    <div class="flex justify-between text-xs text-white/80">
+                        <span>Freelance</span><span>$1,300</span>
+                    </div>
+                </div>
+                <div class="progress-bar bg-white/20">
+                    <div class="progress-fill bg-gradient-to-r from-cyan-300 to-white" style="width: 85%;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Monthly Expenses Card with Category Breakdown -->
+        <div class="card card-3d relative p-6 rounded-2xl shadow-2xl bg-gradient-to-br from-orange-500 via-red-500 to-pink-600 text-white transform hover:scale-105 transition-all duration-500 glow-border animate-slide-up stagger-3">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent rounded-2xl"></div>
+            <div class="relative z-10">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="p-4 rounded-full bg-white/20 backdrop-blur-sm">
+                        <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-white/80 text-sm font-medium">Monthly Expenses</div>
+                        <div class="counter text-4xl font-bold text-white">$6,200</div>
+                        <div class="text-white/70 text-xs flex items-center justify-end">
+                            <span class="mr-1 animate-bounce">📉</span> -3.1% vs last month
+                        </div>
+                    </div>
+                </div>
+                <!-- Expense categories -->
+                <div class="space-y-1 mb-3">
+                    <div class="flex items-center space-x-2 text-xs text-white/80">
+                        <div class="w-2 h-2 bg-[var(--warning-color)] rounded-full"></div>
+                        <span>Housing: $2,400</span>
+                    </div>
+                    <div class="flex items-center space-x-2 text-xs text-white/80">
+                        <div class="w-2 h-2 bg-[var(--success-color)] rounded-full"></div>
+                        <span>Food: $800</span>
+                    </div>
+                    <div class="flex items-center space-x-2 text-xs text-white/80">
+                        <div class="w-2 h-2 bg-[var(--accent-color)] rounded-full"></div>
+                        <span>Transport: $600</span>
+                    </div>
+                </div>
+                <div class="progress-bar bg-white/20">
+                    <div class="progress-fill bg-gradient-to-r from-[var(--warning-color)] to-white" style="width: 62%;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Savings Rate Card with Goal Progress -->
+        <div class="card card-3d relative p-6 rounded-2xl shadow-2xl bg-gradient-to-br from-purple-500 via-violet-500 to-fuchsia-600 text-white transform hover:scale-105 transition-all duration-500 glow-border animate-slide-up stagger-4">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent rounded-2xl"></div>
+            <div class="relative z-10">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="p-4 rounded-full bg-white/20 backdrop-blur-sm">
+                        <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-white/80 text-sm font-medium">Savings Rate</div>
+                        <div class="counter text-4xl font-bold text-white">27%</div>
+                        <div class="text-white/70 text-xs flex items-center justify-end">
+                            <span class="mr-1 animate-bounce">🎯</span> Above target
+                        </div>
+                    </div>
+                </div>
+                <!-- Savings goal progress -->
+                <div class="mb-3">
+                    <div class="flex justify-between text-xs text-white/80 mb-1">
+                        <span>Goal: 25%</span>
+                        <span>Current: 27%</span>
+                    </div>
+                    <div class="text-xs text-white/70">Monthly: $2,300 saved</div>
+                </div>
+                <div class="progress-bar bg-white/20">
+                    <div class="progress-fill bg-gradient-to-r from-[var(--success-color)] to-white" style="width: 108%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Insurance & Obligations Overview Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Insurance Overview Card -->
+        <div class="card bg-[var(--card-bg)] rounded-2xl shadow-2xl border border-[var(--border-color)] p-6 animate-slide-up stagger-5">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h3 class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Insurance Portfolio</h3>
+                    <p class="text-sm text-[var(--text-secondary)]">Active policies and coverage</p>
+                </div>
+                <div class="p-3 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                    </svg>
+                </div>
+            </div>
+            
+            <div class="space-y-4">
+                <!-- Health Insurance -->
+                <div class="p-4 bg-gradient-to-r from-[var(--success-color)]/10 to-emerald-50 dark:from-[var(--success-color)]/20 dark:to-emerald-900/20 rounded-xl border border-[var(--success-color)]/30">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-3 h-3 bg-[var(--success-color)] rounded-full pulse"></div>
+                            <span class="font-semibold text-[var(--text-primary)]">Health Insurance</span>
+                        </div>
+                        <span class="text-sm font-medium text-[var(--success-color)]">Active</span>
+                    </div>
+                    <div class="flex justify-between text-sm text-[var(--text-secondary)]">
+                        <span>Premium: $450/month</span>
+                        <span>Coverage: $500K</span>
+                    </div>
+                </div>
+
+                <!-- Life Insurance -->
+                <div class="p-4 bg-gradient-to-r from-[var(--accent-color)]/10 to-indigo-50 dark:from-[var(--accent-color)]/20 dark:to-indigo-900/20 rounded-xl border border-[var(--accent-color)]/30">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-3 h-3 bg-[var(--accent-color)] rounded-full pulse"></div>
+                            <span class="font-semibold text-[var(--text-primary)]">Life Insurance</span>
+                        </div>
+                        <span class="text-sm font-medium text-[var(--accent-color)]">Active</span>
+                    </div>
+                    <div class="flex justify-between text-sm text-[var(--text-secondary)]">
+                        <span>Premium: $125/month</span>
+                        <span>Coverage: $1M</span>
+                    </div>
+                </div>
+
+                <!-- Auto Insurance -->
+                <div class="p-4 bg-gradient-to-r from-[var(--warning-color)]/10 to-red-50 dark:from-[var(--warning-color)]/20 dark:to-red-900/20 rounded-xl border border-[var(--warning-color)]/30">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-3 h-3 bg-[var(--warning-color)] rounded-full pulse"></div>
+                            <span class="font-semibold text-[var(--text-primary)]">Auto Insurance</span>
+                        </div>
+                        <span class="text-sm font-medium text-[var(--warning-color)]">Due Soon</span>
+                    </div>
+                    <div class="flex justify-between text-sm text-[var(--text-secondary)]">
+                        <span>Premium: $180/month</span>
+                        <span>Due: Feb 15</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-[var(--border-color)]">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Monthly Premiums</span>
+                    <span class="text-xl font-bold text-gray-900 dark:text-white">$755</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Obligations Overview Card -->
+        <div class="card bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-6 animate-slide-up stagger-6">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h3 class="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Group Obligations</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Chamas, SACCOs & Welfare</p>
+                </div>
+                <div class="p-3 rounded-full bg-gradient-to-r from-purple-500 to-pink-600 text-white">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"></path>
+                    </svg>
+                </div>
+            </div>
+            
+            <div class="space-y-4">
+                <!-- Investment Chama -->
+                <div class="p-4 bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/20 rounded-xl border border-purple-200 dark:border-purple-800">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-3 h-3 bg-purple-500 rounded-full pulse"></div>
+                            <span class="font-semibold text-gray-900 dark:text-white">Investment Chama</span>
+                        </div>
+                        <span class="text-sm font-medium text-purple-600 dark:text-purple-400">Current</span>
+                    </div>
+                    <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+                        <span>Monthly: $200</span>
+                        <span>Total Contributed: $2,400</span>
+                    </div>
+                </div>
+
+                <!-- SACCO Contribution -->
+                <div class="p-4 bg-gradient-to-r from-green-50 to-teal-50 dark:from-green-900/20 dark:to-teal-900/20 rounded-xl border border-green-200 dark:border-green-800">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-3 h-3 bg-green-500 rounded-full pulse"></div>
+                            <span class="font-semibold text-gray-900 dark:text-white">SACCO Shares</span>
+                        </div>
+                        <span class="text-sm font-medium text-green-600 dark:text-green-400">Active</span>
+                    </div>
+                    <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+                        <span>Monthly: $150</span>
+                        <span>Shares: 480</span>
+                    </div>
+                </div>
+
+                <!-- Welfare Group -->
+                <div class="p-4 bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 rounded-xl border border-yellow-200 dark:border-yellow-800">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-3 h-3 bg-yellow-500 rounded-full pulse"></div>
+                            <span class="font-semibold text-gray-900 dark:text-white">Welfare Group</span>
+                        </div>
+                        <span class="text-sm font-medium text-yellow-600 dark:text-yellow-400">Arrears</span>
+                    </div>
+                    <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+                        <span>Monthly: $50</span>
+                        <span>Arrears: $100</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Monthly Obligations</span>
+                    <span class="text-xl font-bold text-gray-900 dark:text-white">$400</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advanced Analytics & Insights Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Recent Transactions with Enhanced Analytics -->
+        <div class="lg:col-span-2">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-6 animate-slide-up backdrop-blur-sm stagger-7" style="animation-delay: 0.4s;">
+                <div class="mb-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Recent Transactions</h2>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Your latest financial activity with AI insights</p>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <div class="text-right">
+                                <div class="text-xs text-gray-500 dark:text-gray-400">Weekly Net</div>
+                                <div class="text-lg font-bold text-green-600 dark:text-green-400">+$4,042</div>
+                            </div>
+                            <div class="p-3 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg">
+                                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <!-- Enhanced Transaction Items -->
+                    <div class="flex items-center space-x-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 hover:shadow-md transition-all duration-200 animate-slide-in" style="animation-delay: 0.6s;">
+                        <div class="flex items-center space-x-4">
+                            <div class="p-2 rounded-full bg-green-100 text-green-600">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="font-semibold text-gray-900 dark:text-white">Salary Deposit</p>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">Jan 15, 2024 • Direct Deposit</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="font-bold text-lg text-green-600">+$4,250.00</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">Recurring</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center space-x-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 hover:shadow-md transition-all duration-200 animate-slide-in" style="animation-delay: 0.7s;">
+                        <div class="flex items-center space-x-4">
+                            <div class="p-2 rounded-full bg-red-100 text-red-600">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"></path>
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="font-semibold text-gray-900 dark:text-white">Grocery Shopping</p>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">Jan 14, 2024 • Whole Foods</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="font-bold text-lg text-red-600">-$127.45</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">Food & Dining</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center space-x-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 hover:shadow-md transition-all duration-200 animate-slide-in" style="animation-delay: 0.8s;">
+                        <div class="flex items-center space-x-4">
+                            <div class="p-2 rounded-full bg-orange-100 text-orange-600">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M8 5a1 1 0 100 2h5.586l-1.293 1.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L13.586 5H8zM12 15a1 1 0 100-2H6.414l1.293-1.293a1 1 0 10-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L6.414 15H12z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="font-semibold text-gray-900 dark:text-white">Gas Station</p>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">Jan 13, 2024 • Shell</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="font-bold text-lg text-red-600">-$65.20</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">Transportation</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center space-x-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 hover:shadow-md transition-all duration-200 animate-slide-in" style="animation-delay: 0.9s;">
+                        <div class="flex items-center space-x-4">
+                            <div class="p-2 rounded-full bg-purple-100 text-purple-600">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z"></path>
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="font-semibold text-gray-900 dark:text-white">Netflix Subscription</p>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">Jan 12, 2024 • Monthly</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="font-bold text-lg text-red-600">-$15.99</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">Entertainment</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <button class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 flex items-center justify-center">
+                        <span>View All Transactions</span>
+                        <svg class="w-4 h-4 ml-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Enhanced Sidebar with Advanced Analytics -->
+        <div class="space-y-6">
+            <!-- Smart Budget Overview -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-6 backdrop-blur-sm animate-slide-up stagger-8" style="animation-delay: 0.5s;">
+                <div class="mb-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Smart Budget</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">AI-powered insights • January 2024</p>
+                        </div>
+                        <div class="p-2 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full">
+                            <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="space-y-5">
+                    <!-- Enhanced Budget Items with Smart Insights -->
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-3 h-3 bg-green-500 rounded-full pulse"></div>
+                                <span class="text-sm font-medium text-gray-900 dark:text-white">Food & Dining</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="font-bold text-gray-900 dark:text-white">$450</span>
+                                <span class="text-sm text-gray-500 dark:text-gray-400">/ $600</span>
+                            </div>
+                        </div>
+                        <div class="relative">
+                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                                <div class="bg-gradient-to-r from-green-400 via-green-500 to-green-600 h-3 rounded-full shadow-inner animate-pulse" style="width: 75%;"></div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between text-xs">
+                            <span class="text-green-600 dark:text-green-400 font-medium">$150 remaining</span>
+                            <span class="text-gray-500 dark:text-gray-400">75% used • On track</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-3 h-3 bg-yellow-500 rounded-full pulse"></div>
+                                <span class="text-sm font-medium text-gray-900 dark:text-white">Transportation</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="font-bold text-gray-900 dark:text-white">$320</span>
+                                <span class="text-sm text-gray-500 dark:text-gray-400">/ $400</span>
+                            </div>
+                        </div>
+                        <div class="relative">
+                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                                <div class="bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 h-3 rounded-full shadow-inner animate-pulse" style="width: 80%; animation-delay: 0.2s;"></div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between text-xs">
+                            <span class="text-yellow-600 dark:text-yellow-400 font-medium">$80 remaining</span>
+                            <span class="text-gray-500 dark:text-gray-400">80% used • Watch spending</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-3 h-3 bg-red-500 rounded-full pulse"></div>
+                                <span class="text-sm font-medium text-gray-900 dark:text-white">Entertainment</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="font-bold text-gray-900 dark:text-white">$180</span>
+                                <span class="text-sm text-gray-500 dark:text-gray-400">/ $200</span>
+                            </div>
+                        </div>
+                        <div class="relative">
+                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                                <div class="bg-gradient-to-r from-red-400 via-red-500 to-red-600 h-3 rounded-full shadow-inner animate-pulse" style="width: 90%; animation-delay: 0.4s;"></div>
+                            </div>
+                            <div class="absolute -top-1 right-2 w-2 h-2 bg-red-500 rounded-full animate-ping"></div>
+                        </div>
+                        <div class="flex justify-between text-xs">
+                            <span class="text-red-600 dark:text-red-400 font-medium">$20 remaining</span>
+                            <span class="text-gray-500 dark:text-gray-400">90% used • Limit reached</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Budget Insights -->
+                <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <div class="p-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                        <div class="flex items-center space-x-2 mb-2">
+                            <svg class="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span class="text-sm font-medium text-blue-700 dark:text-blue-300">AI Insight</span>
+                        </div>
+                        <p class="text-xs text-blue-600 dark:text-blue-400">You're on track to save $300 more this month by reducing entertainment spending by 15%.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Smart Quick Actions with Enhanced Design -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-6 animate-slide-up stagger-9">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 class="text-xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path>
+                            </svg>
+                            Quick Actions
+                        </h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Manage your finances</p>
+                    </div>
+                    <div class="p-2 bg-gradient-to-r from-green-500 to-blue-600 rounded-full">
+                        <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
+                        </svg>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <!-- Add Transaction Button -->
+                    <button class="group p-4 bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 border border-green-400">
+                        <div class="flex flex-col items-center space-y-2">
+                            <div class="p-2 bg-white/20 rounded-full group-hover:bg-white/30 transition-colors duration-300">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                            <span class="text-sm font-medium">Add Transaction</span>
+                        </div>
+                    </button>
+
+                    <!-- View Reports Button -->
+                    <button class="group p-4 bg-gradient-to-br from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-xl shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 border border-blue-400">
+                        <div class="flex flex-col items-center space-y-2">
+                            <div class="p-2 bg-white/20 rounded-full group-hover:bg-white/30 transition-colors duration-300">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"></path>
+                                </svg>
+                            </div>
+                            <span class="text-sm font-medium">View Reports</span>
+                        </div>
+                    </button>
+
+                    <!-- Pay Bills Button -->
+                    <button class="group p-4 bg-gradient-to-br from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white rounded-xl shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 border border-purple-400">
+                        <div class="flex flex-col items-center space-y-2">
+                            <div class="p-2 bg-white/20 rounded-full group-hover:bg-white/30 transition-colors duration-300">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"></path>
+                                </svg>
+                            </div>
+                            <span class="text-sm font-medium">Pay Bills</span>
+                        </div>
+                    </button>
+
+                    <!-- Set Goals Button -->
+                    <button class="group p-4 bg-gradient-to-br from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white rounded-xl shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 border border-orange-400">
+                        <div class="flex flex-col items-center space-y-2">
+                            <div class="p-2 bg-white/20 rounded-full group-hover:bg-white/30 transition-colors duration-300">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                            <span class="text-sm font-medium">Set Goals</span>
+                        </div>
+                    </button>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <div class="grid grid-cols-2 gap-4 text-center">
+                        <div>
+                            <div class="text-lg font-bold text-green-600 dark:text-green-400">12</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">This Month</div>
+                        </div>
+                        <div>
+                            <div class="text-lg font-bold text-blue-600 dark:text-blue-400">3</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">Pending Bills</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enhanced Upcoming Bills with Smart Notifications -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-6 animate-slide-up stagger-10">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 class="text-xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
+                            </svg>
+                            Upcoming Bills
+                        </h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Next 7 days</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <div class="text-right">
+                            <div class="text-xs text-gray-500 dark:text-gray-400">Total Due</div>
+                            <div class="text-lg font-bold text-red-600 dark:text-red-400">$890</div>
+                        </div>
+                        <div class="p-2 bg-gradient-to-r from-red-500 to-orange-600 rounded-full">
+                            <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <!-- Rent Bill - Due Soon -->
+                    <div class="group p-4 bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 rounded-xl border-l-4 border-red-500 hover:from-red-100 hover:to-orange-100 dark:hover:from-red-900/30 dark:hover:to-orange-900/30 transition-all duration-300 transform hover:scale-[1.02]">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="p-2 bg-red-500 rounded-full shadow-lg">
+                                    <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <div class="font-semibold text-gray-900 dark:text-white">Rent Payment</div>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400 flex items-center">
+                                        <span class="text-red-600 dark:text-red-400 font-medium">Due Tomorrow</span>
+                                        <span class="mx-2">•</span>
+                                        <span>Feb 1, 2024</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-bold text-red-600 dark:text-red-400 text-lg">$2,400</div>
+                                <button class="text-xs bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-2 py-1 rounded-full hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors duration-200">
+                                    Pay Now
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Internet Bill -->
+                    <div class="group p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border-l-4 border-blue-500 hover:from-blue-100 hover:to-indigo-100 dark:hover:from-blue-900/30 dark:hover:to-indigo-900/30 transition-all duration-300 transform hover:scale-[1.02]">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="p-2 bg-blue-500 rounded-full shadow-lg">
+                                    <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2h-2.22l.123.489.804.804A1 1 0 0113 18H7a1 1 0 01-.707-1.707l.804-.804L7.22 15H5a2 2 0 01-2-2V5zm5.771 7H5V5h10v7H8.771z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <div class="font-semibold text-gray-900 dark:text-white">Internet Bill</div>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400 flex items-center">
+                                        <span class="text-blue-600 dark:text-blue-400 font-medium">Due in 3 days</span>
+                                        <span class="mx-2">•</span>
+                                        <span>Feb 4, 2024</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-bold text-blue-600 dark:text-blue-400 text-lg">$89</div>
+                                <button class="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-1 rounded-full hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors duration-200">
+                                    Schedule
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Insurance Premium -->
+                    <div class="group p-4 bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/20 rounded-xl border-l-4 border-purple-500 hover:from-purple-100 hover:to-violet-100 dark:hover:from-purple-900/30 dark:hover:to-violet-900/30 transition-all duration-300 transform hover:scale-[1.02]">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="p-2 bg-purple-500 rounded-full shadow-lg">
+                                    <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <div class="font-semibold text-gray-900 dark:text-white">Health Insurance</div>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400 flex items-center">
+                                        <span class="text-purple-600 dark:text-purple-400 font-medium">Due in 5 days</span>
+                                        <span class="mx-2">•</span>
+                                        <span>Feb 6, 2024</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-bold text-purple-600 dark:text-purple-400 text-lg">$450</div>
+                                <button class="text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 px-2 py-1 rounded-full hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors duration-200">
+                                    Auto-pay
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bills Summary -->
+                <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Total This Week</span>
+                        <span class="text-xl font-bold text-gray-900 dark:text-white">$2,939</span>
+                    </div>
+                    <div class="mt-2 text-xs text-gray-500 dark:text-gray-400 text-center">
+                        💡 Set up auto-pay to never miss a payment
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

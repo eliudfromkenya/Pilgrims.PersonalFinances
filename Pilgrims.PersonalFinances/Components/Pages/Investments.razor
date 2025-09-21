@@ -1,0 +1,355 @@
+@page "/investments"
+@using Pilgrims.PersonalFinances.Models
+@using Pilgrims.PersonalFinances.Models.Enums
+
+<PageTitle>Investments - Pilgrims Personal Finance</PageTitle>
+
+<!-- Particle Background -->
+<div class="fixed inset-0 overflow-hidden pointer-events-none">
+    <div class="absolute inset-0 bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 dark:from-gray-900 dark:via-emerald-900 dark:to-teal-900"></div>
+    <div class="particles-container">
+        @for (int i = 0; i < 25; i++)
+        {
+            <div class="particle" style="animation-delay: @(i * 0.15)s;"></div>
+        }
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="relative z-10 min-h-screen p-6">
+    <!-- Header Section -->
+    <div class="mb-8">
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h1 class="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+                        📈 Investment Portfolio
+                    </h1>
+                    <p class="text-gray-600 dark:text-gray-300 mt-2">Track and grow your investment portfolio</p>
+                </div>
+                <button class="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-300">
+                    <span class="mr-2">➕</span> Add Investment
+                </button>
+            </div>
+            
+            <!-- Portfolio Overview Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+                <div class="bg-gradient-to-r from-emerald-400 to-emerald-600 p-4 rounded-xl text-white">
+                    <div class="text-sm opacity-90">Total Value</div>
+                    <div class="text-2xl font-bold">$125,450.00</div>
+                    <div class="text-xs opacity-75 mt-1">📈 +8.5% this month</div>
+                </div>
+                <div class="bg-gradient-to-r from-green-400 to-green-600 p-4 rounded-xl text-white">
+                    <div class="text-sm opacity-90">Total Gains</div>
+                    <div class="text-2xl font-bold">+$18,750.00</div>
+                    <div class="text-xs opacity-75 mt-1">17.6% return</div>
+                </div>
+                <div class="bg-gradient-to-r from-teal-400 to-teal-600 p-4 rounded-xl text-white">
+                    <div class="text-sm opacity-90">Today's Change</div>
+                    <div class="text-2xl font-bold">+$1,245.30</div>
+                    <div class="text-xs opacity-75 mt-1">+1.0% today</div>
+                </div>
+                <div class="bg-gradient-to-r from-cyan-400 to-cyan-600 p-4 rounded-xl text-white">
+                    <div class="text-sm opacity-90">Dividend Income</div>
+                    <div class="text-2xl font-bold">$2,850.00</div>
+                    <div class="text-xs opacity-75 mt-1">This year</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Portfolio Performance & Allocation -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Portfolio Performance Chart -->
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
+                <span class="mr-2">📊</span> Portfolio Performance (6 Months)
+            </h3>
+            <div class="h-48 flex items-end justify-between space-x-2">
+                @{
+                    var months = new[] { "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+                    var portfolioValues = new[] { 98500, 102300, 108750, 115200, 118900, 125450 };
+                    var maxValue = portfolioValues.Max();
+                }
+                @for (int i = 0; i < 6; i++)
+                {
+                    var height = (portfolioValues[i] / (double)maxValue) * 100;
+                    var growth = i > 0 ? ((portfolioValues[i] - portfolioValues[i-1]) / (double)portfolioValues[i-1]) * 100 : 0;
+                    
+                    <div class="flex-1 flex flex-col items-center">
+                        <div class="bg-gradient-to-t from-emerald-500 to-teal-600 rounded-t-lg transition-all duration-1000 hover:shadow-lg w-full" 
+                             style="height: @(height)%; animation-delay: @(i * 0.1)s;">
+                        </div>
+                        <span class="text-xs text-gray-500 mt-2">@months[i]</span>
+                        <span class="text-xs font-medium text-gray-700 dark:text-gray-300">$@(portfolioValues[i]/1000)k</span>
+                        @if (i > 0)
+                        {
+                            <span class="text-xs @(growth > 0 ? "text-green-600" : "text-red-600")">
+                                @(growth > 0 ? "+" : "")@Math.Round(growth, 1)%
+                            </span>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Asset Allocation -->
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
+                <span class="mr-2">🥧</span> Asset Allocation
+            </h3>
+            <div class="space-y-4">
+                @{
+                    var allocations = new[]
+                    {
+                        new { Name = "Stocks", Amount = 75270, Color = "from-emerald-400 to-emerald-600", Percentage = 60 },
+                        new { Name = "Bonds", Amount = 25090, Color = "from-blue-400 to-blue-600", Percentage = 20 },
+                        new { Name = "ETFs", Amount = 18817, Color = "from-purple-400 to-purple-600", Percentage = 15 },
+                        new { Name = "Crypto", Amount = 6272, Color = "from-orange-400 to-orange-600", Percentage = 5 }
+                    };
+                }
+                @foreach (var allocation in allocations)
+                {
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center flex-1">
+                            <div class="w-4 h-4 bg-gradient-to-r @allocation.Color rounded-full mr-3"></div>
+                            <span class="text-gray-700 dark:text-gray-300 flex-1">@allocation.Name</span>
+                            <div class="w-24 bg-gray-200 dark:bg-gray-600 rounded-full h-2 mx-3">
+                                <div class="bg-gradient-to-r @allocation.Color h-2 rounded-full transition-all duration-1000" 
+                                     style="width: @(allocation.Percentage)%"></div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-semibold">$@allocation.Amount</div>
+                            <div class="text-xs text-gray-500">@allocation.Percentage%</div>
+                        </div>
+                    </div>
+                }
+            </div>
+            
+            <!-- Rebalancing Suggestion -->
+            <div class="mt-6 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                <div class="flex items-start space-x-2">
+                    <span class="text-yellow-600 text-sm">💡</span>
+                    <div>
+                        <h4 class="text-sm font-medium text-yellow-800 dark:text-yellow-300">Rebalancing Suggestion</h4>
+                        <p class="text-xs text-yellow-600 dark:text-yellow-400 mt-1">Consider reducing stock allocation by 5% and increasing bonds for better risk management.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Holdings List -->
+    <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 mb-8">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-white flex items-center">
+                <span class="mr-2">📋</span> Current Holdings
+            </h3>
+            <div class="flex items-center space-x-2">
+                <button class="px-3 py-1 text-sm bg-emerald-100 text-emerald-800 rounded-full">All</button>
+                <button class="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded-full">Stocks</button>
+                <button class="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded-full">ETFs</button>
+                <button class="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded-full">Bonds</button>
+            </div>
+        </div>
+        
+        <div class="space-y-3">
+            @{
+                var holdings = new[]
+                {
+                    new { Symbol = "AAPL", Name = "Apple Inc.", Shares = 125.0, Price = 185.50m, Change = 2.35m, ChangePercent = 1.28m, Value = 23187.50m, Type = "Stock" },
+                    new { Symbol = "MSFT", Name = "Microsoft Corp.", Shares = 85.0, Price = 378.20m, Change = -1.85m, ChangePercent = -0.49m, Value = 32147.00m, Type = "Stock" },
+                    new { Symbol = "GOOGL", Name = "Alphabet Inc.", Shares = 45.0, Price = 142.80m, Change = 3.45m, ChangePercent = 2.47m, Value = 6426.00m, Type = "Stock" },
+                    new { Symbol = "SPY", Name = "SPDR S&P 500 ETF", Shares = 75.0, Price = 456.30m, Change = 1.20m, ChangePercent = 0.26m, Value = 34222.50m, Type = "ETF" },
+                    new { Symbol = "BTC", Name = "Bitcoin", Shares = 0.15, Price = 41800.00m, Change = 850.00m, ChangePercent = 2.08m, Value = 6270.00m, Type = "Crypto" },
+                    new { Symbol = "TLT", Name = "iShares 20+ Year Treasury", Shares = 200.0, Price = 125.45m, Change = -0.85m, ChangePercent = -0.67m, Value = 25090.00m, Type = "Bond" }
+                };
+            }
+            
+            @foreach (var holding in holdings)
+            {
+                <div class="flex items-center justify-between p-4 bg-white/50 dark:bg-gray-700/50 rounded-xl hover:bg-white/70 dark:hover:bg-gray-700/70 transition-all duration-200 cursor-pointer group">
+                    <div class="flex items-center flex-1">
+                        <div class="w-12 h-12 bg-gradient-to-r from-emerald-100 to-teal-200 dark:from-emerald-600 dark:to-teal-700 rounded-full flex items-center justify-center text-sm font-bold text-emerald-800 dark:text-white mr-4 group-hover:scale-110 transition-transform duration-200">
+                            @holding.Symbol.Substring(0, Math.Min(3, holding.Symbol.Length))
+                        </div>
+                        <div class="flex-1">
+                            <div class="font-medium text-gray-800 dark:text-white">@holding.Symbol</div>
+                            <div class="text-sm text-gray-500">@holding.Name</div>
+                        </div>
+                        <div class="text-sm text-gray-600 dark:text-gray-300 mr-4">
+                            @holding.Shares @(holding.Shares < 1 ? "" : " shares")
+                        </div>
+                        <div class="text-sm text-gray-600 dark:text-gray-300 mr-4">
+                            $@holding.Price
+                        </div>
+                        <div class="text-sm mr-4 @(holding.Change >= 0 ? "text-green-600" : "text-red-600")">
+                            @(holding.Change >= 0 ? "+" : "")$@Math.Abs(holding.Change)
+                            <br />
+                            <span class="text-xs">(@(holding.ChangePercent >= 0 ? "+" : "")@holding.ChangePercent%)</span>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-bold text-gray-800 dark:text-white">$@holding.Value</div>
+                            <div class="text-xs text-gray-500">@holding.Type</div>
+                        </div>
+                    </div>
+                    <div class="ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <button class="p-2 text-gray-400 hover:text-gray-600">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Market Insights & Watchlist -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Market Insights -->
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
+                <span class="mr-2">🔍</span> Market Insights
+            </h3>
+            <div class="space-y-4">
+                <div class="flex items-start space-x-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <span class="text-green-600 text-xl">📈</span>
+                    <div>
+                        <h4 class="font-medium text-green-800 dark:text-green-300">Strong Performance</h4>
+                        <p class="text-sm text-green-600 dark:text-green-400">Your tech stocks are outperforming the market by 12% this quarter.</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start space-x-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <span class="text-blue-600 text-xl">💡</span>
+                    <div>
+                        <h4 class="font-medium text-blue-800 dark:text-blue-300">Diversification Tip</h4>
+                        <p class="text-sm text-blue-600 dark:text-blue-400">Consider adding international exposure to reduce portfolio risk.</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start space-x-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                    <span class="text-yellow-600 text-xl">⚠️</span>
+                    <div>
+                        <h4 class="font-medium text-yellow-800 dark:text-yellow-300">Dividend Alert</h4>
+                        <p class="text-sm text-yellow-600 dark:text-yellow-400">AAPL ex-dividend date is approaching. Expected dividend: $0.24/share.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Watchlist -->
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
+                <span class="mr-2">👁️</span> Watchlist
+            </h3>
+            <div class="space-y-3">
+                @{
+                    var watchlist = new[]
+                    {
+                        new { Symbol = "TSLA", Name = "Tesla Inc.", Price = 248.50m, Change = 12.30m, ChangePercent = 5.21m },
+                        new { Symbol = "NVDA", Name = "NVIDIA Corp.", Price = 485.20m, Change = -8.45m, ChangePercent = -1.71m },
+                        new { Symbol = "AMD", Name = "Advanced Micro Devices", Price = 142.80m, Change = 3.25m, ChangePercent = 2.33m },
+                        new { Symbol = "AMZN", Name = "Amazon.com Inc.", Price = 155.30m, Change = 1.85m, ChangePercent = 1.21m }
+                    };
+                }
+                
+                @foreach (var stock in watchlist)
+                {
+                    <div class="flex items-center justify-between p-3 bg-white/50 dark:bg-gray-700/50 rounded-lg hover:bg-white/70 dark:hover:bg-gray-700/70 transition-all duration-200 cursor-pointer">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-600 dark:to-gray-700 rounded-full flex items-center justify-center text-xs font-bold text-gray-800 dark:text-white mr-3">
+                                @stock.Symbol.Substring(0, 2)
+                            </div>
+                            <div>
+                                <h4 class="font-medium text-gray-800 dark:text-white">@stock.Symbol</h4>
+                                <p class="text-xs text-gray-500">@stock.Name</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-bold text-gray-800 dark:text-white">$@stock.Price</div>
+                            <div class="text-xs @(stock.Change >= 0 ? "text-green-600" : "text-red-600")">
+                                @(stock.Change >= 0 ? "+" : "")$@Math.Abs(stock.Change) (@(stock.ChangePercent >= 0 ? "+" : "")@stock.ChangePercent%)
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+            
+            <button class="w-full mt-4 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all duration-300 text-sm">
+                + Add to Watchlist
+            </button>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 text-center hover:shadow-xl transition-all duration-300 cursor-pointer">
+            <div class="text-4xl mb-3">💰</div>
+            <h4 class="font-semibold text-gray-800 dark:text-white mb-2">Buy/Sell</h4>
+            <p class="text-sm text-gray-600 dark:text-gray-300">Execute trades and manage positions</p>
+        </div>
+        
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 text-center hover:shadow-xl transition-all duration-300 cursor-pointer">
+            <div class="text-4xl mb-3">📊</div>
+            <h4 class="font-semibold text-gray-800 dark:text-white mb-2">Portfolio Analysis</h4>
+            <p class="text-sm text-gray-600 dark:text-gray-300">Detailed performance analytics</p>
+        </div>
+        
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 text-center hover:shadow-xl transition-all duration-300 cursor-pointer">
+            <div class="text-4xl mb-3">🎯</div>
+            <h4 class="font-semibold text-gray-800 dark:text-white mb-2">Investment Goals</h4>
+            <p class="text-sm text-gray-600 dark:text-gray-300">Set and track investment objectives</p>
+        </div>
+        
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 text-center hover:shadow-xl transition-all duration-300 cursor-pointer">
+            <div class="text-4xl mb-3">📈</div>
+            <h4 class="font-semibold text-gray-800 dark:text-white mb-2">Market Research</h4>
+            <p class="text-sm text-gray-600 dark:text-gray-300">Research stocks and market trends</p>
+        </div>
+    </div>
+</div>
+
+<style>
+    .particles-container {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .particle {
+        position: absolute;
+        width: 3px;
+        height: 3px;
+        background: linear-gradient(45deg, #10b981, #14b8a6);
+        border-radius: 50%;
+        animation: float 8s ease-in-out infinite;
+        opacity: 0.7;
+    }
+
+    .particle:nth-child(odd) {
+        left: 15%;
+        animation-duration: 10s;
+    }
+
+    .particle:nth-child(even) {
+        right: 15%;
+        animation-duration: 12s;
+    }
+
+    @@keyframes float {
+        0%, 100% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+        10% { opacity: 0.7; }
+        90% { opacity: 0.7; }
+        50% { transform: translateY(-10vh) rotate(180deg); }
+    }
+
+    .glass-card {
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    }
+</style>

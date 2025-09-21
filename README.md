@@ -308,6 +308,70 @@ The Personal Finance Manager is a comprehensive offline-first mobile application
 - **Backup Synchronization:** Ensure latest backup is available across all devices
 - **Device-Specific Settings:** Maintain device-specific preferences separately from financial data
 
+### 2.13 Insurance Management (FR-013)
+**Priority:** Medium  
+**Description:** Comprehensive insurance policy tracking and management system
+
+#### 2.13.1 Policy Management
+- **Policy Information:** Policy number, insurance company, policy type (Life, Health, Auto, Property)
+- **Coverage Details:** Coverage amount, deductible amount, premium information
+- **Policy Dates:** Start date, end date, next premium due date, renewal tracking
+- **Beneficiary Information:** Primary and secondary beneficiaries with relationships
+- **Agent Details:** Agent name, contact information, and communication history
+
+#### 2.13.2 Premium Tracking
+- **Payment Frequency:** Monthly, quarterly, semi-annual, annual premium schedules
+- **Premium Calculations:** Automatic calculation of payment amounts based on frequency
+- **Payment Reminders:** Configurable notifications for upcoming premium payments
+- **Payment History:** Track all premium payments with transaction linking
+- **Auto-Pay Integration:** Link to scheduled transactions for automatic premium payments
+
+#### 2.13.3 Claims Management
+- **Claim Tracking:** Claim number, claim date, description, and status tracking
+- **Claim Amounts:** Claimed amount vs approved amount tracking
+- **Documentation:** Attach claim documents, receipts, and correspondence
+- **Claim History:** Complete history of all claims per policy
+- **Settlement Tracking:** Track claim settlements and payment receipts
+
+#### 2.13.4 Insurance Analytics
+- **Coverage Analysis:** Total coverage amounts across all policies
+- **Premium Costs:** Annual and monthly premium summaries
+- **Claims Statistics:** Claims frequency and success rates
+- **Coverage Gaps:** Identify potential gaps in insurance coverage
+- **Renewal Alerts:** Automated alerts for policy renewals and expirations
+
+### 2.14 Obligation Management (FR-014)
+**Priority:** Medium  
+**Description:** Track and manage financial obligations including loans, debts, and recurring commitments
+
+#### 2.14.1 Obligation Types
+- **Loan Management:** Mortgages, personal loans, student loans, auto loans
+- **Credit Card Debt:** Credit card balances, minimum payments, interest rates
+- **Subscription Services:** Monthly/annual subscriptions and memberships
+- **Recurring Commitments:** Charitable donations, membership fees, service contracts
+- **Tax Obligations:** Estimated tax payments, property taxes, other tax liabilities
+
+#### 2.14.2 Payment Tracking
+- **Payment Schedules:** Due dates, payment amounts, frequency (monthly, quarterly, annual)
+- **Balance Tracking:** Current balance, original amount, remaining balance
+- **Interest Calculations:** Interest rates, compound vs simple interest, payment allocation
+- **Payment History:** Complete payment history with transaction linking
+- **Early Payment Options:** Track extra payments and their impact on payoff timeline
+
+#### 2.14.3 Debt Management Tools
+- **Payoff Calculators:** Calculate payoff timelines with different payment scenarios
+- **Debt Prioritization:** Debt avalanche and snowball method support
+- **Refinancing Tracking:** Track refinancing opportunities and savings calculations
+- **Credit Impact:** Monitor how debt payments affect credit utilization
+- **Consolidation Planning:** Tools for debt consolidation analysis
+
+#### 2.14.4 Obligation Analytics
+- **Debt-to-Income Ratio:** Calculate and track debt-to-income ratios over time
+- **Total Obligation Summary:** Overview of all monthly obligations and commitments
+- **Payment Forecasting:** Project future payment schedules and total costs
+- **Interest Cost Analysis:** Track total interest paid and projected interest costs
+- **Obligation Alerts:** Notifications for due dates, rate changes, and payoff milestones
+
 ---
 
 ## 3. Non-Functional Requirements

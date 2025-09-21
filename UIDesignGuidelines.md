@@ -535,4 +535,116 @@ public void ApplyTheme(AppTheme theme)
 </StackLayout>
 ```
 
+### Insurance Policy Card
+```xml
+<Frame Style="{StaticResource InsuranceCard}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        
+        <Label Grid.Row="0" 
+               Text="{Binding PolicyType}"
+               Style="{StaticResource Heading3}" />
+               
+        <Label Grid.Row="1"
+               Text="{Binding PolicyNumber}"
+               Style="{StaticResource BodyText}"
+               TextColor="{DynamicResource SecondaryTextColor}" />
+               
+        <Label Grid.Row="2"
+               Text="{Binding CoverageAmount, StringFormat='Coverage: {0:C}'}"
+               Style="{StaticResource CurrencyMedium}"
+               TextColor="{DynamicResource SuccessColor}" />
+               
+        <StackLayout Grid.Row="3" Orientation="Horizontal">
+            <Label Text="{Binding NextPremiumDue, StringFormat='Due: {0:MMM dd}'}"
+                   Style="{StaticResource Caption}"
+                   TextColor="{Binding PremiumDueColor}" />
+            <Label Text="{Binding PremiumAmount, StringFormat='{0:C}'}"
+                   Style="{StaticResource Caption}"
+                   HorizontalOptions="EndAndExpand" />
+        </StackLayout>
+    </Grid>
+</Frame>
+```
+
+### Obligation Tracker Card
+```xml
+<Frame Style="{StaticResource ObligationCard}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        
+        <Label Grid.Row="0" 
+               Text="{Binding ObligationName}"
+               Style="{StaticResource Heading3}" />
+               
+        <Label Grid.Row="1"
+               Text="{Binding CurrentBalance, StringFormat='Balance: {0:C}'}"
+               Style="{StaticResource CurrencyMedium}"
+               TextColor="{Binding BalanceColor}" />
+               
+        <ProgressBar Grid.Row="2"
+                     Progress="{Binding PayoffProgress}"
+                     Style="{StaticResource DebtProgressBar}"
+                     Margin="0,8" />
+                     
+        <StackLayout Grid.Row="3" Orientation="Horizontal">
+            <Label Text="{Binding NextPaymentDue, StringFormat='Next: {0:MMM dd}'}"
+                   Style="{StaticResource Caption}"
+                   TextColor="{Binding PaymentDueColor}" />
+            <Label Text="{Binding MinimumPayment, StringFormat='{0:C}'}"
+                   Style="{StaticResource Caption}"
+                   HorizontalOptions="EndAndExpand" />
+        </StackLayout>
+    </Grid>
+</Frame>
+```
+
+### Insurance Claims List Item
+```xml
+<Grid Style="{StaticResource ClaimListItem}">
+    <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="Auto" />
+    </Grid.ColumnDefinitions>
+    
+    <Ellipse Grid.Column="0"
+             Fill="{Binding StatusColor}"
+             WidthRequest="12"
+             HeightRequest="12"
+             VerticalOptions="Center" />
+             
+    <StackLayout Grid.Column="1" Spacing="4">
+        <Label Text="{Binding ClaimNumber}"
+               Style="{StaticResource BodyTextBold}" />
+        <Label Text="{Binding Description}"
+               Style="{StaticResource Caption}"
+               LineBreakMode="TailTruncation" />
+        <Label Text="{Binding ClaimDate, StringFormat='Filed: {0:MMM dd, yyyy}'}"
+               Style="{StaticResource Caption}"
+               TextColor="{DynamicResource SecondaryTextColor}" />
+    </StackLayout>
+    
+    <StackLayout Grid.Column="2" HorizontalOptions="End">
+        <Label Text="{Binding ClaimAmount, StringFormat='{0:C}'}"
+               Style="{StaticResource CurrencySmall}"
+               HorizontalTextAlignment="End" />
+        <Label Text="{Binding Status}"
+               Style="{StaticResource Caption}"
+               TextColor="{Binding StatusColor}"
+               HorizontalTextAlignment="End" />
+    </StackLayout>
+</Grid>
+```
+
 This comprehensive UI/UX design guide ensures a consistent, professional, and accessible financial application that meets the highest standards for financial software while providing an excellent user experience across all supported platforms.

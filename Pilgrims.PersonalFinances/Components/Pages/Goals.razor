@@ -1,0 +1,370 @@
+@page "/goals"
+@using Pilgrims.PersonalFinances.Models
+@using Pilgrims.PersonalFinances.Models.Enums
+
+<PageTitle>Goals - Pilgrims Personal Finance</PageTitle>
+
+<!-- Particle Background -->
+<div class="fixed inset-0 overflow-hidden pointer-events-none">
+    <div class="absolute inset-0 bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 dark:from-gray-900 dark:via-emerald-900 dark:to-teal-900"></div>
+    <div class="particles-container">
+        @for (int i = 0; i < 25; i++)
+        {
+            <div class="particle" style="animation-delay: @(i * 0.15)s;"></div>
+        }
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="relative z-10 min-h-screen p-6">
+    <!-- Header Section -->
+    <div class="mb-8">
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h1 class="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+                        🎯 Financial Goals
+                    </h1>
+                    <p class="text-gray-600 dark:text-gray-300 mt-2">Track your progress towards financial freedom</p>
+                </div>
+                <button class="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-300">
+                    <span class="mr-2">➕</span> New Goal
+                </button>
+            </div>
+            
+            <!-- Goals Overview Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+                <div class="bg-gradient-to-r from-emerald-400 to-emerald-600 p-4 rounded-xl text-white">
+                    <div class="text-sm opacity-90">Active Goals</div>
+                    <div class="text-2xl font-bold">8</div>
+                    <div class="text-xs opacity-75 mt-1">🎯 5 on track</div>
+                </div>
+                <div class="bg-gradient-to-r from-teal-400 to-teal-600 p-4 rounded-xl text-white">
+                    <div class="text-sm opacity-90">Total Target</div>
+                    <div class="text-2xl font-bold">$485,000</div>
+                    <div class="text-xs opacity-75 mt-1">Across all goals</div>
+                </div>
+                <div class="bg-gradient-to-r from-cyan-400 to-cyan-600 p-4 rounded-xl text-white">
+                    <div class="text-sm opacity-90">Progress</div>
+                    <div class="text-2xl font-bold">62%</div>
+                    <div class="text-xs opacity-75 mt-1">$300,700 saved</div>
+                </div>
+                <div class="bg-gradient-to-r from-blue-400 to-blue-600 p-4 rounded-xl text-white">
+                    <div class="text-sm opacity-90">Monthly Savings</div>
+                    <div class="text-2xl font-bold">$3,250</div>
+                    <div class="text-xs opacity-75 mt-1">📈 +8% vs last month</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Goal Categories & Progress Overview -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Goal Categories -->
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
+                <span class="mr-2">📊</span> Goals by Category
+            </h3>
+            <div class="space-y-4">
+                @{
+                    var goalCategories = new[]
+                    {
+                        new { Name = "Emergency Fund", Current = 25000, Target = 30000, Progress = 83, Color = "from-red-400 to-red-600", Icon = "🚨" },
+                        new { Name = "Retirement", Current = 185000, Target = 250000, Progress = 74, Color = "from-blue-400 to-blue-600", Icon = "🏖️" },
+                        new { Name = "House Down Payment", Current = 65000, Target = 100000, Progress = 65, Color = "from-green-400 to-green-600", Icon = "🏠" },
+                        new { Name = "Vacation Fund", Current = 8500, Target = 15000, Progress = 57, Color = "from-purple-400 to-purple-600", Icon = "✈️" },
+                        new { Name = "Education Fund", Current = 12200, Target = 50000, Progress = 24, Color = "from-yellow-400 to-yellow-600", Icon = "🎓" },
+                        new { Name = "Investment Goals", Current = 5000, Target = 40000, Progress = 13, Color = "from-indigo-400 to-indigo-600", Icon = "📈" }
+                    };
+                }
+                @foreach (var category in goalCategories)
+                {
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center flex-1">
+                            <span class="text-2xl mr-3">@category.Icon</span>
+                            <span class="text-gray-700 dark:text-gray-300 flex-1">@category.Name</span>
+                            <div class="w-24 bg-gray-200 dark:bg-gray-600 rounded-full h-2 mx-3">
+                                <div class="bg-gradient-to-r @category.Color h-2 rounded-full transition-all duration-1000" 
+                                     style="width: @(category.Progress)%"></div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-semibold">@category.Progress%</div>
+                            <div class="text-xs text-gray-500">$@category.Current / $@category.Target</div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Monthly Savings Trend -->
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
+                <span class="mr-2">📈</span> Monthly Savings Trend
+            </h3>
+            <div class="h-48 flex items-end justify-between space-x-2">
+                @{
+                    var months = new[] { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+                    var savings = new[] { 2800, 3100, 2950, 3200, 3400, 3150, 3300, 3500, 3250, 3400, 3600, 3250 };
+                    var maxSavings = savings.Max();
+                }
+                @for (int i = 0; i < 12; i++)
+                {
+                    var height = (savings[i] / (double)maxSavings) * 100;
+                    var isCurrentMonth = i == 11;
+                    
+                    <div class="flex-1 flex flex-col items-center">
+                        <div class="@(isCurrentMonth ? "bg-gradient-to-t from-emerald-500 to-teal-600" : "bg-gradient-to-t from-gray-300 to-gray-500") rounded-t-lg transition-all duration-1000 hover:shadow-lg w-full" 
+                             style="height: @(height)%; animation-delay: @(i * 0.05)s;">
+                        </div>
+                        <span class="text-xs text-gray-500 mt-2">@months[i]</span>
+                        <span class="text-xs font-medium text-gray-700 dark:text-gray-300">$@savings[i]</span>
+                    </div>
+                }
+            </div>
+            
+            <div class="mt-4 p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-emerald-700 dark:text-emerald-300">Average Monthly Savings</span>
+                    <span class="font-semibold text-emerald-800 dark:text-emerald-200">$3,233</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Goals List -->
+    <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 mb-8">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-white flex items-center">
+                <span class="mr-2">🎯</span> Active Goals
+            </h3>
+            <div class="flex items-center space-x-2">
+                <button class="px-3 py-1 text-sm bg-emerald-100 text-emerald-800 rounded-full">All</button>
+                <button class="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded-full">Short-term</button>
+                <button class="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded-full">Long-term</button>
+                <button class="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded-full">Priority</button>
+            </div>
+        </div>
+        
+        <div class="space-y-4">
+            @{
+                var goals = new[]
+                {
+                    new { Name = "Emergency Fund (6 months)", Category = "Safety", Current = 25000, Target = 30000, MonthlyContribution = 500, TargetDate = "Mar 2024", Priority = "High", Status = "On Track", Icon = "🚨", Progress = 83 },
+                    new { Name = "Retirement Savings", Category = "Long-term", Current = 185000, Target = 250000, MonthlyContribution = 1200, TargetDate = "Dec 2025", Priority = "High", Status = "On Track", Icon = "🏖️", Progress = 74 },
+                    new { Name = "House Down Payment", Category = "Major Purchase", Current = 65000, Target = 100000, MonthlyContribution = 800, TargetDate = "Jun 2025", Priority = "Medium", Status = "On Track", Icon = "🏠", Progress = 65 },
+                    new { Name = "Dream Vacation to Japan", Category = "Lifestyle", Current = 8500, Target = 15000, MonthlyContribution = 300, TargetDate = "Sep 2024", Priority = "Low", Status = "On Track", Icon = "✈️", Progress = 57 },
+                    new { Name = "Kids Education Fund", Category = "Education", Current = 12200, Target = 50000, MonthlyContribution = 400, TargetDate = "Aug 2030", Priority = "Medium", Status = "Behind", Icon = "🎓", Progress = 24 },
+                    new { Name = "Investment Portfolio", Category = "Wealth Building", Current = 5000, Target = 40000, MonthlyContribution = 250, TargetDate = "Dec 2027", Priority = "Medium", Status = "Behind", Icon = "📈", Progress = 13 },
+                    new { Name = "New Car Fund", Category = "Transportation", Current = 15000, Target = 35000, MonthlyContribution = 600, TargetDate = "Jan 2025", Priority = "Low", Status = "Ahead", Icon = "🚗", Progress = 43 },
+                    new { Name = "Home Renovation", Category = "Home Improvement", Current = 8000, Target = 25000, MonthlyContribution = 350, TargetDate = "May 2025", Priority = "Low", Status = "On Track", Icon = "🔨", Progress = 32 }
+                };
+            }
+            
+            @foreach (var goal in goals)
+            {
+                var statusColor = goal.Status switch
+                {
+                    "On Track" => "text-green-500",
+                    "Ahead" => "text-blue-500",
+                    "Behind" => "text-red-500",
+                    _ => "text-gray-500"
+                };
+                
+                var priorityColor = goal.Priority switch
+                {
+                    "High" => "bg-red-100 text-red-800",
+                    "Medium" => "bg-yellow-100 text-yellow-800",
+                    "Low" => "bg-green-100 text-green-800",
+                    _ => "bg-gray-100 text-gray-800"
+                };
+                
+                <div class="p-4 bg-white/50 dark:bg-gray-700/50 rounded-xl hover:bg-white/70 dark:hover:bg-gray-700/70 transition-all duration-200 cursor-pointer group">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-gradient-to-r from-emerald-100 to-teal-200 dark:from-emerald-600 dark:to-teal-700 rounded-full flex items-center justify-center text-2xl mr-4 group-hover:scale-110 transition-transform duration-200">
+                                @goal.Icon
+                            </div>
+                            <div>
+                                <h4 class="font-medium text-gray-800 dark:text-white">@goal.Name</h4>
+                                <p class="text-sm text-gray-500">@goal.Category • Target: @goal.TargetDate</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="px-2 py-1 text-xs @priorityColor rounded-full">@goal.Priority</span>
+                            <span class="text-sm @statusColor font-medium">@goal.Status</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-sm text-gray-600 dark:text-gray-300">Progress: @goal.Progress%</span>
+                            <span class="text-sm font-medium text-gray-800 dark:text-white">$@goal.Current / $@goal.Target</span>
+                        </div>
+                        <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                            <div class="bg-gradient-to-r from-emerald-400 to-teal-600 h-2 rounded-full transition-all duration-1000" 
+                                 style="width: @(goal.Progress)%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between items-center text-sm text-gray-600 dark:text-gray-300">
+                        <span>Monthly: $@goal.MonthlyContribution</span>
+                        <span>Remaining: $@(goal.Target - goal.Current)</span>
+                        <span>@((goal.Target - goal.Current) / goal.MonthlyContribution) months to go</span>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Goal Insights & Recommendations -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Goal Insights -->
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
+                <span class="mr-2">💡</span> Goal Insights
+            </h3>
+            <div class="space-y-4">
+                <div class="flex items-start space-x-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <span class="text-green-600 text-xl">🎉</span>
+                    <div>
+                        <h4 class="font-medium text-green-800 dark:text-green-300">Great Progress!</h4>
+                        <p class="text-sm text-green-600 dark:text-green-400">You're ahead of schedule on your car fund. Consider increasing your house down payment contribution.</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start space-x-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <span class="text-blue-600 text-xl">📊</span>
+                    <div>
+                        <h4 class="font-medium text-blue-800 dark:text-blue-300">Optimization Opportunity</h4>
+                        <p class="text-sm text-blue-600 dark:text-blue-400">Your emergency fund is almost complete. You could redirect $300/month to other goals soon.</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start space-x-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                    <span class="text-yellow-600 text-xl">⚠️</span>
+                    <div>
+                        <h4 class="font-medium text-yellow-800 dark:text-yellow-300">Attention Needed</h4>
+                        <p class="text-sm text-yellow-600 dark:text-yellow-400">Your investment portfolio goal is behind schedule. Consider increasing monthly contributions by $100.</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start space-x-3 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                    <span class="text-purple-600 text-xl">🎯</span>
+                    <div>
+                        <h4 class="font-medium text-purple-800 dark:text-purple-300">Goal Suggestion</h4>
+                        <p class="text-sm text-purple-600 dark:text-purple-400">Consider setting up a goal for tax savings. You could benefit from maximizing your IRA contributions.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Achievement Milestones -->
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
+                <span class="mr-2">🏆</span> Recent Achievements
+            </h3>
+            <div class="space-y-4">
+                @{
+                    var achievements = new[]
+                    {
+                        new { Title = "Emergency Fund Milestone", Description = "Reached 80% of emergency fund goal", Date = "Nov 2023", Icon = "🚨", Color = "text-red-500" },
+                        new { Title = "Consistent Saver", Description = "Saved for 12 consecutive months", Date = "Oct 2023", Icon = "💪", Color = "text-blue-500" },
+                        new { Title = "Goal Crusher", Description = "Completed vacation fund goal early", Date = "Sep 2023", Icon = "✈️", Color = "text-green-500" },
+                        new { Title = "Investment Starter", Description = "Made first investment contribution", Date = "Aug 2023", Icon = "📈", Color = "text-purple-500" },
+                        new { Title = "Budget Master", Description = "Stayed under budget for 6 months", Date = "Jul 2023", Icon = "🎯", Color = "text-yellow-500" }
+                    };
+                }
+                
+                @foreach (var achievement in achievements)
+                {
+                    <div class="flex items-center space-x-3 p-3 bg-white/50 dark:bg-gray-700/50 rounded-lg">
+                        <div class="w-10 h-10 bg-gradient-to-r from-emerald-100 to-teal-200 dark:from-emerald-600 dark:to-teal-700 rounded-full flex items-center justify-center text-lg">
+                            @achievement.Icon
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-medium text-gray-800 dark:text-white">@achievement.Title</h4>
+                            <p class="text-sm text-gray-500">@achievement.Description</p>
+                        </div>
+                        <span class="text-xs text-gray-400">@achievement.Date</span>
+                    </div>
+                }
+            </div>
+            
+            <div class="mt-4 p-3 bg-gradient-to-r from-emerald-100 to-teal-100 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-lg text-center">
+                <div class="text-2xl mb-1">🏆</div>
+                <div class="font-semibold text-emerald-800 dark:text-emerald-300">Next Milestone</div>
+                <div class="text-sm text-emerald-600 dark:text-emerald-400">Complete Emergency Fund (17 days)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 text-center hover:shadow-xl transition-all duration-300 cursor-pointer">
+            <div class="text-4xl mb-3">🎯</div>
+            <h4 class="font-semibold text-gray-800 dark:text-white mb-2">Set New Goal</h4>
+            <p class="text-sm text-gray-600 dark:text-gray-300">Create a new financial goal</p>
+        </div>
+        
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 text-center hover:shadow-xl transition-all duration-300 cursor-pointer">
+            <div class="text-4xl mb-3">💰</div>
+            <h4 class="font-semibold text-gray-800 dark:text-white mb-2">Make Contribution</h4>
+            <p class="text-sm text-gray-600 dark:text-gray-300">Add money to your goals</p>
+        </div>
+        
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 text-center hover:shadow-xl transition-all duration-300 cursor-pointer">
+            <div class="text-4xl mb-3">📊</div>
+            <h4 class="font-semibold text-gray-800 dark:text-white mb-2">Goal Calculator</h4>
+            <p class="text-sm text-gray-600 dark:text-gray-300">Calculate savings needed</p>
+        </div>
+        
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 text-center hover:shadow-xl transition-all duration-300 cursor-pointer">
+            <div class="text-4xl mb-3">🏆</div>
+            <h4 class="font-semibold text-gray-800 dark:text-white mb-2">View Achievements</h4>
+            <p class="text-sm text-gray-600 dark:text-gray-300">See all your milestones</p>
+        </div>
+    </div>
+</div>
+
+<style>
+    .particles-container {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .particle {
+        position: absolute;
+        width: 3px;
+        height: 3px;
+        background: linear-gradient(45deg, #10b981, #14b8a6);
+        border-radius: 50%;
+        animation: float 8s ease-in-out infinite;
+        opacity: 0.7;
+    }
+
+    .particle:nth-child(odd) {
+        left: 15%;
+        animation-duration: 10s;
+    }
+
+    .particle:nth-child(even) {
+        right: 15%;
+        animation-duration: 12s;
+    }
+
+    @@keyframes float {
+        0%, 100% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+        10% { opacity: 0.7; }
+        90% { opacity: 0.7; }
+        50% { transform: translateY(-10vh) rotate(180deg); }
+    }
+
+    .glass-card {
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    }
+</style>
