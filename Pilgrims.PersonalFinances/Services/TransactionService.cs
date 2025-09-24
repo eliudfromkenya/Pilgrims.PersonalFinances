@@ -408,7 +408,7 @@ public class TransactionService : ITransactionService
         return template;
     }
 
-    public async Task<bool> DeleteTransactionTemplateAsync(string templateId)
+    public async Task<bool> DeleteTransactionTemplateAsync(string? templateId)
     {
         // Mock implementation - replace with actual database operations
         // In a real implementation:

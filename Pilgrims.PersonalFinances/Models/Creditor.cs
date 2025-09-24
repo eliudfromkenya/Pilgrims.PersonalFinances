@@ -60,8 +60,7 @@ namespace Pilgrims.PersonalFinances.Models
 
         /// <summary>
         /// Date when the creditor record was created
-        /// </summary>
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        /// Audit fields - CreatedAt and UpdatedAt are inherited from BaseEntity
 
         /// <summary>
         /// Date when the creditor record was last updated

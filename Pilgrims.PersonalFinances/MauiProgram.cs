@@ -34,6 +34,10 @@ namespace Pilgrims.PersonalFinances
             builder.Services.AddScoped<IAccountService, AccountService>();
             builder.Services.AddScoped<ITransactionService, TransactionService>();
             builder.Services.AddScoped<IWindowService, WindowService>();
+            builder.Services.AddScoped<IScheduledTransactionService, ScheduledTransactionService>();
+            builder.Services.AddScoped<INotificationService, NotificationService>();
+            builder.Services.AddSingleton<IScheduledTransactionBackgroundService, ScheduledTransactionBackgroundService>();
+            builder.Services.AddHostedService<ScheduledTransactionBackgroundService>();
 
 #if DEBUG
     		builder.Services.AddBlazorWebViewDeveloperTools();

@@ -1,0 +1,252 @@
+@using Pilgrims.PersonalFinances.Models
+@using Pilgrims.PersonalFinances.Services.Interfaces
+@inject INotificationService NotificationService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@implements IDisposable
+
+<div class="relative">
+    <!-- Notification Bell Button -->
+    <button @onclick="ToggleDropdown" 
+            class="relative p-2 text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                  d="M15 17h5l-5 5v-5zM9 7H4l5-5v5z M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        
+        <!-- Notification Badge -->
+        @if (unreadCount > 0)
+        {
+            <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
+                @(unreadCount > 99 ? "99+" : unreadCount.ToString())
+            </span>
+        }
+    </button>
+
+    <!-- Dropdown Menu -->
+    @if (showDropdown)
+    {
+        <div class="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 max-h-96 overflow-hidden">
+            <!-- Header -->
+            <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Notifications</h3>
+                <div class="flex items-center space-x-2">
+                    @if (unreadCount > 0)
+                    {
+                        <button @onclick="MarkAllAsRead" 
+                                class="text-xs text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300">
+                            Mark all read
+                        </button>
+                    }
+                    <button @onclick="ViewAllNotifications" 
+                            class="text-xs text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300">
+                        View all
+                    </button>
+                </div>
+            </div>
+
+            <!-- Notifications List -->
+            <div class="max-h-64 overflow-y-auto">
+                @if (recentNotifications.Any())
+                {
+                    @foreach (var notification in recentNotifications.Take(5))
+                    {
+                        <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer @(notification.IsRead ? "opacity-75" : "")"
+                             @onclick="() => HandleNotificationClick(notification)">
+                            <div class="flex items-start space-x-3">
+                                <!-- Icon -->
+                                <div class="flex-shrink-0 p-1 rounded-full @GetNotificationIconBg(notification.NotificationType)">
+                                    @((MarkupString)GetNotificationIcon(notification.NotificationType))
+                                </div>
+                                
+                                <!-- Content -->
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center space-x-2">
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white truncate @(notification.IsRead ? "" : "font-bold")">
+                                            @notification.Title
+                                        </p>
+                                        @if (!notification.IsRead)
+                                        {
+                                            <span class="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></span>
+                                        }
+                                    </div>
+                                    <p class="text-xs text-gray-600 dark:text-gray-400 truncate">@notification.Message</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">@GetRelativeTime(notification.ScheduledDate)</p>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="px-4 py-8 text-center">
+                        <div class="text-4xl mb-2">🔕</div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">No notifications</p>
+                    </div>
+                }
+            </div>
+
+            <!-- Footer -->
+            @if (recentNotifications.Count > 5)
+            {
+                <div class="px-4 py-3 border-t border-gray-200 dark:border-gray-700 text-center">
+                    <button @onclick="ViewAllNotifications" 
+                            class="text-sm text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300">
+                        View @(recentNotifications.Count - 5) more notifications
+                    </button>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<!-- Overlay to close dropdown -->
+@if (showDropdown)
+{
+    <div class="fixed inset-0 z-40" @onclick="CloseDropdown"></div>
+}
+
+@code {
+    private List<TransactionNotification> recentNotifications = new();
+    private int unreadCount = 0;
+    private bool showDropdown = false;
+    private Timer? refreshTimer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadNotifications();
+        
+        // Set up auto-refresh every 30 seconds
+        refreshTimer = new Timer(async _ => await InvokeAsync(LoadNotifications), null, TimeSpan.Zero, TimeSpan.FromSeconds(30));
+    }
+
+    private async Task LoadNotifications()
+    {
+        try
+        {
+            recentNotifications = await NotificationService.GetRecentNotificationsAsync("10");
+            unreadCount = await NotificationService.GetUnreadCountAsync();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            // Silently handle errors in background refresh
+            Console.WriteLine($"Error loading notifications: {ex.Message}");
+        }
+    }
+
+    private void ToggleDropdown()
+    {
+        showDropdown = !showDropdown;
+    }
+
+    private void CloseDropdown()
+    {
+        showDropdown = false;
+    }
+
+    private async Task HandleNotificationClick(TransactionNotification notification)
+    {
+        // Mark as read if not already read
+        if (!notification.IsRead)
+        {
+            try
+            {
+                await NotificationService.MarkAsReadAsync(notification.Id);
+                notification.IsRead = true;
+                unreadCount = Math.Max(0, unreadCount - 1);
+            }
+            catch (Exception ex)
+            {
+                await JSRuntime.InvokeVoidAsync("showToast", $"Error marking notification as read: {ex.Message}", "error");
+            }
+        }
+
+        // Navigate based on notification type
+        if (notification.NotificationType == Models.Enums.AppNotificationType.SystemAlert && notification.ScheduledTransaction != null)
+        {
+            Navigation.NavigateTo($"/recurring-transactions/edit/{notification.ScheduledTransaction.Id}");
+        }
+        else if (notification.ScheduledTransaction != null)
+        {
+            Navigation.NavigateTo($"/recurring-transactions");
+        }
+        else
+        {
+            Navigation.NavigateTo("/notifications");
+        }
+
+        CloseDropdown();
+    }
+
+    private async Task MarkAllAsRead()
+    {
+        try
+        {
+            await NotificationService.MarkAllAsReadAsync();
+            foreach (var notification in recentNotifications)
+            {
+                notification.IsRead = true;
+            }
+            unreadCount = 0;
+            await JSRuntime.InvokeVoidAsync("showToast", "All notifications marked as read", "success");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("showToast", $"Error marking all notifications as read: {ex.Message}", "error");
+        }
+    }
+
+    private void ViewAllNotifications()
+    {
+        Navigation.NavigateTo("/notifications");
+        CloseDropdown();
+    }
+
+    private string GetNotificationIcon(Models.Enums.AppNotificationType type)
+    {
+        return type switch
+        {
+            Models.Enums.AppNotificationType.BillReminder => "<svg class=\"w-4 h-4\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z\"></path></svg>",
+            Models.Enums.AppNotificationType.BudgetAlert => "<svg class=\"w-4 h-4\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z\"></path></svg>",
+            Models.Enums.AppNotificationType.SystemAlert => "<svg class=\"w-4 h-4\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z\"></path></svg>",
+            Models.Enums.AppNotificationType.DebtPayment => "<svg class=\"w-4 h-4\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M5 13l4 4L19 7\"></path></svg>",
+            Models.Enums.AppNotificationType.IncomeExpectation => "<svg class=\"w-4 h-4\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z\"></path></svg>",
+            _ => "<svg class=\"w-4 h-4\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M15 17h5l-5 5v-5zM9 7H4l5-5v5z\"></path></svg>"
+        };
+    }
+
+    private string GetNotificationIconBg(Models.Enums.AppNotificationType type)
+    {
+        return type switch
+        {
+            Models.Enums.AppNotificationType.BillReminder => "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400",
+            Models.Enums.AppNotificationType.BudgetAlert => "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400",
+            Models.Enums.AppNotificationType.SystemAlert => "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400",
+            Models.Enums.AppNotificationType.DebtPayment => "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400",
+            Models.Enums.AppNotificationType.IncomeExpectation => "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400",
+            _ => "bg-gray-100 dark:bg-gray-900/30 text-gray-600 dark:text-gray-400"
+        };
+    }
+
+    private string GetRelativeTime(DateTime date)
+    {
+        var timeSpan = DateTime.Now - date;
+        
+        if (timeSpan.TotalMinutes < 1)
+            return "Just now";
+        if (timeSpan.TotalMinutes < 60)
+            return $"{(int)timeSpan.TotalMinutes}m ago";
+        if (timeSpan.TotalHours < 24)
+            return $"{(int)timeSpan.TotalHours}h ago";
+        if (timeSpan.TotalDays < 7)
+            return $"{(int)timeSpan.TotalDays}d ago";
+        
+        return date.ToString("MMM dd");
+    }
+
+    public void Dispose()
+    {
+        refreshTimer?.Dispose();
+    }
+}

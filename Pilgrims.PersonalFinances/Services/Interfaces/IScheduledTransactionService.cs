@@ -25,14 +25,18 @@ public interface IScheduledTransactionService
 
     // Due Date Management
     Task<IEnumerable<ScheduledTransaction>> GetDueScheduledTransactionsAsync(DateTime? asOfDate = null);
+    Task<IEnumerable<ScheduledTransaction>> GetDueTransactionsAsync(DateTime? asOfDate = null);
     Task<IEnumerable<ScheduledTransaction>> GetOverdueScheduledTransactionsAsync();
+    Task<IEnumerable<ScheduledTransaction>> GetOverdueTransactionsAsync();
     Task<IEnumerable<ScheduledTransaction>> GetUpcomingScheduledTransactionsAsync(int daysAhead = 7);
+    Task<IEnumerable<ScheduledTransaction>> GetUpcomingTransactionsAsync(int daysAhead = 7);
 
     // Transaction Processing
     Task<Transaction> ProcessScheduledTransactionAsync(string scheduledTransactionId, DateTime? processDate = null);
     Task<IEnumerable<Transaction>> ProcessDueScheduledTransactionsAsync(DateTime? asOfDate = null);
     Task<bool> SkipScheduledTransactionOccurrenceAsync(string scheduledTransactionId, DateTime skipDate);
     Task<bool> UnskipScheduledTransactionOccurrenceAsync(string scheduledTransactionId, DateTime unskipDate);
+    Task<bool> MarkAsProcessedAsync(string scheduledTransactionId);
 
     // Notification Management
     Task<IEnumerable<TransactionNotification>> GetNotificationsForScheduledTransactionAsync(string scheduledTransactionId);
@@ -56,4 +60,10 @@ public interface IScheduledTransactionService
     Task<List<string>> ValidateScheduledTransactionAsync(ScheduledTransaction scheduledTransaction);
     Task<DateTime?> CalculateNextDueDateAsync(string scheduledTransactionId);
     Task<IEnumerable<DateTime>> GetProjectedDatesAsync(string scheduledTransactionId, int monthsAhead = 12);
+
+    // Additional methods used by Razor components
+    Task<Transaction> ProcessDueTransactionAsync(string scheduledTransactionId);
+    Task<bool> PauseAsync(string scheduledTransactionId);
+    Task<bool> ResumeAsync(string scheduledTransactionId);
+    Task<bool> DeleteAsync(string scheduledTransactionId);
 }

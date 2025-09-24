@@ -382,7 +382,7 @@ public class ScheduledTransactionService : IScheduledTransactionService
             {
                 var existingOverdueNotification = await _context.TransactionNotifications
                     .AnyAsync(tn => tn.ScheduledTransactionId == scheduledTransaction.Id &&
-                                   tn.NotificationType == NotificationType.Overdue &&
+                                   tn.NotificationType == Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.BudgetAlert &&
                                    !tn.IsSent);
 
                 if (!existingOverdueNotification)
@@ -401,7 +401,7 @@ public class ScheduledTransactionService : IScheduledTransactionService
                     {
                         var existingReminder = await _context.TransactionNotifications
                             .AnyAsync(tn => tn.ScheduledTransactionId == scheduledTransaction.Id &&
-                                           tn.NotificationType == NotificationType.Reminder &&
+                                           tn.NotificationType == Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.BillReminder &&
                                            tn.ScheduledDate.Date == reminderDate.Date);
 
                         if (!existingReminder)
@@ -658,14 +658,77 @@ public class ScheduledTransactionService : IScheduledTransactionService
             case NotificationTiming.OneWeekBefore:
                 reminderDates.Add(dueDate.AddDays(-7));
                 break;
-            case NotificationTiming.Multiple:
-                reminderDates.Add(dueDate.AddDays(-7));
-                reminderDates.Add(dueDate.AddDays(-3));
-                reminderDates.Add(dueDate.AddDays(-1));
-                break;
+
         }
 
         return reminderDates.Where(d => d >= DateTime.Today).ToList();
+    }
+
+    #endregion
+
+    #region Additional Interface Methods
+
+    public async Task<IEnumerable<ScheduledTransaction>> GetDueTransactionsAsync(DateTime? asOfDate = null)
+    {
+        return await GetDueScheduledTransactionsAsync(asOfDate);
+    }
+
+    public async Task<IEnumerable<ScheduledTransaction>> GetOverdueTransactionsAsync()
+    {
+        return await GetOverdueScheduledTransactionsAsync();
+    }
+
+    public async Task<IEnumerable<ScheduledTransaction>> GetUpcomingTransactionsAsync(int daysAhead)
+    {
+        return await GetUpcomingScheduledTransactionsAsync(daysAhead);
+    }
+
+    public async Task<bool> MarkAsProcessedAsync(string scheduledTransactionId)
+    {
+        var scheduledTransaction = await GetScheduledTransactionByIdAsync(scheduledTransactionId);
+        if (scheduledTransaction == null)
+            return false;
+
+        scheduledTransaction.LastProcessedDate = DateTime.UtcNow;
+        scheduledTransaction.NextDueDate = scheduledTransaction.CalculateNextDueDate();
+        
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<Transaction> ProcessDueTransactionAsync(string scheduledTransactionId)
+    {
+        return await ProcessScheduledTransactionAsync(scheduledTransactionId);
+    }
+
+    public async Task<bool> PauseAsync(string scheduledTransactionId)
+    {
+        var scheduledTransaction = await GetScheduledTransactionByIdAsync(scheduledTransactionId);
+        if (scheduledTransaction == null)
+            return false;
+
+        scheduledTransaction.IsActive = false;
+        scheduledTransaction.MarkAsDirty();
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> ResumeAsync(string scheduledTransactionId)
+    {
+        var scheduledTransaction = await GetScheduledTransactionByIdAsync(scheduledTransactionId);
+        if (scheduledTransaction == null)
+            return false;
+
+        scheduledTransaction.IsActive = true;
+        scheduledTransaction.NextDueDate = scheduledTransaction.CalculateNextDueDate();
+        scheduledTransaction.MarkAsDirty();
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> DeleteAsync(string scheduledTransactionId)
+    {
+        return await DeleteScheduledTransactionAsync(scheduledTransactionId);
     }
 
     #endregion

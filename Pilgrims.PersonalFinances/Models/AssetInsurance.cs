@@ -94,8 +94,7 @@ namespace Pilgrims.PersonalFinances.Models
         public string? ScheduledTransactionId { get; set; }
         public virtual ScheduledTransaction? ScheduledTransaction { get; set; }
 
-        // Audit fields
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        // Audit fields - CreatedAt and UpdatedAt are inherited from BaseEntity
         // Audit fields - CreatedAt and UpdatedAt are inherited from BaseEntity
 
         // Calculated properties

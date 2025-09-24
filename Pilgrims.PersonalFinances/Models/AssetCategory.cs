@@ -28,8 +28,6 @@ namespace Pilgrims.PersonalFinances.Models
         // Category status
         public bool IsActive { get; set; } = true;
 
-        // Audit fields
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
         // Audit fields - CreatedAt and UpdatedAt are inherited from BaseEntity
 
         // Navigation properties

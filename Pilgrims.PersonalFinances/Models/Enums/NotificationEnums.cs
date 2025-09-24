@@ -3,7 +3,7 @@ namespace Pilgrims.PersonalFinances.Models.Enums
     /// <summary>
     /// Types of notifications in the system
     /// </summary>
-    public enum NotificationType
+    public enum AppNotificationType
     {
         BillReminder = 1,
         BudgetAlert = 2,
@@ -29,17 +29,6 @@ namespace Pilgrims.PersonalFinances.Models.Enums
         SystemNotification = 2,
         Email = 3,
         SMS = 4
-    }
-
-    /// <summary>
-    /// Notification priority levels
-    /// </summary>
-    public enum NotificationPriority
-    {
-        Low = 1,
-        Medium = 2,
-        High = 3,
-        Critical = 4
     }
 
     /// <summary>
@@ -76,5 +65,36 @@ namespace Pilgrims.PersonalFinances.Models.Enums
         Monthly = 4,
         Quarterly = 5,
         Yearly = 6
+    }
+
+    /// <summary>
+    /// Priority levels for notifications
+    /// </summary>
+    public enum NotificationPriority
+    {
+        /// <summary>
+        /// Low priority notification
+        /// </summary>
+        Low = 0,
+
+        /// <summary>
+        /// Normal priority notification
+        /// </summary>
+        Normal = 1,
+
+        /// <summary>
+        /// Medium priority notification
+        /// </summary>
+        Medium = 2,
+
+        /// <summary>
+        /// High priority notification
+        /// </summary>
+        High = 3,
+
+        /// <summary>
+        /// Critical priority notification
+        /// </summary>
+        Critical = 4
     }
 }

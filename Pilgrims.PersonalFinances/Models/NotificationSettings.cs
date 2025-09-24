@@ -10,7 +10,7 @@ namespace Pilgrims.PersonalFinances.Models
     public class NotificationSettings : BaseEntity
     {
         [Required]
-        public NotificationType NotificationType { get; set; }
+        public AppNotificationType NotificationType { get; set; }
 
         [Required]
         public bool IsEnabled { get; set; } = true;

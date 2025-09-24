@@ -1,0 +1,626 @@
+@page "/transactions/recurring/edit/{Id}"
+@using Pilgrims.PersonalFinances.Models
+@using Pilgrims.PersonalFinances.Models.Enums
+@using Pilgrims.PersonalFinances.Services.Interfaces
+@using Pilgrims.PersonalFinances.Services
+@inject IScheduledTransactionService ScheduledTransactionService
+@inject ITransactionService TransactionService
+@inject IAccountService AccountService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Edit Recurring Transaction - Pilgrims Personal Finance</PageTitle>
+
+<!-- Particle Background -->
+<div class="fixed inset-0 overflow-hidden pointer-events-none">
+    <div class="absolute inset-0 bg-gradient-to-br from-purple-50 via-indigo-50 to-blue-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900"></div>
+    <div class="particles-container">
+        @for (int i = 0; i < 25; i++)
+        {
+            <div class="particle" style="animation-delay: @(i * 0.15)s;"></div>
+        }
+    </div>
+</div>
+
+@if (isLoading)
+{
+    <div class="relative z-10 min-h-screen flex items-center justify-center">
+        <div class="glass-card p-8 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
+            <div class="flex items-center space-x-4">
+                <svg class="animate-spin h-8 w-8 text-purple-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span class="text-lg text-[var(--text-primary)]">Loading transaction...</span>
+            </div>
+        </div>
+    </div>
+}
+else if (transaction == null)
+{
+    <div class="relative z-10 min-h-screen flex items-center justify-center">
+        <div class="glass-card p-8 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 text-center">
+            <div class="text-6xl mb-4">❌</div>
+            <h1 class="text-2xl font-bold text-[var(--text-primary)] mb-2">Transaction Not Found</h1>
+            <p class="text-[var(--text-secondary)] mb-6">The recurring transaction you're looking for doesn't exist or has been deleted.</p>
+            <button @onclick="NavigateBack" class="px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-300">
+                Back to Recurring Transactions
+            </button>
+        </div>
+    </div>
+}
+else
+{
+    <!-- Main Content -->
+    <div class="relative z-10 min-h-screen p-6">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="glass-card p-6 rounded-2xl border border-[var(--border-color)] backdrop-blur-lg bg-[var(--card-bg)]">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-4xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                            ✏️ Edit Recurring Transaction
+                        </h1>
+                        <p class="text-[var(--text-secondary)] mt-2">Modify your automated transaction settings</p>
+                    </div>
+                    <button @onclick="NavigateBack" class="px-4 py-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modification Warning -->
+        <div class="max-w-4xl mx-auto mb-6">
+            <div class="glass-card p-4 rounded-xl border border-yellow-200 dark:border-yellow-800 bg-yellow-50/50 dark:bg-yellow-900/20">
+                <div class="flex items-start space-x-3">
+                    <div class="text-yellow-600 dark:text-yellow-400 text-xl">⚠️</div>
+                    <div>
+                        <h3 class="font-medium text-yellow-800 dark:text-yellow-200 mb-1">Modification Policy</h3>
+                        <p class="text-sm text-yellow-700 dark:text-yellow-300">
+                            Changes will apply to future occurrences only. Past transactions remain unchanged.
+                            @if (transaction.CurrentOccurrences > 0)
+                            {
+                                <span>This transaction has already generated @transaction.CurrentOccurrences occurrence(s).</span>
+                            }
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form -->
+        <div class="max-w-4xl mx-auto">
+            <EditForm Model="@transaction" OnValidSubmit="@HandleValidSubmit">
+                <DataAnnotationsValidator />
+                
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Main Form -->
+                    <div class="lg:col-span-2 space-y-6">
+                        <!-- Basic Information -->
+                        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
+                            <h2 class="text-xl font-semibold text-[var(--text-primary)] mb-4 flex items-center">
+                                <span class="mr-2">📝</span> Basic Information
+                            </h2>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-[var(--text-primary)] mb-2">Transaction Name *</label>
+                                    <InputText @bind-Value="transaction.Name" 
+                                              class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                              placeholder="e.g., Monthly Salary, Rent Payment" />
+                                    <ValidationMessage For="@(() => transaction.Name)" class="text-red-500 text-sm mt-1" />
+                                </div>
+                                
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-[var(--text-primary)] mb-2">Description</label>
+                                    <InputTextArea @bind-Value="transaction.Description" 
+                                                  class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                                  rows="3" placeholder="Optional description..." />
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-[var(--text-primary)] mb-2">Transaction Type *</label>
+                                    <InputSelect @bind-Value="transaction.TransactionType" 
+                                               class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                                        <option value="">Select Type</option>
+                                        <option value="@TransactionType.Income">Income</option>
+                                        <option value="@TransactionType.Expense">Expense</option>
+                                        <option value="@TransactionType.Transfer">Transfer</option>
+                                    </InputSelect>
+                                    <ValidationMessage For="@(() => transaction.TransactionType)" class="text-red-500 text-sm mt-1" />
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-[var(--text-primary)] mb-2">Amount *</label>
+                                    <InputNumber @bind-Value="transaction.Amount" 
+                                               class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                               placeholder="0.00" step="0.01" />
+                                    <ValidationMessage For="@(() => transaction.Amount)" class="text-red-500 text-sm mt-1" />
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-[var(--text-primary)] mb-2">Account *</label>
+                                    <InputSelect @bind-Value="transaction.AccountId" 
+                                               class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                                        <option value="">Select Account</option>
+                                        @foreach (var account in accounts)
+                                        {
+                                            <option value="@account.Id">@account.Name (@account.Balance.ToString("C"))</option>
+                                        }
+                                    </InputSelect>
+                                    <ValidationMessage For="@(() => transaction.AccountId)" class="text-red-500 text-sm mt-1" />
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-[var(--text-primary)] mb-2">Category</label>
+                                    <InputSelect @bind-Value="transaction.CategoryId" 
+                                               class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                                        <option value="">Select Category</option>
+                                        @foreach (var category in categories)
+                                        {
+                                            <option value="@category.Id">@category.Name</option>
+                                        }
+                                    </InputSelect>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recurrence Pattern -->
+                        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
+                            <h2 class="text-xl font-semibold text-[var(--text-primary)] mb-4 flex items-center">
+                                <span class="mr-2">🔄</span> Recurrence Pattern
+                            </h2>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-[var(--text-primary)] mb-2">Frequency *</label>
+                                    <InputSelect @bind-Value="transaction.RecurrenceType" @bind:after="OnRecurrencePatternChanged"
+                                               class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                                        <option value="">Select Frequency</option>
+                                        <option value="@RecurrenceType.Daily">Daily</option>
+                                        <option value="@RecurrenceType.Weekly">Weekly</option>
+                                        <option value="@RecurrenceType.Monthly">Monthly</option>
+                                        <option value="@RecurrenceType.Quarterly">Quarterly</option>
+                                        <option value="@RecurrenceType.SemiAnnually">Semi-Annually</option>
+                                        <option value="@RecurrenceType.Annually">Annually</option>
+                                        <option value="@RecurrenceType.Custom">Custom</option>
+                                    </InputSelect>
+                                    <ValidationMessage For="@(() => transaction.RecurrenceType)" class="text-red-500 text-sm mt-1" />
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-[var(--text-primary)] mb-2">Start Date *</label>
+                                    <InputDate @bind-Value="transaction.StartDate" 
+                                             class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+                                    <ValidationMessage For="@(() => transaction.StartDate)" class="text-red-500 text-sm mt-1" />
+                                </div>
+                            </div>
+
+                            <!-- Custom Recurrence Options -->
+                            @if (transaction.RecurrenceType == RecurrenceType.Custom)
+                            {
+                                <div class="mt-4 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                                    <h3 class="font-medium text-[var(--text-primary)] mb-3">Custom Recurrence Settings</h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-[var(--text-primary)] mb-2">Interval</label>
+                                            <InputNumber @bind-Value="transaction.RecurrenceInterval" 
+                                                       class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                                       min="1" />
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-[var(--text-primary)] mb-2">Unit</label>
+                                            <select @bind="customRecurrenceUnit" 
+                                                   class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                                                <option value="Days">Days</option>
+                                                <option value="Weeks">Weeks</option>
+                                                <option value="Months">Months</option>
+                                                <option value="Years">Years</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+
+                            <!-- Weekly Options -->
+                            @if (transaction.RecurrenceType == RecurrenceType.Weekly)
+                            {
+                                <div class="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                                    <h3 class="font-medium text-[var(--text-primary)] mb-3">Weekly Settings</h3>
+                                    <div class="flex flex-wrap gap-2">
+                                        @foreach (DayOfWeek day in Enum.GetValues<DayOfWeek>())
+                                        {
+                                            <label class="flex items-center">
+                                                <input type="checkbox" @bind="selectedDays[day]" class="mr-2 rounded" />
+                                                <span class="text-sm">@day</span>
+                                            </label>
+                                        }
+                                    </div>
+                                </div>
+                            }
+
+                            <!-- Monthly Options -->
+                            @if (transaction.RecurrenceType == RecurrenceType.Monthly)
+                            {
+                                <div class="mt-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                                    <h3 class="font-medium text-[var(--text-primary)] mb-3">Monthly Settings</h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-[var(--text-primary)] mb-2">Day of Month</label>
+                                            <InputNumber @bind-Value="transaction.DayOfMonth" 
+                                                       class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                                       min="1" max="31" />
+                                        </div>
+                                        <div class="flex items-center">
+                                            <label class="flex items-center">
+                                                <input type="checkbox" @bind="transaction.AdjustForWeekends" class="mr-2 rounded" />
+                                                <span class="text-sm">Adjust for weekends</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- End Conditions -->
+                        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
+                            <h2 class="text-xl font-semibold text-[var(--text-primary)] mb-4 flex items-center">
+                                <span class="mr-2">🏁</span> End Conditions
+                            </h2>
+                            
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-[var(--text-primary)] mb-2">End Type</label>
+                                    <InputSelect @bind-Value="transaction.EndType" @bind:after="OnEndTypeChanged"
+                                               class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                                        <option value="@RecurrenceEndType.Never">Never (Indefinite)</option>
+                                        <option value="@RecurrenceEndType.EndDate">End on specific date</option>
+                                        <option value="@RecurrenceEndType.AfterOccurrences">After number of occurrences</option>
+                                    </InputSelect>
+                                </div>
+                                
+                                @if (transaction.EndType == RecurrenceEndType.EndDate)
+                                {
+                                    <div>
+                                        <label class="block text-sm font-medium text-[var(--text-primary)] mb-2">End Date</label>
+                                        <InputDate @bind-Value="transaction.EndDate" 
+                                                 class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+                                    </div>
+                                }
+                                
+                                @if (transaction.EndType == RecurrenceEndType.AfterOccurrences)
+                                {
+                                    <div>
+                                        <label class="block text-sm font-medium text-[var(--text-primary)] mb-2">Number of Occurrences</label>
+                                        <InputNumber @bind-Value="transaction.MaxOccurrences" 
+                                                   class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                                   min="1" />
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Processing Options -->
+                        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
+                            <h2 class="text-xl font-semibold text-[var(--text-primary)] mb-4 flex items-center">
+                                <span class="mr-2">⚙️</span> Processing Options
+                            </h2>
+                            
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-[var(--text-primary)] mb-2">Scheduling Mode</label>
+                                    <InputSelect @bind-Value="transaction.SchedulingMode" 
+                                               class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                                        <option value="@SchedulingMode.AutoPost">Auto-post (Automatic)</option>
+                                        <option value="@SchedulingMode.ManualApproval">Manual approval required</option>
+                                    </InputSelect>
+                                    <p class="text-sm text-[var(--text-secondary)] mt-1">
+                                        @if (transaction.SchedulingMode == SchedulingMode.AutoPost)
+                                        {
+                                            <span>Transactions will be created automatically on the due date.</span>
+                                        }
+                                        else
+                                        {
+                                            <span>You'll be notified to approve each transaction before it's created.</span>
+                                        }
+                                    </p>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-[var(--text-primary)] mb-2">Notification Timing</label>
+                                    <InputSelect @bind-Value="transaction.NotificationTiming" 
+                                               class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                                        <option value="@NotificationTiming.SameDay">Same day</option>
+                                        <option value="@NotificationTiming.OneDayBefore">1 day before</option>
+                                        <option value="@NotificationTiming.ThreeDaysBefore">3 days before</option>
+                                        <option value="@NotificationTiming.OneWeekBefore">1 week before</option>
+                                    </InputSelect>
+                                </div>
+                                
+                                <div class="flex items-center">
+                                    <label class="flex items-center">
+                                        <InputCheckbox @bind-Value="transaction.IsActive" class="mr-2 rounded" />
+                                        <span class="text-sm">Keep this recurring transaction active</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Preview Sidebar -->
+                    <div class="space-y-6">
+                        <!-- Current Status -->
+                        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
+                            <h3 class="text-lg font-semibold text-[var(--text-primary)] mb-4 flex items-center">
+                                <span class="mr-2">📊</span> Current Status
+                            </h3>
+                            
+                            <div class="space-y-3">
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-[var(--text-secondary)]">Status:</span>
+                                    <span class="text-sm font-medium @(transaction.IsActive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")">
+                                        @(transaction.IsActive ? "Active" : "Inactive")
+                                    </span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-[var(--text-secondary)]">Occurrences:</span>
+                                    <span class="text-sm font-medium">@transaction.CurrentOccurrences</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-[var(--text-secondary)]">Last Generated:</span>
+                                    <span class="text-sm font-medium">@(transaction.LastGeneratedDate?.ToString("MMM dd, yyyy") ?? "Never")</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-[var(--text-secondary)]">Next Due:</span>
+                                    <span class="text-sm font-medium">@(transaction.NextDueDate?.ToString("MMM dd, yyyy") ?? "Not calculated")</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Preview -->
+                        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
+                            <h3 class="text-lg font-semibold text-[var(--text-primary)] mb-4 flex items-center">
+                                <span class="mr-2">👁️</span> Preview
+                            </h3>
+                            
+                            <div class="space-y-3">
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-[var(--text-secondary)]">Name:</span>
+                                    <span class="text-sm font-medium">@(string.IsNullOrEmpty(transaction.Name) ? "Not set" : transaction.Name)</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-[var(--text-secondary)]">Amount:</span>
+                                    <span class="text-sm font-medium @GetAmountColorClass(transaction.TransactionType)">@transaction.Amount.ToString("C")</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-[var(--text-secondary)]">Frequency:</span>
+                                    <span class="text-sm font-medium">@GetFrequencyDescription()</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-[var(--text-secondary)]">End Condition:</span>
+                                    <span class="text-sm font-medium">@GetEndConditionDescription()</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="space-y-3">
+                            <button type="submit" disabled="@isSubmitting" 
+                                    class="w-full px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                                @if (isSubmitting)
+                                {
+                                    <span class="flex items-center justify-center">
+                                        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        Updating...
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span>Update Recurring Transaction</span>
+                                }
+                            </button>
+                            
+                            <button type="button" @onclick="NavigateBack" 
+                                    class="w-full px-6 py-3 border border-gray-300 dark:border-gray-600 text-[var(--text-primary)] rounded-xl hover:bg-white/5 transition-all duration-300">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public string Id { get; set; } = "";
+    
+    private ScheduledTransaction? transaction;
+    private List<Account> accounts = new();
+    private List<Category> categories = new();
+    private bool isLoading = true;
+    private bool isSubmitting = false;
+    private string customRecurrenceUnit = "Days";
+    private Dictionary<DayOfWeek, bool> selectedDays = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            transaction = await ScheduledTransactionService.GetScheduledTransactionByIdAsync(Id);
+            accounts = (await AccountService.GetAllAccountsAsync()).ToList();
+            categories = await TransactionService.GetCategoriesAsync();
+
+            if (transaction != null)
+            {
+                InitializeFormData();
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", "Error loading data:", ex.Message);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void InitializeFormData()
+    {
+        if (transaction == null) return;
+
+        // Initialize selected days for weekly pattern
+        InitializeSelectedDays();
+        if (transaction.RecurrenceType == RecurrenceType.Weekly && transaction.DaysOfWeek.HasValue)
+        {
+            // Convert bit flags back to selected days
+            for (int i = 0; i < 7; i++)
+            {
+                if ((transaction.DaysOfWeek.Value & (1 << i)) != 0)
+                {
+                    selectedDays[(DayOfWeek)i] = true;
+                }
+            }
+        }
+
+        // Initialize custom recurrence unit
+        if (transaction.RecurrenceType == RecurrenceType.Custom)
+        {
+            // Custom recurrence is handled through RecurrenceInterval and RecurrenceType
+            // Set default unit based on interval
+            if (transaction.RecurrenceInterval == 1)
+                customRecurrenceUnit = "Days";
+            else
+                customRecurrenceUnit = "Days"; // Default to days for custom intervals
+        }
+    }
+
+    private void InitializeSelectedDays()
+    {
+        foreach (DayOfWeek day in Enum.GetValues<DayOfWeek>())
+        {
+            selectedDays[day] = false;
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (transaction == null) return;
+
+        isSubmitting = true;
+        try
+        {
+            // Set weekly days if weekly pattern
+            if (transaction.RecurrenceType == RecurrenceType.Weekly)
+            {
+                var selectedDaysList = selectedDays.Where(kvp => kvp.Value).Select(kvp => kvp.Key).ToList();
+                if (selectedDaysList.Any())
+                {
+                    transaction.DaysOfWeek = selectedDaysList.Aggregate(0, (acc, day) => acc | (1 << (int)day));
+                }
+            }
+
+            // Set custom recurrence details
+            if (transaction.RecurrenceType == RecurrenceType.Custom)
+            {
+                // Custom recurrence is handled through RecurrenceInterval and RecurrenceType
+                // No additional properties needed
+            }
+
+            await ScheduledTransactionService.UpdateScheduledTransactionAsync(transaction);
+            await JSRuntime.InvokeVoidAsync("showToast", "Recurring transaction updated successfully!", "success");
+            Navigation.NavigateTo("/recurring-transactions");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("showToast", $"Error updating transaction: {ex.Message}", "error");
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void NavigateBack()
+    {
+        Navigation.NavigateTo("/recurring-transactions");
+    }
+
+    private void OnRecurrencePatternChanged()
+    {
+        if (transaction == null) return;
+
+        // Reset pattern-specific fields when pattern changes
+        transaction.DaysOfWeek = null;
+        transaction.DayOfMonth = null;
+        InitializeSelectedDays();
+    }
+
+    private void OnEndTypeChanged()
+    {
+        if (transaction == null) return;
+
+        // Reset end condition fields when type changes
+        if (transaction.EndType != RecurrenceEndType.EndDate)
+        {
+            transaction.EndDate = null;
+        }
+        if (transaction.EndType != RecurrenceEndType.AfterOccurrences)
+        {
+            transaction.MaxOccurrences = null;
+        }
+    }
+
+    private string GetFrequencyDescription()
+    {
+        if (transaction == null) return "Not set";
+
+        return transaction.RecurrenceType switch
+        {
+            RecurrenceType.Daily => "Daily",
+            RecurrenceType.Weekly => "Weekly",
+            RecurrenceType.Monthly => "Monthly",
+            RecurrenceType.Quarterly => "Quarterly",
+            RecurrenceType.SemiAnnually => "Semi-Annually",
+            RecurrenceType.Annually => "Annually",
+            RecurrenceType.Custom => $"Every {transaction.RecurrenceInterval} {customRecurrenceUnit}",
+            _ => "Not set"
+        };
+    }
+
+    private string GetEndConditionDescription()
+    {
+        if (transaction == null) return "Not set";
+
+        return transaction.EndType switch
+        {
+            RecurrenceEndType.Never => "Never ends",
+            RecurrenceEndType.EndDate => transaction.EndDate?.ToString("MMM dd, yyyy") ?? "Not set",
+            RecurrenceEndType.AfterOccurrences => $"After {transaction.MaxOccurrences} occurrences",
+            _ => "Not set"
+        };
+    }
+
+    private string GetAmountColorClass(TransactionType type)
+    {
+        return type switch
+        {
+            TransactionType.Income => "text-green-600 dark:text-green-400",
+            TransactionType.Expense => "text-red-600 dark:text-red-400",
+            TransactionType.Transfer => "text-blue-600 dark:text-blue-400",
+            _ => "text-[var(--text-primary)]"
+        };
+    }
+}

@@ -38,7 +38,7 @@ namespace Pilgrims.PersonalFinances.Models
         /// Type of notification
         /// </summary>
         [Required]
-        public NotificationType NotificationType { get; set; }
+        public AppNotificationType NotificationType { get; set; }
 
         /// <summary>
         /// When the notification should be sent
@@ -67,9 +67,10 @@ namespace Pilgrims.PersonalFinances.Models
         public bool IsDismissed { get; set; } = false;
 
         /// <summary>
-        /// Priority level of the notification
-        /// </summary>
-        public NotificationPriority Priority { get; set; } = NotificationPriority.Normal;
+    /// Priority level of the notification
+    /// </summary>
+    [Required]
+    public Enums.NotificationPriority Priority { get; set; } = Enums.NotificationPriority.Normal;
 
         /// <summary>
         /// Additional data for the notification (JSON)
@@ -263,7 +264,7 @@ namespace Pilgrims.PersonalFinances.Models
                 ScheduledTransactionId = scheduledTransaction.Id,
                 Title = $"Upcoming Transaction: {scheduledTransaction.Name}",
                 Message = $"Your scheduled transaction '{scheduledTransaction.Name}' for {scheduledTransaction.FormattedAmount} is due on {scheduledTransaction.NextDueDate?.ToString("MMM dd, yyyy")}.",
-                NotificationType = NotificationType.Reminder,
+                NotificationType = Enums.AppNotificationType.BillReminder,
                 ScheduledDate = reminderDate,
                 Priority = NotificationPriority.Normal
             };
@@ -281,7 +282,7 @@ namespace Pilgrims.PersonalFinances.Models
                 ScheduledTransactionId = scheduledTransaction.Id,
                 Title = $"Overdue Transaction: {scheduledTransaction.Name}",
                 Message = $"Your scheduled transaction '{scheduledTransaction.Name}' for {scheduledTransaction.FormattedAmount} was due on {scheduledTransaction.NextDueDate?.ToString("MMM dd, yyyy")} and is now overdue.",
-                NotificationType = NotificationType.Overdue,
+                NotificationType = Enums.AppNotificationType.BudgetAlert,
                 ScheduledDate = DateTime.Now,
                 Priority = NotificationPriority.High
             };
@@ -299,7 +300,7 @@ namespace Pilgrims.PersonalFinances.Models
                 ScheduledTransactionId = scheduledTransaction.Id,
                 Title = $"Approval Required: {scheduledTransaction.Name}",
                 Message = $"Your scheduled transaction '{scheduledTransaction.Name}' for {scheduledTransaction.FormattedAmount} is ready to be created. Please review and approve.",
-                NotificationType = NotificationType.ApprovalRequest,
+                NotificationType = Enums.AppNotificationType.SystemAlert,
                 ScheduledDate = DateTime.Now,
                 Priority = NotificationPriority.High
             };
@@ -318,7 +319,7 @@ namespace Pilgrims.PersonalFinances.Models
                 ScheduledTransactionId = scheduledTransaction.Id,
                 Title = $"Transaction Created: {scheduledTransaction.Name}",
                 Message = $"Your scheduled transaction '{scheduledTransaction.Name}' for {scheduledTransaction.FormattedAmount} has been automatically created on {createdTransaction.Date:MMM dd, yyyy}.",
-                NotificationType = NotificationType.TransactionCreated,
+                NotificationType = Enums.AppNotificationType.SystemAlert,
                 ScheduledDate = DateTime.Now,
                 Priority = NotificationPriority.Normal
             };
@@ -337,7 +338,7 @@ namespace Pilgrims.PersonalFinances.Models
                 ScheduledTransactionId = scheduledTransaction.Id,
                 Title = $"Error Processing: {scheduledTransaction.Name}",
                 Message = $"An error occurred while processing your scheduled transaction '{scheduledTransaction.Name}': {errorMessage}",
-                NotificationType = NotificationType.Error,
+                NotificationType = Enums.AppNotificationType.SystemAlert,
                 ScheduledDate = DateTime.Now,
                 Priority = NotificationPriority.High,
                 ErrorMessage = errorMessage
@@ -384,36 +385,5 @@ namespace Pilgrims.PersonalFinances.Models
         /// Approval request notification
         /// </summary>
         Approval = 6
-    }
-
-    /// <summary>
-    /// Priority levels for notifications
-    /// </summary>
-    public enum NotificationPriority
-    {
-        /// <summary>
-        /// Low priority notification
-        /// </summary>
-        Low = 0,
-
-        /// <summary>
-        /// Normal priority notification
-        /// </summary>
-        Normal = 1,
-
-        /// <summary>
-        /// Medium priority notification
-        /// </summary>
-        Medium = 2,
-
-        /// <summary>
-        /// High priority notification
-        /// </summary>
-        High = 3,
-
-        /// <summary>
-        /// Critical priority notification
-        /// </summary>
-        Critical = 3
     }
 }

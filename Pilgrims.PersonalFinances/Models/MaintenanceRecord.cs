@@ -45,8 +45,7 @@ namespace Pilgrims.PersonalFinances.Models
 
         public int? RecurrenceIntervalDays { get; set; }
 
-        // Audit Fields
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        // Audit fields - CreatedAt and UpdatedAt are inherited from BaseEntity
         // Audit fields - CreatedAt and UpdatedAt are inherited from BaseEntity
         public string? CreatedBy { get; set; }
         public string? UpdatedBy { get; set; }

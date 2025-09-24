@@ -153,8 +153,7 @@ namespace Pilgrims.PersonalFinances.Models
         public string? AccountId { get; set; }
         public virtual Account? Account { get; set; }
 
-        // Audit fields
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        // Audit fields - CreatedAt and UpdatedAt are inherited from BaseEntity
         // Audit fields - CreatedAt and UpdatedAt are inherited from BaseEntity
 
         // Computed properties

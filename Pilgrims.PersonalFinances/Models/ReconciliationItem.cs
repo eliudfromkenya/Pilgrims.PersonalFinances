@@ -48,8 +48,7 @@ namespace Pilgrims.PersonalFinances.Models
         // For book transactions that don't appear on statement
         public bool IsBookOnly { get; set; } = false;
 
-        // Audit Fields
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        // Audit fields - CreatedAt and UpdatedAt are inherited from BaseEntity
         // Audit fields - CreatedAt and UpdatedAt are inherited from BaseEntity
         public string? CreatedBy { get; set; }
         public string? UpdatedBy { get; set; }

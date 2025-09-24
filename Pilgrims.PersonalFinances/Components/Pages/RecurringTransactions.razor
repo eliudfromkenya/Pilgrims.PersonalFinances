@@ -1,11 +1,11 @@
-@page "/recurring-transactions"
+@page "/transactions/recurring"
 @using Pilgrims.PersonalFinances.Models
 @using Pilgrims.PersonalFinances.Models.Enums
 @using Pilgrims.PersonalFinances.Services.Interfaces
 @using Pilgrims.PersonalFinances.Services
 @inject IScheduledTransactionService ScheduledTransactionService
+@inject ITransactionService TransactionService
 @inject IAccountService AccountService
-@inject ICategoryService CategoryService
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
 
@@ -165,8 +165,8 @@
 
                                 <!-- Transaction Icon -->
                                 <div class="flex-shrink-0">
-                                    <div class="w-12 h-12 rounded-full flex items-center justify-center @GetTransactionTypeClass(transaction.Type)">
-                                        @GetTransactionIcon(transaction.Type)
+                                    <div class="w-12 h-12 rounded-full flex items-center justify-center @GetTransactionTypeClass(transaction.TransactionType)">
+                                        @GetTransactionIcon(transaction.TransactionType)
                                     </div>
                                 </div>
 
@@ -181,7 +181,7 @@
                                     </div>
                                     <div class="flex items-center space-x-4 mt-1">
                                         <span class="text-sm text-[var(--text-secondary)]">@transaction.RecurrenceDescription</span>
-                                        <span class="text-sm text-[var(--text-secondary)]">Next: @transaction.NextDueDate.ToString("MMM dd, yyyy")</span>
+                                        <span class="text-sm text-[var(--text-secondary)]">Next: @(transaction.NextDueDate?.ToString("MMM dd, yyyy") ?? "Not scheduled")</span>
                                         @if (transaction.Category != null)
                                         {
                                             <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
@@ -195,7 +195,7 @@
                             <!-- Amount and Actions -->
                             <div class="flex items-center space-x-4">
                                 <div class="text-right">
-                                    <div class="text-lg font-bold @GetAmountColorClass(transaction.Type)">
+                                    <div class="text-lg font-bold @GetAmountColorClass(transaction.TransactionType)">
                                         @transaction.FormattedAmount
                                     </div>
                                     <div class="text-sm text-[var(--text-secondary)]">
@@ -280,9 +280,9 @@
         isLoading = true;
         try
         {
-            scheduledTransactions = await ScheduledTransactionService.GetAllAsync();
-            accounts = await AccountService.GetAllAsync();
-            categories = await CategoryService.GetAllAsync();
+            scheduledTransactions = (await ScheduledTransactionService.GetAllScheduledTransactionsAsync()).ToList();
+            accounts = (await AccountService.GetAllAccountsAsync()).ToList();
+            categories = await TransactionService.GetCategoriesAsync();
             
             CalculateStatistics();
             ApplyFilters();
@@ -312,45 +312,45 @@
 
     private decimal GetMonthlyAmount(ScheduledTransaction transaction)
     {
-        return transaction.RecurrencePattern switch
+        return transaction.RecurrenceType switch
         {
-            RecurrencePattern.Daily => transaction.Amount * 30,
-            RecurrencePattern.Weekly => transaction.Amount * 4.33m,
-            RecurrencePattern.Monthly => transaction.Amount,
-            RecurrencePattern.Quarterly => transaction.Amount / 3,
-            RecurrencePattern.SemiAnnually => transaction.Amount / 6,
-            RecurrencePattern.Annually => transaction.Amount / 12,
+            RecurrenceType.Daily => transaction.Amount * 30,
+            RecurrenceType.Weekly => transaction.Amount * 4.33m,
+            RecurrenceType.Monthly => transaction.Amount,
+            RecurrenceType.Quarterly => transaction.Amount / 3,
+            RecurrenceType.SemiAnnually => transaction.Amount / 6,
+            RecurrenceType.Annually => transaction.Amount / 12,
             _ => 0
         };
     }
 
     private void ApplyFilters()
     {
-        filteredTransactions = scheduledTransactions.AsEnumerable();
+        filteredTransactions = scheduledTransactions.AsEnumerable().ToList();
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
             filteredTransactions = filteredTransactions.Where(t => 
                 t.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
-                (t.Description?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false));
+                (t.Description?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false)).ToList();
         }
 
         if (!string.IsNullOrWhiteSpace(selectedStatus))
         {
             filteredTransactions = selectedStatus switch
             {
-                "Active" => filteredTransactions.Where(t => t.IsActive),
-                "Paused" => filteredTransactions.Where(t => !t.IsActive),
-                "Completed" => filteredTransactions.Where(t => t.EndType != RecurrenceEndType.Never && t.CurrentOccurrences >= t.MaxOccurrences),
+                "Active" => filteredTransactions.Where(t => t.IsActive).ToList(),
+                "Paused" => filteredTransactions.Where(t => !t.IsActive).ToList(),
+                "Completed" => filteredTransactions.Where(t => t.EndType != RecurrenceEndType.Never && t.CurrentOccurrences >= t.MaxOccurrences).ToList(),
                 _ => filteredTransactions
             };
         }
 
         if (!string.IsNullOrWhiteSpace(selectedFrequency))
         {
-            if (Enum.TryParse<RecurrencePattern>(selectedFrequency, out var pattern))
+            if (Enum.TryParse<RecurrenceType>(selectedFrequency, out var pattern))
             {
-                filteredTransactions = filteredTransactions.Where(t => t.RecurrencePattern == pattern);
+                filteredTransactions = filteredTransactions.Where(t => t.RecurrenceType == pattern).ToList();
             }
         }
 
@@ -358,7 +358,7 @@
         {
             if (Enum.TryParse<TransactionType>(selectedType, out var type))
             {
-                filteredTransactions = filteredTransactions.Where(t => t.Type == type);
+                filteredTransactions = filteredTransactions.Where(t => t.TransactionType == type).ToList();
             }
         }
 
