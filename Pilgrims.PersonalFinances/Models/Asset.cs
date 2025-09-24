@@ -65,9 +65,7 @@ namespace Pilgrims.PersonalFinances.Models
         [MaxLength(100)]
         public string? SerialNumber { get; set; }
 
-        // Audit fields
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
-        public DateTime? UpdatedAt { get; set; }
+        // Audit fields - CreatedAt and UpdatedAt are inherited from BaseEntity
 
         // Data Linking Relationships
         public string? AssetRegisterId { get; set; }
@@ -160,7 +158,7 @@ namespace Pilgrims.PersonalFinances.Models
             if (DepreciationMethod != "Custom")
             {
                 CurrentValue = CalculateDepreciatedValue();
-                UpdatedAt = DateTime.Now;
+                TouchUpdatedAt();
             }
         }
     }

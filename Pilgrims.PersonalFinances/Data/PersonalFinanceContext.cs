@@ -1008,10 +1008,10 @@ public class PersonalFinanceContext : DbContext
             {
                 case EntityState.Added:
                     entry.Entity.CreatedAt = DateTime.UtcNow;
-                    entry.Entity.UpdatedAt = DateTime.UtcNow;
+                    ((BaseEntity)entry.Entity).TouchUpdatedAt();
                     break;
                 case EntityState.Modified:
-                    entry.Entity.UpdatedAt = DateTime.UtcNow;
+                    ((BaseEntity)entry.Entity).TouchUpdatedAt();
                     break;
             }
         }

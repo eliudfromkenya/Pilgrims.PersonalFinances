@@ -58,7 +58,7 @@ namespace Pilgrims.PersonalFinances.Models
 
         // Audit Fields
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        // Audit fields - CreatedAt and UpdatedAt are inherited from BaseEntity
         public string? CreatedBy { get; set; }
         public string? UpdatedBy { get; set; }
 

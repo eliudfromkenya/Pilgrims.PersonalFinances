@@ -96,7 +96,7 @@ namespace Pilgrims.PersonalFinances.Models
 
         // Audit fields
         public DateTime CreatedAt { get; set; } = DateTime.Now;
-        public DateTime? UpdatedAt { get; set; }
+        // Audit fields - CreatedAt and UpdatedAt are inherited from BaseEntity
 
         // Calculated properties
         [NotMapped]
@@ -137,7 +137,7 @@ namespace Pilgrims.PersonalFinances.Models
             ClaimsCount++;
             TotalClaimsAmount = (TotalClaimsAmount ?? 0) + claimAmount;
             LastClaimDate = DateTime.Now;
-            UpdatedAt = DateTime.Now;
+            TouchUpdatedAt();
         }
 
         public void Renew(DateTime newEndDate, decimal? newPremium = null)
@@ -151,7 +151,7 @@ namespace Pilgrims.PersonalFinances.Models
             
             Status = "Active";
             IsActive = true;
-            UpdatedAt = DateTime.Now;
+            TouchUpdatedAt();
         }
     }
 }

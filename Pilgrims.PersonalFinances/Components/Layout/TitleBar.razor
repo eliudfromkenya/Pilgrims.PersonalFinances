@@ -1,0 +1,99 @@
+@using Pilgrims.PersonalFinances.Components.Shared
+@using Pilgrims.PersonalFinances.Services
+@inject IWindowService WindowService
+
+<!-- Custom Title Bar -->
+<div class="fixed top-0 left-0 right-0 z-50 h-12 flex items-center justify-between px-4 shadow-lg bg-gradient-to-r from-slate-600 to-gray-600 backdrop-blur-lg border-b border-white/20 select-none" 
+     style="-webkit-app-region: drag;">
+    
+    <!-- Left side - App Title -->
+    <div class="flex items-center space-x-3">
+        <span class="text-lg font-bold text-white">💰 Pilgrims Personal Finance</span>
+    </div>
+
+    <!-- Right side - Controls -->
+    <div class="flex items-center space-x-2" style="-webkit-app-region: no-drag;">
+        <!-- Theme Selector -->
+        <div class="scale-75">
+            <ThemeSelector />
+        </div>
+        
+        <!-- Profile Button -->
+        <button class="text-xs px-3 py-1.5 rounded-lg transition-all duration-300 text-white hover:bg-white/20"
+                title="Profile">
+            👤 Profile
+        </button>
+        
+        <!-- Docs Button -->
+        <a href="https://learn.microsoft.com/aspnet/core/" target="_blank" 
+           class="text-xs px-3 py-1.5 rounded-lg transition-all duration-300 text-white hover:bg-white/20"
+           title="Documentation">
+            📚 Docs
+        </a>
+        
+        <!-- Window Controls -->
+        <div class="flex items-center ml-2">
+            <!-- Minimize Button -->
+            <button class="w-8 h-8 flex items-center justify-center text-white hover:bg-white/20 transition-all duration-200"
+                    @onclick="MinimizeWindow"
+                    title="Minimize">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+            </button>
+            
+            <!-- Maximize/Restore Button -->
+            <button class="w-8 h-8 flex items-center justify-center text-white hover:bg-white/20 transition-all duration-200"
+                    @onclick="ToggleMaximizeWindow"
+                    title="Maximize/Restore">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                </svg>
+            </button>
+            
+            <!-- Close Button -->
+            <button class="w-8 h-8 flex items-center justify-center text-white hover:bg-red-500 transition-all duration-200"
+                    @onclick="CloseApplication"
+                    title="Close">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool isMaximized = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        isMaximized = await WindowService.IsMaximizedAsync();
+    }
+
+    private async Task CloseApplication()
+    {
+        await WindowService.CloseApplicationAsync();
+    }
+
+    private async Task MinimizeWindow()
+    {
+        await WindowService.MinimizeWindowAsync();
+    }
+
+    private async Task ToggleMaximizeWindow()
+    {
+        if (isMaximized)
+        {
+            await WindowService.RestoreWindowAsync();
+            isMaximized = false;
+        }
+        else
+        {
+            await WindowService.MaximizeWindowAsync();
+            isMaximized = true;
+        }
+        StateHasChanged();
+    }
+}

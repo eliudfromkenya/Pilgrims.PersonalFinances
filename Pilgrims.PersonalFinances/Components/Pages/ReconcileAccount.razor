@@ -427,7 +427,7 @@
                     if (Math.Abs(difference) > 0.01m)
                     {
                         // Create adjustment transaction
-                        await CreateAdjustmentTransaction(difference);
+                        CreateAdjustmentTransaction(difference);
                         
                         // Update account balance
                         account.CurrentBalance = reconciliationModel.StatementBalance;
@@ -441,7 +441,7 @@
             }
             
             // Record the reconciliation
-            await RecordReconciliation(difference);
+            RecordReconciliation(difference);
             
             await JSRuntime.InvokeVoidAsync("alert", "Account reconciliation completed successfully!");
             NavigationManager.NavigateTo($"/accounts/{AccountId}");
@@ -461,7 +461,7 @@
         await JSRuntime.InvokeVoidAsync("alert", "Please fix the validation errors before submitting.");
     }
 
-    private async Task CreateAdjustmentTransaction(decimal amount)
+    private void CreateAdjustmentTransaction(decimal amount)
     {
         // This would create an adjustment transaction in the database
         // Placeholder implementation
@@ -472,7 +472,7 @@
         // await TransactionService.CreateAdjustmentTransactionAsync(AccountId, amount, description, reconciliationModel.StatementDate);
     }
 
-    private async Task RecordReconciliation(decimal difference)
+    private void RecordReconciliation(decimal difference)
     {
         // This would record the reconciliation in the database
         // Placeholder implementation

@@ -30,7 +30,7 @@ namespace Pilgrims.PersonalFinances.Models
 
         // Audit fields
         public DateTime CreatedAt { get; set; } = DateTime.Now;
-        public DateTime? UpdatedAt { get; set; }
+        // Audit fields - CreatedAt and UpdatedAt are inherited from BaseEntity
 
         // Navigation properties
         public virtual ICollection<Asset> Assets { get; set; } = new List<Asset>();

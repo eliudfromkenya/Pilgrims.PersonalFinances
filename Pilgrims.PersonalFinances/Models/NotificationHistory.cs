@@ -155,7 +155,7 @@ namespace Pilgrims.PersonalFinances.Models
 
         // Audit fields
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        // Audit fields - CreatedAt and UpdatedAt are inherited from BaseEntity
 
         // Computed properties
         [NotMapped]
@@ -209,7 +209,7 @@ namespace Pilgrims.PersonalFinances.Models
             {
                 Status = NotificationStatus.Read;
                 ReadAt = DateTime.UtcNow;
-                UpdatedAt = DateTime.UtcNow;
+                TouchUpdatedAt();
             }
         }
 
@@ -220,7 +220,7 @@ namespace Pilgrims.PersonalFinances.Models
         {
             Status = NotificationStatus.Dismissed;
             DismissedAt = DateTime.UtcNow;
-            UpdatedAt = DateTime.UtcNow;
+            TouchUpdatedAt();
         }
 
         /// <summary>
@@ -234,7 +234,7 @@ namespace Pilgrims.PersonalFinances.Models
             SnoozeCount++;
             LastSnoozedAt = DateTime.UtcNow;
             SnoozeUntil = DateTime.UtcNow.Add(duration);
-            UpdatedAt = DateTime.UtcNow;
+            TouchUpdatedAt();
 
             return true;
         }
@@ -247,7 +247,7 @@ namespace Pilgrims.PersonalFinances.Models
             ActionTaken = action;
             ActionTakenAt = DateTime.UtcNow;
             ActionResult = result;
-            UpdatedAt = DateTime.UtcNow;
+            TouchUpdatedAt();
         }
     }
 }

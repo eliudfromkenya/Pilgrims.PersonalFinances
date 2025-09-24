@@ -11,8 +11,8 @@
 <div class="h-full shadow-xl bg-gradient-to-b from-slate-50/90 via-gray-50/90 to-zinc-50/90 dark:from-gray-900/90 dark:via-slate-900/90 dark:to-zinc-900/90 backdrop-blur-lg border-r border-white/20">
     <nav class="flex flex-col py-4 h-full">
         <!-- Dashboard -->
-        <div class="px-4 mb-2">
-            <NavLink class="flex items-center py-3 px-4 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md" 
+        <div class="px-2">
+            <NavLink class="flex items-center py-1 px-4 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md" 
                      href="" Match="NavLinkMatch.All">
                 <span class="text-xl mr-3 group-hover:scale-110 transition-transform duration-300">📊</span> 
                 <span class="font-medium">Dashboard</span>
@@ -20,29 +20,31 @@
         </div>
 
         <!-- Accounts Section -->
-        <div class="px-4 mb-2">
+        <div class="px-2">
             <!-- Main Accounts Link -->
             <div class="flex items-center">
-                <NavLink class="flex items-center py-3 px-4 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md flex-1" 
-                         href="accounts">
+                <button @onclick="() => ToggleSubmenu(SubmenuType.Accounts)" 
+                        class="flex items-center py-1 px-4 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md flex-1 w-full text-left">
                     <span class="text-xl mr-3 group-hover:scale-110 transition-transform duration-300">🏦</span> 
                     <span class="font-medium">Accounts</span>
-                </NavLink>
-                <button @onclick="ToggleAccountsSubmenu" 
-                        class="p-2 rounded-lg transition-all duration-300 text-gray-500 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400">
-                    <span class="text-sm transition-transform duration-300 @(showAccountsSubmenu ? "rotate-180" : "")">▼</span>
-                </button>
+                    <span class="text-sm transition-transform duration-300 ml-auto @(activeSubmenu == SubmenuType.Accounts ? "rotate-180" : "")">▼</span>
+                </button>               
             </div>
             
             <!-- Accounts Submenu -->
-            <div class="overflow-hidden transition-all duration-300 @(showAccountsSubmenu ? "max-h-96 opacity-100" : "max-h-0 opacity-0")">
+            <div class="overflow-hidden transition-all duration-300 @(activeSubmenu == SubmenuType.Accounts ? "max-h-96 opacity-100" : "max-h-0 opacity-0")">
                 <div class="ml-8 mt-2 space-y-1 border-l-2 border-blue-200 dark:border-blue-800 pl-4">
-                    <NavLink class="flex items-center py-2 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
+                    <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
+                             href="accounts">
+                        <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">📋</span> 
+                        <span>All Accounts</span>
+                    </NavLink>
+                    <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
                              href="accounts/create">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">➕</span> 
                         <span>Create Account</span>
                     </NavLink>
-                    <NavLink class="flex items-center py-2 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
+                    <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
                              href="accounts/transfer">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">🔄</span> 
                         <span>Transfer Funds</span>
@@ -51,18 +53,53 @@
             </div>
         </div>
 
-        <!-- Transactions -->
-        <div class="px-4 mb-2">
-            <NavLink class="flex items-center py-3 px-4 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md" 
-                     href="transactions">
-                <span class="text-xl mr-3 group-hover:scale-110 transition-transform duration-300">💳</span> 
-                <span class="font-medium">Transactions</span>
-            </NavLink>
+        <!-- Transactions Section -->
+        <div class="px-2">
+            <!-- Main Transactions Link -->
+            <div class="flex items-center">
+                <button @onclick="() => ToggleSubmenu(SubmenuType.Transactions)" 
+                        class="flex items-center py-1 px-4 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md flex-1 w-full text-left">
+                    <span class="text-xl mr-3 group-hover:scale-110 transition-transform duration-300">💳</span> 
+                    <span class="font-medium">Transactions</span>
+                    <span class="text-sm transition-transform duration-300 ml-auto @(activeSubmenu == SubmenuType.Transactions ? "rotate-180" : "")">▼</span>
+                </button>               
+            </div>
+            
+            <!-- Transactions Submenu -->
+            <div class="overflow-hidden transition-all duration-300 @(activeSubmenu == SubmenuType.Transactions ? "max-h-96 opacity-100" : "max-h-0 opacity-0")">
+                <div class="ml-8 mt-2 space-y-1 border-l-2 border-blue-200 dark:border-blue-800 pl-4">
+                    <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 text-sm" 
+                             href="transactions">
+                        <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">📋</span>
+                        <span>All Transactions</span>
+                    </NavLink>
+                    <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 text-sm" 
+                             href="transactions/add">
+                        <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">➕</span>
+                        <span>Add Transaction</span>
+                    </NavLink>
+                    <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 text-sm" 
+                             href="transactions/templates">
+                        <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">📝</span>
+                        <span>Templates</span>
+                    </NavLink>
+                    <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 text-sm" 
+                             href="transactions/recurring">
+                        <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">🔄</span>
+                        <span>Recurring</span>
+                    </NavLink>
+                    <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 text-sm" 
+                             href="transactions/import">
+                        <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">📥</span>
+                        <span>Import</span>
+                    </NavLink>
+                </div>
+            </div>
         </div>
 
         <!-- Budget -->
-        <div class="px-4 mb-2">
-            <NavLink class="flex items-center py-3 px-4 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md" 
+        <div class="px-2">
+            <NavLink class="flex items-center py-1 px-4 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md" 
                      href="budget">
                 <span class="text-xl mr-3 group-hover:scale-110 transition-transform duration-300">📋</span> 
                 <span class="font-medium">Budget</span>
@@ -70,8 +107,8 @@
         </div>
 
         <!-- Investments -->
-        <div class="px-4 mb-2">
-            <NavLink class="flex items-center py-3 px-4 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md" 
+        <div class="px-2">
+            <NavLink class="flex items-center py-1 px-4 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md" 
                      href="investments">
                 <span class="text-xl mr-3 group-hover:scale-110 transition-transform duration-300">📈</span> 
                 <span class="font-medium">Investments</span>
@@ -79,8 +116,8 @@
         </div>
 
         <!-- Assets -->
-        <div class="px-4 mb-2">
-            <NavLink class="flex items-center py-3 px-4 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md" 
+        <div class="px-2">
+            <NavLink class="flex items-center py-1 px-4 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md" 
                      href="assets">
                 <span class="text-xl mr-3 group-hover:scale-110 transition-transform duration-300">🏠</span> 
                 <span class="font-medium">Assets</span>
@@ -88,8 +125,8 @@
         </div>
 
         <!-- Insurance -->
-        <div class="px-4 mb-2">
-            <NavLink class="flex items-center py-3 px-4 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md" 
+        <div class="px-2">
+            <NavLink class="flex items-center py-1 px-4 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md" 
                      href="insurance">
                 <span class="text-xl mr-3 group-hover:scale-110 transition-transform duration-300">🛡️</span> 
                 <span class="font-medium">Insurance</span>
@@ -97,8 +134,8 @@
         </div>
 
         <!-- Obligations -->
-        <div class="px-4 mb-2">
-            <NavLink class="flex items-center py-3 px-4 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md" 
+        <div class="px-2">
+            <NavLink class="flex items-center py-1 px-4 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md" 
                      href="obligations">
                 <span class="text-xl mr-3 group-hover:scale-110 transition-transform duration-300">🤝</span> 
                 <span class="font-medium">Obligations</span>
@@ -106,8 +143,8 @@
         </div>
 
         <!-- Goals -->
-        <div class="px-4 mb-2">
-            <NavLink class="flex items-center py-3 px-4 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md" 
+        <div class="px-2">
+            <NavLink class="flex items-center py-1 px-4 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md" 
                      href="goals">
                 <span class="text-xl mr-3 group-hover:scale-110 transition-transform duration-300">🎯</span> 
                 <span class="font-medium">Goals</span>
@@ -115,8 +152,8 @@
         </div>
 
         <!-- Reports -->
-        <div class="px-4 mb-2">
-            <NavLink class="flex items-center py-3 px-4 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md" 
+        <div class="px-2">
+            <NavLink class="flex items-center py-1 px-4 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md" 
                      href="reports">
                 <span class="text-xl mr-3 group-hover:scale-110 transition-transform duration-300">📊</span> 
                 <span class="font-medium">Reports</span>
@@ -124,8 +161,8 @@
         </div>
 
         <!-- Settings -->
-        <div class="px-4 mb-2 mt-8 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <NavLink class="flex items-center py-3 px-4 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md" 
+        <div class="px-4 mb-2 mt-2 pt-1 border-t border-gray-200 dark:border-gray-700">
+            <NavLink class="flex items-center py-1 px-4 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md" 
                      href="settings">
                 <span class="text-xl mr-3 group-hover:scale-110 transition-transform duration-300">⚙️</span> 
                 <span class="font-medium">Settings</span>
@@ -135,10 +172,30 @@
 </div>
 
 @code {
-    private bool showAccountsSubmenu = false;
+    private SubmenuType? activeSubmenu = null;
 
-    private void ToggleAccountsSubmenu()
+    public enum SubmenuType
     {
-        showAccountsSubmenu = !showAccountsSubmenu;
+        Accounts,
+        Transactions,
+        Budget,
+        Investments,
+        Assets,
+        Insurance,
+        Obligations,
+        Goals,
+        Reports
+    }
+
+    private void ToggleSubmenu(SubmenuType submenuType)
+    {
+        if (activeSubmenu == submenuType)
+        {
+            activeSubmenu = null; // Close if already open
+        }
+        else
+        {
+            activeSubmenu = submenuType; // Open the selected submenu (closes others automatically)
+        }
     }
 }

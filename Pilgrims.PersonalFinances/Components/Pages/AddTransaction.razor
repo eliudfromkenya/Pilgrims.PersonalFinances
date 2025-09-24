@@ -1,0 +1,828 @@
+@page "/transactions/add"
+@using Pilgrims.PersonalFinances.Models
+@using Pilgrims.PersonalFinances.Models.DTOs
+@using Pilgrims.PersonalFinances.Models.Enums
+@using Pilgrims.PersonalFinances.Services.Interfaces
+@using Pilgrims.PersonalFinances.Services
+@using Pilgrims.PersonalFinances.Components.Shared
+@inject ITransactionService TransactionService
+@inject IAccountService AccountService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Add Transaction - Pilgrims Personal Finance</PageTitle>
+
+<!-- Particle Background -->
+<div class="fixed inset-0 overflow-hidden pointer-events-none">
+    <div class="absolute inset-0 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 dark:from-gray-900 dark:via-green-900 dark:to-teal-900"></div>
+    <div class="particles-container">
+        @for (int i = 0; i < 25; i++)
+        {
+            <div class="particle" style="animation-delay: @(i * 0.15)s;"></div>
+        }
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="relative z-10 min-h-screen p-6">
+    <!-- Header Section -->
+    <div class="mb-8">
+        <div class="glass-card p-6 rounded-2xl border border-[var(--border-color)] backdrop-blur-lg bg-[var(--card-bg)]">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h1 class="text-4xl font-bold bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent">
+                        ➕ Add Transaction
+                    </h1>
+                    <p class="text-[var(--text-secondary)] mt-2">Record a new financial transaction</p>
+                </div>
+                <div class="flex gap-3">
+                    <button @onclick="LoadTemplate" class="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors">
+                        📋 Templates
+                    </button>
+                    <button @onclick="NavigateBack" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors">
+                        ← Back
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transaction Form -->
+    <div class="glass-card p-8 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
+        <EditForm Model="transaction" OnValidSubmit="SaveTransaction">
+            <DataAnnotationsValidator />
+            
+            <!-- Transaction Type Selection -->
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4">Transaction Type</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    @foreach (var type in Enum.GetValues<TransactionType>())
+                    {
+                        <div @onclick="@(() => SelectTransactionType(type))" 
+                             class="p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 @(transaction.Type == type ? "border-green-500 bg-green-50 dark:bg-green-900/20" : "border-gray-200 dark:border-gray-600 hover:border-green-300")">
+                            <div class="text-center">
+                                <div class="text-3xl mb-2">@GetTransactionTypeIcon(type)</div>
+                                <div class="font-medium text-gray-800 dark:text-white">@type.ToString()</div>
+                                <div class="text-xs text-gray-500 mt-1">@GetTransactionTypeDescription(type)</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Basic Transaction Details -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <!-- Amount -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Amount <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                        <InputNumber @bind-Value="transaction.Amount" 
+                                   class="w-full pl-8 pr-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 focus:ring-2 focus:ring-green-500 focus:border-transparent" 
+                                   placeholder="0.00" />
+                    </div>
+                    <ValidationMessage For="@(() => transaction.Amount)" class="text-red-500 text-sm mt-1" />
+                </div>
+
+                <!-- Date -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Date <span class="text-red-500">*</span>
+                    </label>
+                    <InputDate @bind-Value="transaction.Date" 
+                             class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 focus:ring-2 focus:ring-green-500 focus:border-transparent" />
+                    <ValidationMessage For="@(() => transaction.Date)" class="text-red-500 text-sm mt-1" />
+                </div>
+
+                <!-- Account -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Account <span class="text-red-500">*</span>
+                    </label>
+                    <InputSelect @bind-Value="transaction.AccountId" 
+                               class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                        <option value="">Select Account</option>
+                        @foreach (var account in accounts)
+                        {
+                            <option value="@account.Id">@account.Name (@account.AccountType)</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => transaction.AccountId)" class="text-red-500 text-sm mt-1" />
+                </div>
+
+                <!-- Transfer To Account (only for transfers) -->
+                @if (transaction.Type == TransactionType.Transfer)
+                {
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Transfer To Account <span class="text-red-500">*</span>
+                        </label>
+                        <InputSelect @bind-Value="transaction.TransferToAccountId" 
+                                   class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                            <option value="">Select Destination Account</option>
+                            @foreach (var account in accounts.Where(a => a.Id != transaction.AccountId))
+                            {
+                                <option value="@account.Id">@account.Name (@account.AccountType)</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="@(() => transaction.TransferToAccountId)" class="text-red-500 text-sm mt-1" />
+                    </div>
+                }
+
+                <!-- Category (not for transfers) -->
+                @if (transaction.Type != TransactionType.Transfer)
+                {
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Category <span class="text-red-500">*</span>
+                        </label>
+                        <InputSelect @bind-Value="transaction.CategoryId" 
+                                   class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                            <option value="">Select Category</option>
+                            @foreach (var category in categories)
+                            {
+                                <option value="@category.Id">@category.Name</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="@(() => transaction.CategoryId)" class="text-red-500 text-sm mt-1" />
+                    </div>
+                }
+
+                <!-- Payee -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Payee/Payer
+                    </label>
+                    <InputText @bind-Value="transaction.Payee" 
+                             class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 focus:ring-2 focus:ring-green-500 focus:border-transparent" 
+                             placeholder="Enter payee or payer name" />
+                    <ValidationMessage For="@(() => transaction.Payee)" class="text-red-500 text-sm mt-1" />
+                </div>
+
+                <!-- Status -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Status
+                    </label>
+                    <InputSelect @bind-Value="transaction.Status" 
+                               class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                        @foreach (var status in Enum.GetValues<TransactionStatus>())
+                        {
+                            <option value="@status">@status.ToString()</option>
+                        }
+                    </InputSelect>
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Description <span class="text-red-500">*</span>
+                </label>
+                <InputText @bind-Value="transaction.Description" 
+                         class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 focus:ring-2 focus:ring-green-500 focus:border-transparent" 
+                         placeholder="Enter transaction description" />
+                <ValidationMessage For="@(() => transaction.Description)" class="text-red-500 text-sm mt-1" />
+            </div>
+
+            <!-- Notes -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Notes
+                </label>
+                <InputTextArea @bind-Value="transaction.Notes" 
+                             class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 focus:ring-2 focus:ring-green-500 focus:border-transparent" 
+                             rows="3" 
+                             placeholder="Additional notes or details" />
+            </div>
+
+            <!-- Tags -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Tags
+                </label>
+                <div class="flex flex-wrap gap-2 mb-2">
+                    @foreach (var tag in selectedTags)
+                    {
+                        <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm flex items-center">
+                            @tag
+                            <button type="button" @onclick="@(() => RemoveTag(tag))" class="ml-2 text-green-600 hover:text-green-800">×</button>
+                        </span>
+                    }
+                </div>
+                <div class="flex gap-2">
+                    <input @bind="newTag" @onkeypress="@((e) => { if (e.Key == "Enter") AddTag(); })" 
+                           type="text" 
+                           class="flex-1 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 focus:ring-2 focus:ring-green-500 focus:border-transparent" 
+                           placeholder="Add a tag" />
+                    <button type="button" @onclick="AddTag" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600">Add</button>
+                </div>
+            </div>
+
+            <!-- Reference Number -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Reference Number
+                </label>
+                <InputText @bind-Value="transaction.ReferenceNumber" 
+                         class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 focus:ring-2 focus:ring-green-500 focus:border-transparent" 
+                         placeholder="Check number, confirmation code, etc." />
+            </div>
+
+            <!-- Split Transaction Toggle -->
+            <div class="mb-6">
+                <div class="flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <div class="flex items-center">
+                        <span class="text-2xl mr-3">🔄</span>
+                        <div>
+                            <h4 class="font-medium text-blue-900 dark:text-blue-100">Split Transaction</h4>
+                            <p class="text-sm text-blue-700 dark:text-blue-300">Divide this transaction across multiple categories</p>
+                        </div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" @bind="isSplitTransaction" @bind:after="OnSplitTransactionToggled" class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                    </label>
+                </div>
+
+                <!-- Split Transaction Component -->
+                @if (isSplitTransaction)
+                {
+                    <div class="mt-6">
+                        <SplitTransactionComponent TotalAmount="transaction.Amount"
+                                                 SplitItems="splitItems"
+                                                 Categories="categories"
+                                                 OnSplitItemsChanged="OnSplitItemsChanged" />
+                    </div>
+                }
+            </div>
+
+            <!-- Split Transaction Details -->
+            @if (isSplitTransaction)
+            {
+                <div class="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
+                    <h4 class="text-lg font-semibold text-blue-800 dark:text-blue-200 mb-4">Split Transaction Details</h4>
+                    
+                    @foreach (var split in splitTransactions)
+                    {
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 p-4 bg-white/50 dark:bg-gray-700/50 rounded-lg">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Amount</label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                                    <input @bind="split.Amount" type="number" step="0.01" 
+                                           class="w-full pl-8 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50" />
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
+                                <select @bind="split.CategoryId" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50">
+                                    <option value="">Select Category</option>
+                                    @foreach (var category in categories)
+                                    {
+                                        <option value="@category.Id">@category.Name</option>
+                                    }
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+                                <input @bind="split.Description" type="text" 
+                                       class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50" 
+                                       placeholder="Split description" />
+                            </div>
+                            <div class="flex items-end">
+                                <button type="button" @onclick="@(() => RemoveSplit(split))" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">
+                                    Remove
+                                </button>
+                            </div>
+                        </div>
+                    }
+                    
+                    <div class="flex justify-between items-center mt-4">
+                        <button type="button" @onclick="AddSplit" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+                            Add Split
+                        </button>
+                        <div class="text-sm">
+                            <span class="text-gray-600">Total Split: </span>
+                            <span class="font-semibold @(GetSplitTotalColor())">@GetSplitTotal().ToString("C")</span>
+                            <span class="text-gray-600"> / Transaction: </span>
+                            <span class="font-semibold">@transaction.Amount.ToString("C")</span>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Recurring Transaction Toggle -->
+            <div class="mb-6">
+                <label class="flex items-center">
+                    <input type="checkbox" @bind="isRecurringTransaction" class="mr-3 rounded">
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Make this a recurring transaction</span>
+                </label>
+            </div>
+
+            <!-- Recurring Transaction Details -->
+            @if (isRecurringTransaction)
+            {
+                <div class="mb-6 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-700">
+                    <h4 class="text-lg font-semibold text-purple-800 dark:text-purple-200 mb-4">Recurring Pattern</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Frequency</label>
+                            <select @bind="recurringFrequency" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50">
+                                <option value="Daily">Daily</option>
+                                <option value="Weekly">Weekly</option>
+                                <option value="Monthly">Monthly</option>
+                                <option value="Quarterly">Quarterly</option>
+                                <option value="Yearly">Yearly</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Interval</label>
+                            <input @bind="recurringInterval" type="number" min="1" 
+                                   class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50" 
+                                   placeholder="Every X periods" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">End Date (Optional)</label>
+                            <input @bind="recurringEndDate" type="date" 
+                                   class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50" />
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Attachments -->
+            <div class="mb-8">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Attachments (Receipts, Documents)
+                </label>
+                <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center">
+                    <InputFile OnChange="HandleFileSelection" multiple accept="image/*,.pdf" class="hidden" id="file-upload" />
+                    <label for="file-upload" class="cursor-pointer">
+                        <div class="text-4xl mb-2">📎</div>
+                        <div class="text-gray-600 dark:text-gray-400">
+                            Click to upload files or drag and drop
+                        </div>
+                        <div class="text-sm text-gray-500 mt-1">
+                            Images and PDF files up to 10MB each
+                        </div>
+                    </label>
+                </div>
+                
+                @if (selectedFiles.Any())
+                {
+                    <div class="mt-4 space-y-2">
+                        @foreach (var file in selectedFiles)
+                        {
+                            <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                                <div class="flex items-center">
+                                    <span class="text-2xl mr-3">📄</span>
+                                    <div>
+                                        <div class="font-medium">@file.Name</div>
+                                        <div class="text-sm text-gray-500">@FormatFileSize(file.Size)</div>
+                                    </div>
+                                </div>
+                                <button type="button" @onclick="@(() => RemoveFile(file))" class="text-red-500 hover:text-red-700">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex justify-between items-center">
+                <div class="flex gap-3">
+                    <button type="button" @onclick="SaveAsTemplate" class="px-6 py-3 bg-purple-500 text-white rounded-xl hover:bg-purple-600 transition-colors">
+                        💾 Save as Template
+                    </button>
+                </div>
+                
+                <div class="flex gap-3">
+                    <button type="button" @onclick="NavigateBack" class="px-6 py-3 bg-gray-500 text-white rounded-xl hover:bg-gray-600 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" disabled="@isSubmitting" class="px-8 py-3 bg-gradient-to-r from-green-500 to-teal-600 text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-300 disabled:opacity-50">
+                        @if (isSubmitting)
+                        {
+                            <span>Saving...</span>
+                        }
+                        else
+                        {
+                            <span>💾 Save Transaction</span>
+                        }
+                    </button>
+                </div>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+<!-- Template Selection Modal -->
+@if (showTemplateModal)
+{
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl max-w-2xl w-full mx-4 max-h-96 overflow-y-auto">
+            <h3 class="text-xl font-semibold mb-4">Select Template</h3>
+            <div class="space-y-3">
+                @foreach (var template in templates)
+                {
+                    <div @onclick="@(() => ApplyTemplate(template))" class="p-4 border border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <div class="font-medium">@template.Name</div>
+                        <div class="text-sm text-gray-500">@template.Description • @template.Amount.ToString("C")</div>
+                    </div>
+                }
+            </div>
+            <div class="flex justify-end mt-6">
+                <button @onclick="@(() => showTemplateModal = false)" class="px-4 py-2 text-gray-600 hover:text-gray-800">Close</button>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .particles-container {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .particle {
+        position: absolute;
+        width: 3px;
+        height: 3px;
+        background: linear-gradient(45deg, #10b981, #14b8a6);
+        border-radius: 50%;
+        animation: float 8s ease-in-out infinite;
+        opacity: 0.7;
+    }
+
+    .particle:nth-child(odd) {
+        left: 15%;
+        animation-duration: 10s;
+    }
+
+    .particle:nth-child(even) {
+        right: 15%;
+        animation-duration: 12s;
+    }
+
+    @@keyframes float {
+        0%, 100% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+        10% { opacity: 0.7; }
+        90% { opacity: 0.7; }
+        50% { transform: translateY(-10vh) rotate(180deg); }
+    }
+
+    .glass-card {
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    }
+</style>
+
+@code {
+    private Transaction transaction = new() { Date = DateTime.Today, Status = TransactionStatus.Pending };
+    private List<Account> accounts = new();
+    private List<Category> categories = new();
+    private List<TransactionTemplate> templates = new();
+    
+    // Split transaction
+    private bool isSplitTransaction = false;
+    private List<SplitTransactionDto> splitTransactions = new();
+    private List<SplitTransactionItem> splitItems = new();
+    
+    // Recurring transaction
+    private bool isRecurringTransaction = false;
+    private string recurringFrequency = "Monthly";
+    private int recurringInterval = 1;
+    private DateTime? recurringEndDate;
+    
+    // Tags
+    private List<string> selectedTags = new();
+    private string newTag = "";
+    
+    // File attachments
+    private List<IBrowserFile> selectedFiles = new();
+    
+    // UI state
+    private bool isSubmitting = false;
+    private bool showTemplateModal = false;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+    
+    private async Task LoadData()
+    {
+        try
+        {
+            accounts = (await AccountService.GetAllAccountsAsync()).ToList();
+            // Load categories - you'll need to implement this service
+            // categories = (await CategoryService.GetAllCategoriesAsync()).ToList();
+            // templates = (await TransactionService.GetTransactionTemplatesAsync()).ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading data: {ex.Message}");
+        }
+    }
+    
+    private void SelectTransactionType(TransactionType type)
+    {
+        transaction.Type = type;
+        
+        // Clear transfer-specific fields if not a transfer
+        if (type != TransactionType.Transfer)
+        {
+            transaction.TransferToAccountId = null;
+        }
+        
+        // Clear category if it's a transfer
+        if (type == TransactionType.Transfer)
+        {
+            transaction.CategoryId = null;
+        }
+    }
+    
+    private void OnSplitTransactionToggled()
+    {
+        if (isSplitTransaction && !splitItems.Any())
+        {
+            // Initialize with one split item
+            splitItems.Add(new SplitTransactionItem
+            {
+                Amount = Math.Abs(transaction.Amount),
+                CategoryId = transaction.CategoryId ?? "",
+                Description = transaction.Description ?? ""
+            });
+        }
+        else if (!isSplitTransaction)
+        {
+            splitItems.Clear();
+        }
+    }
+
+    private void OnSplitItemsChanged(List<SplitTransactionItem> items)
+    {
+        splitItems = items;
+    }
+
+    private async Task SaveTransaction()
+    {
+        if (isSubmitting) return;
+        
+        isSubmitting = true;
+        
+        try
+        {
+            // Validate split transactions if enabled
+            if (isSplitTransaction)
+            {
+                if (!ValidateSplitTransactions())
+                {
+                    await JSRuntime.InvokeVoidAsync("alert", "Split transaction amounts must equal the total transaction amount.");
+                    return;
+                }
+                transaction.IsSplit = true;
+            }
+            
+            // Set tags
+            transaction.Tags = string.Join(",", selectedTags);
+            
+            // Set recurring pattern if enabled
+            if (isRecurringTransaction)
+            {
+                transaction.IsRecurring = true;
+                transaction.RecurringPattern = $"{recurringFrequency}:{recurringInterval}:{recurringEndDate?.ToString("yyyy-MM-dd")}";
+            }
+            
+            // Save the transaction
+            var savedTransaction = await TransactionService.CreateTransactionAsync(transaction);
+            
+            // Save split transactions if any
+            if (isSplitTransaction && splitItems.Any())
+            {
+                foreach (var split in splitItems)
+                {
+                    var splitTransaction = new SplitTransaction
+                    {
+                        TransactionId = savedTransaction.Id,
+                        Amount = split.Amount,
+                        CategoryId = split.CategoryId,
+                        Description = split.Description
+                    };
+                    await TransactionService.CreateSplitTransactionAsync(splitTransaction);
+                }
+            }
+            
+            // Upload attachments if any
+            if (selectedFiles.Any())
+            {
+                foreach (var file in selectedFiles)
+                {
+                    using var stream = file.OpenReadStream();
+                    var buffer = new byte[stream.Length];
+                    await stream.ReadAsync(buffer);
+                    await TransactionService.AddAttachmentAsync(savedTransaction.Id, file.Name, file.ContentType, buffer);
+                }
+            }
+            
+            await JSRuntime.InvokeVoidAsync("alert", "Transaction saved successfully!");
+            Navigation.NavigateTo("/transactions");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error saving transaction: {ex.Message}");
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+    
+    private bool ValidateSplitTransactions()
+    {
+        if (!splitItems.Any()) return true;
+        
+        var splitTotal = splitItems.Sum(s => s.Amount);
+        return Math.Abs(splitTotal - Math.Abs(transaction.Amount)) < 0.01m;
+    }
+    
+    private void AddSplit()
+    {
+        splitTransactions.Add(new SplitTransactionDto
+        {
+            Amount = 0,
+            CategoryId = "",
+            Description = ""
+        });
+    }
+    
+    private void RemoveSplit(SplitTransactionDto split)
+    {
+        splitTransactions.Remove(split);
+    }
+    
+    private decimal GetSplitTotal()
+    {
+        return splitTransactions.Sum(s => s.Amount);
+    }
+    
+    private string GetSplitTotalColor()
+    {
+        var splitTotal = GetSplitTotal();
+        var transactionAmount = Math.Abs(transaction.Amount);
+        
+        if (Math.Abs(splitTotal - transactionAmount) < 0.01m)
+            return "text-green-600";
+        else if (splitTotal > transactionAmount)
+            return "text-red-600";
+        else
+            return "text-yellow-600";
+    }
+    
+    private void AddTag()
+    {
+        if (!string.IsNullOrWhiteSpace(newTag) && !selectedTags.Contains(newTag))
+        {
+            selectedTags.Add(newTag.Trim());
+            newTag = "";
+        }
+    }
+    
+    private void RemoveTag(string tag)
+    {
+        selectedTags.Remove(tag);
+    }
+    
+    private async Task HandleFileSelection(InputFileChangeEventArgs e)
+    {
+        foreach (var file in e.GetMultipleFiles(10)) // Max 10 files
+        {
+            if (file.Size <= 10 * 1024 * 1024) // 10MB limit
+            {
+                selectedFiles.Add(file);
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", $"File {file.Name} is too large. Maximum size is 10MB.");
+            }
+        }
+    }
+    
+    private void RemoveFile(IBrowserFile file)
+    {
+        selectedFiles.Remove(file);
+    }
+    
+    private string FormatFileSize(long bytes)
+    {
+        string[] sizes = { "B", "KB", "MB", "GB" };
+        double len = bytes;
+        int order = 0;
+        while (len >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            len = len / 1024;
+        }
+        return $"{len:0.##} {sizes[order]}";
+    }
+    
+    private void LoadTemplate()
+    {
+        showTemplateModal = true;
+    }
+    
+    private void ApplyTemplate(TransactionTemplate template)
+    {
+        transaction.Amount = template.Amount;
+        transaction.Type = template.Type;
+        transaction.CategoryId = template.CategoryId;
+        transaction.Description = template.Description;
+        transaction.Payee = template.Payee;
+        selectedTags = template.Tags?.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList() ?? new List<string>();
+        
+        showTemplateModal = false;
+    }
+    
+    private async Task SaveAsTemplate()
+    {
+        var templateName = await JSRuntime.InvokeAsync<string>("prompt", "Enter template name:");
+        if (!string.IsNullOrWhiteSpace(templateName))
+        {
+            var template = new Models.TransactionTemplate
+            {
+                Name = templateName,
+                Description = transaction.Description,
+                Amount = transaction.Amount,
+                Type = transaction.Type,
+                CategoryId = transaction.CategoryId,
+                Payee = transaction.Payee,
+                Tags = string.Join(",", selectedTags)
+            };
+            
+            await TransactionService.CreateTransactionTemplateAsync(template);
+            await JSRuntime.InvokeVoidAsync("alert", "Template saved successfully!");
+        }
+    }
+    
+    private void NavigateBack()
+    {
+        Navigation.NavigateTo("/transactions");
+    }
+    
+    // Helper methods for UI
+    private string GetTransactionTypeIcon(TransactionType type)
+    {
+        return type switch
+        {
+            TransactionType.Income => "💰",
+            TransactionType.Expense => "💸",
+            TransactionType.Transfer => "🔄",
+            TransactionType.Adjustment => "⚖️",
+            _ => "💳"
+        };
+    }
+    
+    private string GetTransactionTypeDescription(TransactionType type)
+    {
+        return type switch
+        {
+            TransactionType.Income => "Money received",
+            TransactionType.Expense => "Money spent",
+            TransactionType.Transfer => "Between accounts",
+            TransactionType.Adjustment => "Balance correction",
+            _ => ""
+        };
+    }
+    
+    // DTO for split transactions
+    public class SplitTransactionDto
+    {
+        public string TransactionId { get; set; } = "";
+        public decimal Amount { get; set; }
+        public string CategoryId { get; set; } = "";
+        public string Description { get; set; } = "";
+    }
+    
+    // DTO for transaction templates
+    public class TransactionTemplate
+    {
+        public string Id { get; set; } = "";
+        public string Name { get; set; } = "";
+        public string Description { get; set; } = "";
+        public decimal Amount { get; set; }
+        public TransactionType Type { get; set; }
+        public string? CategoryId { get; set; }
+        public string? Payee { get; set; }
+        public string? Tags { get; set; }
+    }
+}

@@ -1,0 +1,612 @@
+@page "/transactions/templates"
+@using Pilgrims.PersonalFinances.Models
+@using Pilgrims.PersonalFinances.Models.Enums
+@using Pilgrims.PersonalFinances.Services.Interfaces
+@using Pilgrims.PersonalFinances.Services
+@inject ITransactionService TransactionService
+@inject IAccountService AccountService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Transaction Templates</PageTitle>
+
+<!-- Particle Background -->
+<div class="fixed inset-0 overflow-hidden pointer-events-none">
+    <div class="particles-container">
+        @for (int i = 0; i < 50; i++)
+        {
+            <div class="particle" style="--delay: @(i * 0.1)s; --duration: @(15 + (i % 10))s;"></div>
+        }
+    </div>
+</div>
+
+<div class="relative z-10 p-6 space-y-6">
+    <!-- Header Section -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div class="flex items-center mb-4 md:mb-0">
+                <div class="bg-gradient-to-r from-purple-500 to-pink-500 p-3 rounded-xl mr-4">
+                    <span class="text-2xl text-white">📝</span>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Transaction Templates</h1>
+                    <p class="text-gray-600 dark:text-gray-400">Create and manage templates for frequently used transactions</p>
+                </div>
+            </div>
+            <div class="flex space-x-3">
+                <button @onclick="ShowCreateTemplateModal" 
+                        class="flex items-center px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-lg hover:shadow-xl">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    Create Template
+                </button>
+                <button @onclick="ImportTemplates" 
+                        class="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-300">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
+                    </svg>
+                    Import
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Search Templates</label>
+                <div class="relative">
+                    <input type="text" @bind="searchQuery" @oninput="FilterTemplates"
+                           class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                           placeholder="Search by name or description...">
+                    <svg class="absolute left-3 top-2.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category</label>
+                <select @bind="selectedCategoryFilter" @bind:after="FilterTemplates"
+                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                    <option value="">All Categories</option>
+                    @if (categories != null)
+                    {
+                        @foreach (var category in categories)
+                        {
+                            <option value="@category.Id">@category.Name</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Transaction Type</label>
+                <select @bind="selectedTypeFilter" @bind:after="FilterTemplates"
+                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                    <option value="">All Types</option>
+                    <option value="Income">Income</option>
+                    <option value="Expense">Expense</option>
+                    <option value="Transfer">Transfer</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Sort By</label>
+                <select @bind="sortBy" @bind:after="FilterTemplates"
+                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                    <option value="name">Name</option>
+                    <option value="created">Date Created</option>
+                    <option value="used">Times Used</option>
+                    <option value="amount">Amount</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Templates Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        @if (filteredTemplates?.Any() == true)
+        {
+            @foreach (var template in filteredTemplates)
+            {
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                    <div class="p-6">
+                        <!-- Template Header -->
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex items-center">
+                                <div class="w-12 h-12 rounded-lg flex items-center justify-center text-2xl @GetTemplateTypeColor(template.Type)">
+                                    @GetTemplateTypeIcon(template.Type)
+                                </div>
+                                <div class="ml-3">
+                                    <h3 class="font-semibold text-gray-900 dark:text-white">@template.Name</h3>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">@template.Type</p>
+                                </div>
+                            </div>
+                            <div class="flex space-x-1">
+                                <button @onclick="() => EditTemplate(template)" 
+                                        class="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all duration-200"
+                                        title="Edit template">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                    </svg>
+                                </button>
+                                <button @onclick="() => DeleteTemplate(template)" 
+                                        class="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200"
+                                        title="Delete template">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Template Details -->
+                        <div class="space-y-3 mb-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-600 dark:text-gray-400">Amount:</span>
+                                <span class="font-semibold @GetAmountColor(template.Amount)">@template.Amount.ToString("C")</span>
+                            </div>
+                            @if (!string.IsNullOrEmpty(template.Description))
+                            {
+                                <div>
+                                    <span class="text-sm text-gray-600 dark:text-gray-400">Description:</span>
+                                    <p class="text-sm text-gray-900 dark:text-white mt-1">@template.Description</p>
+                                </div>
+                            }
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-600 dark:text-gray-400">Used:</span>
+                                <span class="text-sm font-medium text-gray-900 dark:text-white">@template.UsageCount times</span>
+                            </div>
+                        </div>
+
+                        <!-- Template Tags -->
+                        @if (template.Tags?.Any() == true)
+                        {
+                            <div class="flex flex-wrap gap-1 mb-4">
+                                @foreach (var tag in template.Tags.Take(3))
+                                {
+                                    <span class="px-2 py-1 text-xs bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300 rounded-full">
+                                        @tag
+                                    </span>
+                                }
+                                @if (template.Tags.Count() > 3)
+                                {
+                                    <span class="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full">
+                                        +@(template.Tags.Count() - 3) more
+                                    </span>
+                                }
+                            </div>
+                        }
+
+                        <!-- Action Buttons -->
+                        <div class="flex space-x-2">
+                            <button @onclick="() => UseTemplate(template)" 
+                                    class="flex-1 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-300 text-sm font-medium">
+                                Use Template
+                            </button>
+                            <button @onclick="() => DuplicateTemplate(template)" 
+                                    class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-300 text-sm"
+                                    title="Duplicate template">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else if (isLoading)
+        {
+            @for (int i = 0; i < 6; i++)
+            {
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 animate-pulse">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-gray-300 dark:bg-gray-600 rounded-lg"></div>
+                        <div class="ml-3 flex-1">
+                            <div class="h-4 bg-gray-300 dark:bg-gray-600 rounded w-3/4 mb-2"></div>
+                            <div class="h-3 bg-gray-300 dark:bg-gray-600 rounded w-1/2"></div>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="h-3 bg-gray-300 dark:bg-gray-600 rounded"></div>
+                        <div class="h-3 bg-gray-300 dark:bg-gray-600 rounded w-2/3"></div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="col-span-full text-center py-12">
+                <div class="text-6xl mb-4">📝</div>
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No templates found</h3>
+                <p class="text-gray-500 dark:text-gray-400 mb-4">Create your first transaction template to get started</p>
+                <button @onclick="ShowCreateTemplateModal" 
+                        class="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-300">
+                    Create Template
+                </button>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Create/Edit Template Modal -->
+@if (showTemplateModal)
+{
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white">
+                        @(editingTemplate != null ? "Edit Template" : "Create Template")
+                    </h2>
+                    <button @onclick="CloseTemplateModal" 
+                            class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-6 space-y-6">
+                <!-- Template Basic Info -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Template Name *</label>
+                        <input type="text" @bind="templateForm.Name" 
+                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                               placeholder="e.g., Monthly Rent, Coffee Purchase">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Transaction Type *</label>
+                        <select @bind="templateForm.Type" 
+                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                            <option value="">Select Type</option>
+                            <option value="Income">Income</option>
+                            <option value="Expense">Expense</option>
+                            <option value="Transfer">Transfer</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Amount *</label>
+                        <input type="number" step="0.01" @bind="templateForm.Amount" 
+                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                               placeholder="0.00">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category *</label>
+                        <select @bind="templateForm.CategoryId" 
+                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                            <option value="">Select Category</option>
+                            @if (categories != null)
+                            {
+                                @foreach (var category in categories)
+                                {
+                                    <option value="@category.Id">@category.Name</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
+                    <textarea @bind="templateForm.Description" rows="3"
+                              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                              placeholder="Optional description for this template"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tags</label>
+                    <input type="text" @bind="templateForm.TagsString" 
+                           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                           placeholder="Enter tags separated by commas (e.g., monthly, bills, utilities)">
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Tags help you organize and find templates quickly</p>
+                </div>
+            </div>
+
+            <div class="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end space-x-3">
+                <button @onclick="CloseTemplateModal" 
+                        class="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200">
+                    Cancel
+                </button>
+                <button @onclick="SaveTemplate" 
+                        class="px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-300">
+                    @(editingTemplate != null ? "Update Template" : "Create Template")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .particles-container {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .particle {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        background: linear-gradient(45deg, #8b5cf6, #ec4899);
+        border-radius: 50%;
+        animation: float var(--duration, 20s) var(--delay, 0s) infinite linear;
+        opacity: 0.6;
+    }
+
+    @@keyframes float {
+        0% {
+            transform: translateY(100vh) translateX(0px) rotate(0deg);
+            opacity: 0;
+        }
+        10% {
+            opacity: 0.6;
+        }
+        90% {
+            opacity: 0.6;
+        }
+        100% {
+            transform: translateY(-100px) translateX(100px) rotate(360deg);
+            opacity: 0;
+        }
+    }
+
+    .particle:nth-child(odd) {
+        background: linear-gradient(45deg, #06b6d4, #3b82f6);
+    }
+
+    .particle:nth-child(3n) {
+        background: linear-gradient(45deg, #10b981, #059669);
+    }
+</style>
+
+@code {
+    private List<TransactionTemplate> templates = new();
+    private List<TransactionTemplate> filteredTemplates = new();
+    private List<Category> categories = new();
+    private List<Account> accounts = new();
+    
+    private bool isLoading = true;
+    private bool showTemplateModal = false;
+    private TransactionTemplate? editingTemplate = null;
+    private TransactionTemplateForm templateForm = new();
+    
+    private string searchQuery = "";
+    private string selectedCategoryFilter = "";
+    private string selectedTypeFilter = "";
+    private string sortBy = "name";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        try
+        {
+            var loadTasks = new[]
+            {
+                LoadTemplates(),
+                LoadCategories(),
+                LoadAccounts()
+            };
+            
+            await Task.WhenAll(loadTasks);
+            FilterTemplates();
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task LoadTemplates()
+    {
+        templates = await TransactionService.GetTransactionTemplatesAsync();
+    }
+
+    private async Task LoadCategories()
+    {
+        categories = await TransactionService.GetCategoriesAsync();
+    }
+
+    private async Task LoadAccounts()
+    {
+        accounts = (await AccountService.GetAllAccountsAsync()).ToList();
+    }
+
+    private void FilterTemplates()
+    {
+        filteredTemplates = templates.ToList();
+
+        if (!string.IsNullOrWhiteSpace(searchQuery))
+        {
+            filteredTemplates = filteredTemplates.Where(t => 
+                t.Name.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+                (t.Description?.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ?? false)).ToList();
+        }
+
+        if (!string.IsNullOrWhiteSpace(selectedCategoryFilter))
+                        {
+                            filteredTemplates = filteredTemplates.Where(t => t.CategoryId == selectedCategoryFilter).ToList();
+                        }
+
+                        if (!string.IsNullOrEmpty(selectedTypeFilter))
+                        {
+                            filteredTemplates = filteredTemplates.Where(t => t.Type.ToString() == selectedTypeFilter).ToList();
+                        }
+
+        filteredTemplates = (sortBy switch
+        {
+            "created" => filteredTemplates.OrderByDescending(t => t.CreatedAt),
+            "used" => filteredTemplates.OrderByDescending(t => t.UsageCount),
+            "amount" => filteredTemplates.OrderByDescending(t => t.Amount),
+            _ => filteredTemplates.OrderBy(t => t.Name)
+        }).ToList();
+    }
+
+    private void ShowCreateTemplateModal()
+    {
+        editingTemplate = null;
+        templateForm = new TransactionTemplateForm();
+        showTemplateModal = true;
+    }
+
+    private void EditTemplate(TransactionTemplate template)
+    {
+        editingTemplate = template;
+        templateForm = new TransactionTemplateForm
+        {
+            Name = template.Name,
+            Type = template.Type.ToString(),
+            Amount = template.Amount,
+            CategoryId = template.CategoryId != null ? Guid.Parse(template.CategoryId) : Guid.Empty,
+            Description = template.Description,
+            TagsString = template.Tags ?? ""
+        };
+        showTemplateModal = true;
+    }
+
+    private void CloseTemplateModal()
+    {
+        showTemplateModal = false;
+        editingTemplate = null;
+        templateForm = new TransactionTemplateForm();
+    }
+
+    private async Task SaveTemplate()
+    {
+        if (string.IsNullOrWhiteSpace(templateForm.Name) || 
+            string.IsNullOrWhiteSpace(templateForm.Type) ||
+            templateForm.CategoryId == Guid.Empty)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Please fill in all required fields.");
+            return;
+        }
+
+        var template = new TransactionTemplate
+        {
+            Id = editingTemplate?.Id ?? Guid.NewGuid().ToString(),
+            Name = templateForm.Name,
+            Type = Enum.Parse<TransactionType>(templateForm.Type),
+            Amount = templateForm.Amount,
+            CategoryId = templateForm.CategoryId.ToString(),
+            Description = templateForm.Description,
+            Tags = templateForm.TagsString,
+            CreatedAt = editingTemplate?.CreatedAt ?? DateTime.UtcNow,
+            UsageCount = editingTemplate?.UsageCount ?? 0
+        };
+
+        if (editingTemplate != null)
+        {
+            await TransactionService.UpdateTransactionTemplateAsync(template);
+        }
+        else
+        {
+            await TransactionService.CreateTransactionTemplateAsync(template);
+        }
+
+        await LoadTemplates();
+        FilterTemplates();
+        CloseTemplateModal();
+    }
+
+    private async Task DeleteTemplate(TransactionTemplate template)
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", 
+            $"Are you sure you want to delete the template '{template.Name}'?");
+        
+        if (confirmed)
+        {
+            await TransactionService.DeleteTransactionTemplateAsync(template.Id);
+            await LoadTemplates();
+            FilterTemplates();
+        }
+    }
+
+    private async Task UseTemplate(TransactionTemplate template)
+    {
+        // Increment usage count
+        template.UsageCount++;
+        await TransactionService.UpdateTransactionTemplateAsync(template);
+        
+        // Navigate to add transaction with template data
+        var queryParams = new Dictionary<string, object?>
+        {
+            ["templateId"] = template.Id,
+            ["amount"] = template.Amount,
+            ["categoryId"] = template.CategoryId,
+            ["description"] = template.Description,
+            ["type"] = template.Type
+        };
+        
+        var query = string.Join("&", queryParams.Select(kvp => $"{kvp.Key}={Uri.EscapeDataString(kvp.Value?.ToString() ?? "")}"));
+        Navigation.NavigateTo($"/transactions/add?{query}");
+    }
+
+    private async Task DuplicateTemplate(TransactionTemplate template)
+    {
+        var duplicate = new TransactionTemplate
+        {
+            Id = Guid.NewGuid().ToString(),
+            Name = $"{template.Name} (Copy)",
+            Type = template.Type,
+            Amount = template.Amount,
+            CategoryId = template.CategoryId,
+            Description = template.Description,
+            Tags = template.Tags,
+            CreatedAt = DateTime.UtcNow,
+            UsageCount = 0
+        };
+
+        await TransactionService.CreateTransactionTemplateAsync(duplicate);
+        await LoadTemplates();
+        FilterTemplates();
+    }
+
+    private async Task ImportTemplates()
+    {
+        // This would typically open a file dialog or import modal
+        await JSRuntime.InvokeVoidAsync("alert", "Import functionality would be implemented here.");
+    }
+
+    private string GetTemplateTypeIcon(TransactionType type) => type switch
+    {
+        TransactionType.Income => "💰",
+        TransactionType.Expense => "💸",
+        TransactionType.Transfer => "🔄",
+        _ => "📝"
+    };
+
+    private string GetTemplateTypeColor(TransactionType type) => type switch
+    {
+        TransactionType.Income => "bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400",
+        TransactionType.Expense => "bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400",
+        TransactionType.Transfer => "bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400",
+        _ => "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+    };
+
+    private string GetAmountColor(decimal amount) => amount >= 0 
+        ? "text-green-600 dark:text-green-400" 
+        : "text-red-600 dark:text-red-400";
+
+    // Form class for template creation/editing
+    public class TransactionTemplateForm
+    {
+        public string Name { get; set; } = "";
+        public string Type { get; set; } = "";
+        public decimal Amount { get; set; }
+        public Guid CategoryId { get; set; }
+        public string? Description { get; set; }
+        public string? TagsString { get; set; }
+    }
+}

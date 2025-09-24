@@ -54,7 +54,7 @@ public class Income: BaseEntity
     public bool IsActive { get; set; } = true;
 
     public DateTime CreatedAt { get; set; } = DateTime.Now;
-    public DateTime? UpdatedAt { get; set; }
+    // Audit fields - CreatedAt and UpdatedAt are inherited from BaseEntity
 
     // Foreign Keys
     public string? IncomeCategoryId { get; set; }

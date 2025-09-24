@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using Pilgrims.PersonalFinances.Data;
 using Pilgrims.PersonalFinances.Services;
+using Pilgrims.PersonalFinances.Services.Interfaces;
 
 namespace Pilgrims.PersonalFinances
 {
@@ -31,6 +32,8 @@ namespace Pilgrims.PersonalFinances
             builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
             builder.Services.AddScoped<IThemeService, ThemeService>();
             builder.Services.AddScoped<IAccountService, AccountService>();
+            builder.Services.AddScoped<ITransactionService, TransactionService>();
+            builder.Services.AddScoped<IWindowService, WindowService>();
 
 #if DEBUG
     		builder.Services.AddBlazorWebViewDeveloperTools();

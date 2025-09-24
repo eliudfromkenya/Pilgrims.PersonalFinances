@@ -304,6 +304,45 @@ namespace Pilgrims.PersonalFinances.Models
                 Priority = NotificationPriority.High
             };
         }
+
+        /// <summary>
+        /// Creates a transaction created notification for a scheduled transaction
+        /// </summary>
+        /// <param name="scheduledTransaction">Scheduled transaction</param>
+        /// <param name="createdTransaction">Created transaction</param>
+        /// <returns>New notification</returns>
+        public static TransactionNotification CreateTransactionCreatedNotification(ScheduledTransaction scheduledTransaction, Transaction createdTransaction)
+        {
+            return new TransactionNotification
+            {
+                ScheduledTransactionId = scheduledTransaction.Id,
+                Title = $"Transaction Created: {scheduledTransaction.Name}",
+                Message = $"Your scheduled transaction '{scheduledTransaction.Name}' for {scheduledTransaction.FormattedAmount} has been automatically created on {createdTransaction.Date:MMM dd, yyyy}.",
+                NotificationType = NotificationType.TransactionCreated,
+                ScheduledDate = DateTime.Now,
+                Priority = NotificationPriority.Normal
+            };
+        }
+
+        /// <summary>
+        /// Creates an error notification for a scheduled transaction
+        /// </summary>
+        /// <param name="scheduledTransaction">Scheduled transaction</param>
+        /// <param name="errorMessage">Error message</param>
+        /// <returns>New notification</returns>
+        public static TransactionNotification CreateErrorNotification(ScheduledTransaction scheduledTransaction, string errorMessage)
+        {
+            return new TransactionNotification
+            {
+                ScheduledTransactionId = scheduledTransaction.Id,
+                Title = $"Error Processing: {scheduledTransaction.Name}",
+                Message = $"An error occurred while processing your scheduled transaction '{scheduledTransaction.Name}': {errorMessage}",
+                NotificationType = NotificationType.Error,
+                ScheduledDate = DateTime.Now,
+                Priority = NotificationPriority.High,
+                ErrorMessage = errorMessage
+            };
+        }
     }
 
     /// <summary>
