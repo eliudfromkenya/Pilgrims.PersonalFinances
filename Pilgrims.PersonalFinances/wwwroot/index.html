@@ -25,6 +25,35 @@
     </div>
 
     <script src="_framework/blazor.webview.js" autostart="false"></script>
+    
+    <script>
+        window.initializeParticles = () => {
+            // Create particle background container if it doesn't exist
+            let particleBg = document.querySelector('.particle-bg');
+            if (!particleBg) {
+                particleBg = document.createElement('div');
+                particleBg.className = 'particle-bg';
+                document.body.appendChild(particleBg);
+            }
+            
+            // Clear existing particles
+            particleBg.innerHTML = '';
+            
+            // Create floating particles
+            const particleCount = 50;
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                
+                // Random positioning and animation delay
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 20 + 's';
+                particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+                
+                particleBg.appendChild(particle);
+            }
+        };
+    </script>
 
 </body>
 

@@ -108,6 +108,11 @@ namespace Pilgrims.PersonalFinances.Models
         public bool AlertsEnabled { get; set; } = true;
 
         /// <summary>
+        /// Whether this budget is a template
+        /// </summary>
+        public bool IsTemplate { get; set; } = false;
+
+        /// <summary>
         /// Last alert level that was triggered
         /// </summary>
         public int? LastAlertLevel { get; set; }
@@ -146,6 +151,12 @@ namespace Pilgrims.PersonalFinances.Models
         public decimal UsedPercentage => LimitAmount + RolloverAmount > 0 
             ? Math.Round((SpentAmount / (LimitAmount + RolloverAmount)) * 100, 2) 
             : 0;
+
+        /// <summary>
+        /// Utilization percentage (alias for UsedPercentage for compatibility)
+        /// </summary>
+        [NotMapped]
+        public decimal UtilizationPercentage => UsedPercentage;
 
         /// <summary>
         /// Whether the budget is over the limit

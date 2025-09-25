@@ -1,0 +1,779 @@
+@page "/budget/templates"
+@using Pilgrims.PersonalFinances.Models
+@using Pilgrims.PersonalFinances.Models.Enums
+@using Pilgrims.PersonalFinances.Services
+@using Pilgrims.PersonalFinances.Services.Interfaces
+@using System.ComponentModel.DataAnnotations
+@using BudgetModel = Pilgrims.PersonalFinances.Models.Budget
+@inject IBudgetService BudgetService
+@inject ITransactionService TransactionService
+@inject IAccountService AccountService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Budget Templates</PageTitle>
+
+<!-- Particle Background -->
+<div class="particle-background">
+    @for (int i = 0; i < 50; i++)
+    {
+        <div class="particle" style="left: @(Random.Shared.Next(0, 100))%; animation-delay: @(Random.Shared.Next(0, 20))s; animation-duration: @(Random.Shared.Next(10, 30))s;"></div>
+    }
+</div>
+
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900 p-4 relative">
+    <!-- Header -->
+    <div class="max-w-7xl mx-auto mb-8 animate-slide-down">
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center space-x-4">
+                <button @onclick="NavigateBack" class="p-2 bg-white/20 dark:bg-gray-800/20 backdrop-blur-lg rounded-lg hover:bg-white/30 dark:hover:bg-gray-800/30 transition-all duration-300">
+                    <i class="fas fa-arrow-left text-gray-700 dark:text-gray-300"></i>
+                </button>
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800 dark:text-white">Budget Templates</h1>
+                    <p class="text-gray-600 dark:text-gray-300">Create and manage reusable budget configurations</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <button @onclick="RefreshTemplates" 
+                        class="px-4 py-2 bg-white/20 dark:bg-gray-800/20 backdrop-blur-lg rounded-lg hover:bg-white/30 dark:hover:bg-gray-800/30 transition-all duration-300 text-gray-700 dark:text-gray-300">
+                    <i class="fas fa-sync-alt mr-2"></i>Refresh
+                </button>
+                <button @onclick="ShowCreateTemplate" 
+                        class="px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all duration-300">
+                    <i class="fas fa-plus mr-2"></i>Create Template
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Templates Grid -->
+    <div class="max-w-7xl mx-auto">
+        @if (templates == null)
+        {
+            <!-- Loading State -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                @for (int i = 0; i < 6; i++)
+                {
+                    <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 animate-pulse">
+                        <div class="h-4 bg-gray-300 dark:bg-gray-600 rounded mb-4"></div>
+                        <div class="h-3 bg-gray-300 dark:bg-gray-600 rounded mb-2"></div>
+                        <div class="h-3 bg-gray-300 dark:bg-gray-600 rounded mb-4"></div>
+                        <div class="h-8 bg-gray-300 dark:bg-gray-600 rounded"></div>
+                    </div>
+                }
+            </div>
+        }
+        else if (!templates.Any())
+        {
+            <!-- Empty State -->
+            <div class="text-center py-16 animate-fade-in">
+                <div class="glass-card p-12 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 max-w-md mx-auto">
+                    <div class="text-6xl mb-6">📋</div>
+                    <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4">No Templates Yet</h3>
+                    <p class="text-gray-600 dark:text-gray-300 mb-6">Create your first budget template to quickly set up recurring budgets</p>
+                    <button @onclick="ShowCreateTemplate" 
+                            class="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-300">
+                        <i class="fas fa-plus mr-2"></i>Create First Template
+                    </button>
+                </div>
+            </div>
+        }
+        else
+        {
+            <!-- Templates Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                @foreach (var template in templates)
+                {
+                    <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 hover:bg-white/20 dark:hover:bg-gray-800/20 transition-all duration-300 animate-slide-up">
+                        <!-- Template Header -->
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex items-center">
+                                <span class="text-2xl mr-3">
+                                    @(template.BudgetType switch
+                                    {
+                                        BudgetType.Category => "📂",
+                                        BudgetType.Account => "🏦",
+                                        BudgetType.Tag => "🏷️",
+                                        BudgetType.TimePeriod => "📅",
+                                        _ => "💰"
+                                    })
+                                </span>
+                                <div>
+                                    <h3 class="font-semibold text-gray-800 dark:text-white">@template.Name</h3>
+                                    <div class="flex items-center space-x-2 mt-1">
+                                        <span class="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-xs">
+                                            @template.BudgetType.ToString()
+                                        </span>
+                                        <span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full text-xs">
+                                            @template.Period.ToString()
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="relative">
+                                <button @onclick="() => ToggleTemplateMenu(template.Id)" 
+                                        class="p-2 hover:bg-white/20 dark:hover:bg-gray-700/20 rounded-lg transition-all duration-300">
+                                    <i class="fas fa-ellipsis-v text-gray-600 dark:text-gray-400"></i>
+                                </button>
+                                
+                                @if (activeMenuId == template.Id)
+                                {
+                                    <div class="absolute right-0 top-10 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-10 min-w-[150px]">
+                                        <button @onclick="() => UseTemplate(template)" 
+                                                class="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                                            <i class="fas fa-plus mr-2"></i>Use Template
+                                        </button>
+                                        <button @onclick="() => EditTemplate(template)" 
+                                                class="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                                            <i class="fas fa-edit mr-2"></i>Edit
+                                        </button>
+                                        <button @onclick="() => DuplicateTemplate(template)" 
+                                                class="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                                            <i class="fas fa-copy mr-2"></i>Duplicate
+                                        </button>
+                                        <hr class="my-1 border-gray-200 dark:border-gray-700">
+                                        <button @onclick="() => DeleteTemplate(template)" 
+                                                class="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 text-red-600 dark:text-red-400">
+                                            <i class="fas fa-trash mr-2"></i>Delete
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Template Details -->
+                        <div class="space-y-3 mb-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-600 dark:text-gray-400">Amount:</span>
+                                <span class="font-semibold text-gray-800 dark:text-white">@template.LimitAmount.ToString("C")</span>
+                            </div>
+                            
+                            @if (!string.IsNullOrEmpty(template.Description))
+                            {
+                                <div>
+                                    <span class="text-sm text-gray-600 dark:text-gray-400">Description:</span>
+                                    <p class="text-sm text-gray-700 dark:text-gray-300 mt-1">@template.Description</p>
+                                </div>
+                            }
+                            
+                            @if (!string.IsNullOrEmpty(template.CategoryId) && categories?.FirstOrDefault(c => c.Id == template.CategoryId) != null)
+                            {
+                                <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                                    <i class="fas fa-tag"></i>
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">@categories.First(c => c.Id == template.CategoryId).Name</span>
+                                </div>
+                            }
+                            
+                            @if (!string.IsNullOrEmpty(template.AccountId) && accounts?.FirstOrDefault(a => a.Id == template.AccountId) != null)
+                            {
+                                <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                                    <i class="fas fa-university"></i>
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">@accounts.First(a => a.Id == template.AccountId).Name</span>
+                                </div>
+                            }
+                            
+                            @if (!string.IsNullOrEmpty(template.Tag))
+                            {
+                                <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                                    <i class="fas fa-hashtag"></i>
+                                    <div class="flex flex-wrap gap-1">
+                                        @template.Tag.Trim()
+                                    </div>
+                                </div>
+                            }
+
+                        </div>
+
+                        <!-- Template Features -->
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            @if (template.EnableRollover)
+                            {
+                                <span class="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-full text-xs">
+                                    <i class="fas fa-recycle mr-1"></i>Rollover
+                                </span>
+                            }
+                            @if (template.AllowOverspend)
+                            {
+                                <span class="px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 rounded-full text-xs">
+                                    <i class="fas fa-exclamation-triangle mr-1"></i>Overspend
+                                </span>
+                            }
+                            @if (template.BudgetAlerts?.Any() == true)
+                            {
+                                <span class="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 rounded-full text-xs">
+                                    <i class="fas fa-bell mr-1"></i>Alerts
+                                </span>
+                            }
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex space-x-2">
+                            <button @onclick="() => UseTemplate(template)" 
+                                    class="flex-1 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all duration-300 text-sm">
+                                <i class="fas fa-plus mr-2"></i>Use Template
+                            </button>
+                            <button @onclick="() => EditTemplate(template)" 
+                                    class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all duration-300 text-sm">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </div>
+
+                        <!-- Template Stats -->
+                        <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                            <div class="text-xs text-gray-500 dark:text-gray-400 flex items-center justify-between">
+                                <span>Created: @template.CreatedAt.ToString("MMM dd, yyyy")</span>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <!-- Create/Edit Template Modal -->
+    @if (showTemplateModal)
+    {
+        <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50" @onclick="CloseTemplateModal">
+            <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/90 dark:bg-gray-800/90 max-w-2xl w-full max-h-[90vh] overflow-y-auto" @onclick:stopPropagation="true">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800 dark:text-white">
+                        @(editingTemplate != null ? "Edit Template" : "Create Template")
+                    </h2>
+                    <button @onclick="CloseTemplateModal" class="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-all duration-300">
+                        <i class="fas fa-times text-gray-600 dark:text-gray-400"></i>
+                    </button>
+                </div>
+
+                <EditForm Model="templateModel" OnValidSubmit="SaveTemplate">
+                    <DataAnnotationsValidator />
+                    
+                    <div class="space-y-6">
+                        <!-- Basic Information -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Template Name</label>
+                                <InputText @bind-Value="templateModel.Name" 
+                                          class="w-full px-4 py-3 bg-white/50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300" 
+                                          placeholder="e.g., Monthly Groceries Template" />
+                                <ValidationMessage For="@(() => templateModel.Name)" class="text-red-500 text-sm mt-1" />
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Default Amount</label>
+                                <InputNumber @bind-Value="templateModel.Amount" 
+                                           class="w-full px-4 py-3 bg-white/50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300" 
+                                           placeholder="0.00" />
+                                <ValidationMessage For="@(() => templateModel.Amount)" class="text-red-500 text-sm mt-1" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
+                            <InputTextArea @bind-Value="templateModel.Description" 
+                                         class="w-full px-4 py-3 bg-white/50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 resize-none" 
+                                         rows="3" 
+                                         placeholder="Describe this template..." />
+                        </div>
+
+                        <!-- Budget Configuration -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Budget Type</label>
+                                <InputSelect @bind-Value="templateModel.BudgetType" 
+                                           @onchange="OnTemplateBudgetTypeChanged"
+                                           class="w-full px-4 py-3 bg-white/50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300">
+                                    <option value="@BudgetType.Category">Category-based</option>
+                                    <option value="@BudgetType.Account">Account-based</option>
+                                    <option value="@BudgetType.Tag">Tag-based</option>
+                                    <option value="@BudgetType.TimePeriod">Time-period</option>
+                                </InputSelect>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Default Period</label>
+                                <InputSelect @bind-Value="templateModel.Period" 
+                                           class="w-full px-4 py-3 bg-white/50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300">
+                                    <option value="@BudgetPeriod.Weekly">Weekly</option>
+                                    <option value="@BudgetPeriod.Monthly">Monthly</option>
+                                    <option value="@BudgetPeriod.Quarterly">Quarterly</option>
+                                    <option value="@BudgetPeriod.Yearly">Yearly</option>
+                                    <option value="@BudgetPeriod.Custom">Custom</option>
+                                </InputSelect>
+                            </div>
+                        </div>
+
+                        <!-- Dynamic Configuration -->
+                        @if (templateModel.BudgetType == BudgetType.Category)
+                        {
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Default Category</label>
+                                <InputSelect @bind-Value="templateModel.CategoryId" 
+                                           class="w-full px-4 py-3 bg-white/50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300">
+                                    <option value="">-- Select Category --</option>
+                                    @if (categories != null)
+                                    {
+                                        @foreach (var category in categories)
+                                        {
+                                            <option value="@category.Id">@category.Name</option>
+                                        }
+                                    }
+                                </InputSelect>
+                            </div>
+                        }
+                        else if (templateModel.BudgetType == BudgetType.Account)
+                        {
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Default Account</label>
+                                <InputSelect @bind-Value="templateModel.AccountId" 
+                                           class="w-full px-4 py-3 bg-white/50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300">
+                                    <option value="">-- Select Account --</option>
+                                    @if (accounts != null)
+                                    {
+                                        @foreach (var account in accounts)
+                                        {
+                                            <option value="@account.Id">@account.Name</option>
+                                        }
+                                    }
+                                </InputSelect>
+                            </div>
+                        }
+                        else if (templateModel.BudgetType == BudgetType.Tag)
+                        {
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Default Tag</label>
+                                <InputText @bind-Value="templateModel.Tag" 
+                                          class="w-full px-4 py-3 bg-white/50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300" 
+                                          placeholder="e.g., shopping" />
+                            </div>
+                        }
+
+                        <!-- Template Features -->
+                        <div class="space-y-4">
+                            <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Template Features</h3>
+                            
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between p-3 bg-white/30 dark:bg-gray-700/30 rounded-lg">
+                                    <div>
+                                        <h4 class="font-medium text-gray-800 dark:text-white">Rollover Unused Budget</h4>
+                                        <p class="text-sm text-gray-600 dark:text-gray-300">Carry unused budget to the next period</p>
+                                    </div>
+                                    <InputCheckbox @bind-Value="templateModel.EnableRollover" 
+                                                 class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2" />
+                                </div>
+                                
+                                <div class="flex items-center justify-between p-3 bg-white/30 dark:bg-gray-700/30 rounded-lg">
+                                    <div>
+                                        <h4 class="font-medium text-gray-800 dark:text-white">Allow Overspending</h4>
+                                        <p class="text-sm text-gray-600 dark:text-gray-300">Permit spending beyond budget limit</p>
+                                    </div>
+                                    <InputCheckbox @bind-Value="templateModel.AllowOverspend" 
+                                                 class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2" />
+                                </div>
+                                
+                                <div class="flex items-center justify-between p-3 bg-white/30 dark:bg-gray-700/30 rounded-lg">
+                                    <div>
+                                        <h4 class="font-medium text-gray-800 dark:text-white">Enable Alerts</h4>
+                                        <p class="text-sm text-gray-600 dark:text-gray-300">Include budget alerts in created budgets</p>
+                                    </div>
+                                    <InputCheckbox @bind-Value="templateModel.EnableAlerts" 
+                                                 class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex space-x-4 pt-4">
+                            <button type="submit" 
+                                    disabled="@isSubmitting"
+                                    class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                                @if (isSubmitting)
+                                {
+                                    <i class="fas fa-spinner fa-spin mr-2"></i>
+                                    @(editingTemplate != null ? "Updating..." : "Creating...")
+                                }
+                                else
+                                {
+                                    <i class="fas fa-save mr-2"></i>
+                                    @(editingTemplate != null ? "Update Template" : "Create Template")
+                                }
+                            </button>
+                            
+                            <button type="button" 
+                                    @onclick="CloseTemplateModal"
+                                    class="px-6 py-3 bg-gray-500 text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-300">
+                                <i class="fas fa-times mr-2"></i>Cancel
+                            </button>
+                        </div>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .particle-background {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    .particle {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        background: linear-gradient(45deg, #3b82f6, #8b5cf6);
+        border-radius: 50%;
+        animation: float linear infinite;
+        opacity: 0.6;
+    }
+
+    @@keyframes float {
+        0% {
+            transform: translateY(100vh) rotate(0deg);
+            opacity: 0;
+        }
+        10% {
+            opacity: 0.6;
+        }
+        90% {
+            opacity: 0.6;
+        }
+        100% {
+            transform: translateY(-100px) rotate(360deg);
+            opacity: 0;
+        }
+    }
+
+    .glass-card {
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    }
+
+    @@keyframes slide-down {
+        from {
+            opacity: 0;
+            transform: translateY(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @@keyframes slide-up {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @@keyframes fade-in {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    .animate-slide-down {
+        animation: slide-down 0.6s ease-out;
+    }
+
+    .animate-slide-up {
+        animation: slide-up 0.6s ease-out;
+        animation-fill-mode: both;
+    }
+
+    .animate-fade-in {
+        animation: fade-in 0.6s ease-out;
+    }
+</style>
+
+@code {
+    private List<BudgetModel>? templates;
+    private List<Category>? categories;
+    private IEnumerable<Account>? accounts;
+    private bool showTemplateModal = false;
+    private bool isSubmitting = false;
+    private BudgetModel? editingTemplate = null;
+    private string? activeMenuId = null;
+    private TemplateCreateModel templateModel = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            templates = (await BudgetService.GetBudgetTemplatesAsync()).ToList();
+            categories = await TransactionService.GetCategoriesAsync();
+            accounts = await AccountService.GetAllAccountsAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading templates: {ex.Message}");
+        }
+    }
+
+    private async Task RefreshTemplates()
+    {
+        templates = null;
+        StateHasChanged();
+        await LoadData();
+    }
+
+    private void ShowCreateTemplate()
+    {
+        editingTemplate = null;
+        templateModel = new TemplateCreateModel
+        {
+            BudgetType = BudgetType.Category,
+            Period = BudgetPeriod.Monthly,
+            EnableAlerts = true
+        };
+        showTemplateModal = true;
+        activeMenuId = null;
+    }
+
+    private void EditTemplate(BudgetModel template)
+    {
+        editingTemplate = template;
+        templateModel = new TemplateCreateModel
+        {
+            Name = template.Name,
+            Description = template.Description,
+            Amount = template.LimitAmount,
+            BudgetType = template.BudgetType,
+            Period = template.Period,
+            CategoryId = template.CategoryId,
+            AccountId = template.AccountId,
+            Tag = template.Tag,
+            EnableRollover = template.EnableRollover,
+            AllowOverspend = template.AllowOverspend,
+            EnableAlerts = template.BudgetAlerts?.Any() == true
+        };
+        showTemplateModal = true;
+        activeMenuId = null;
+    }
+
+    private async Task UseTemplate(BudgetModel template)
+    {
+        // Navigate to create budget page with template data
+        var queryParams = new Dictionary<string, object?>
+        {
+            ["templateId"] = template.Id
+        };
+        
+        Navigation.NavigateTo($"/budget/create?templateId={template.Id}");
+        activeMenuId = null;
+    }
+
+    private async Task DuplicateTemplate(BudgetModel template)
+    {
+        try
+        {
+            var duplicatedTemplate = new BudgetModel
+            {
+                Name = $"{template.Name} (Copy)",
+                Description = template.Description,
+                LimitAmount = template.LimitAmount,
+                BudgetType = template.BudgetType,
+                Period = template.Period,
+                CategoryId = template.CategoryId,
+                AccountId = template.AccountId,
+                Tag = template.Tag,
+                EnableRollover = template.EnableRollover,
+                AllowOverspend = template.AllowOverspend,
+                IsActive = true,
+                StartDate = DateTime.Today,
+                EndDate = DateTime.Today.AddMonths(1)
+            };
+
+            await BudgetService.CreateBudgetAsync(duplicatedTemplate);
+            await RefreshTemplates();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error duplicating template: {ex.Message}");
+        }
+        
+        activeMenuId = null;
+    }
+
+    private async Task DeleteTemplate(BudgetModel template)
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete the template '{template.Name}'? This action cannot be undone.");
+        
+        if (confirmed)
+        {
+            try
+            {
+                await BudgetService.DeleteBudgetTemplateAsync(template.Id);
+                await RefreshTemplates();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error deleting template: {ex.Message}");
+            }
+        }
+        
+        activeMenuId = null;
+    }
+
+    private void ToggleTemplateMenu(string templateId)
+    {
+        activeMenuId = activeMenuId == templateId ? null : templateId;
+    }
+
+    private void CloseTemplateModal()
+    {
+        showTemplateModal = false;
+        editingTemplate = null;
+        templateModel = new();
+    }
+
+    private async Task OnTemplateBudgetTypeChanged(ChangeEventArgs e)
+    {
+        if (Enum.TryParse<BudgetType>(e.Value?.ToString(), out var budgetType))
+        {
+            templateModel.BudgetType = budgetType;
+            
+            // Clear related fields when type changes
+            templateModel.CategoryId = null;
+            templateModel.AccountId = null;
+            templateModel.Tag = null;
+            
+            StateHasChanged();
+        }
+    }
+
+    private async Task SaveTemplate()
+    {
+        try
+        {
+            isSubmitting = true;
+            StateHasChanged();
+
+            var templateToSave = new BudgetModel
+            {
+                Id = editingTemplate?.Id ?? Guid.NewGuid().ToString(),
+                Name = templateModel.Name,
+                Description = templateModel.Description,
+                LimitAmount = templateModel.Amount,
+                BudgetType = templateModel.BudgetType,
+                Period = templateModel.Period,
+                CategoryId = templateModel.CategoryId,
+                AccountId = templateModel.AccountId,
+                Tag = templateModel.Tag,
+                EnableRollover = templateModel.EnableRollover,
+                AllowOverspend = templateModel.AllowOverspend,
+                IsActive = true,
+                IsTemplate = true,
+                StartDate = DateTime.Today,
+                EndDate = DateTime.Today.AddMonths(1)
+            };
+
+            BudgetModel savedTemplate;
+            if (editingTemplate != null)
+            {
+                savedTemplate = await BudgetService.UpdateBudgetAsync(templateToSave);
+            }
+            else
+            {
+                savedTemplate = await BudgetService.CreateBudgetAsync(templateToSave);
+            }
+
+            // Create template alerts if enabled
+            if (templateModel.EnableAlerts)
+            {
+                await CreateTemplateAlerts(savedTemplate.Id);
+            }
+
+            CloseTemplateModal();
+            await RefreshTemplates();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving template: {ex.Message}");
+        }
+        finally
+        {
+            isSubmitting = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CreateTemplateAlerts(string templateId)
+    {
+        var alertThresholds = new[] { 50, 75, 90, 100 };
+        
+        foreach (var threshold in alertThresholds)
+        {
+            var alert = new BudgetAlert
+            {
+                BudgetId = templateId,
+                ThresholdPercentage = threshold,
+                AlertLevel = (int)BudgetAlertLevel.SeventyFivePercent,
+                Severity = threshold switch
+                {
+                    50 => AlertSeverity.Info,
+                    75 => AlertSeverity.Warning,
+                    90 => AlertSeverity.Warning,
+                    100 => AlertSeverity.Critical,
+                    _ => AlertSeverity.Warning
+                },
+                Message = $"Budget alert at {threshold}% threshold",
+                IsActive = true
+            };
+            
+            await BudgetService.CreateBudgetAlertAsync(alert);
+        }
+    }
+
+    private void NavigateBack()
+    {
+        Navigation.NavigateTo("/budget-dashboard");
+    }
+
+    // Model class for template form binding
+    public class TemplateCreateModel
+    {
+        [Required(ErrorMessage = "Template name is required")]
+        [StringLength(100, ErrorMessage = "Template name cannot exceed 100 characters")]
+        public string Name { get; set; } = "";
+
+        public string? Description { get; set; }
+
+        [Required(ErrorMessage = "Default amount is required")]
+        [Range(0.01, double.MaxValue, ErrorMessage = "Default amount must be greater than 0")]
+        public decimal Amount { get; set; }
+
+        public BudgetType BudgetType { get; set; } = BudgetType.Category;
+        public BudgetPeriod Period { get; set; } = BudgetPeriod.Monthly;
+        
+        public string? CategoryId { get; set; }
+        public string? AccountId { get; set; }
+        public string? Tag { get; set; }
+        
+        public bool EnableRollover { get; set; }
+        public bool AllowOverspend { get; set; }
+        public bool EnableAlerts { get; set; } = true;
+    }
+}

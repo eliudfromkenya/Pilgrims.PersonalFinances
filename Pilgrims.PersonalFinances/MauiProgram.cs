@@ -33,6 +33,7 @@ namespace Pilgrims.PersonalFinances
             builder.Services.AddScoped<IThemeService, ThemeService>();
             builder.Services.AddScoped<IAccountService, AccountService>();
             builder.Services.AddScoped<ITransactionService, TransactionService>();
+            builder.Services.AddScoped<IBudgetService, BudgetService>();
             builder.Services.AddScoped<IWindowService, WindowService>();
             builder.Services.AddScoped<IScheduledTransactionService, ScheduledTransactionService>();
             builder.Services.AddScoped<INotificationService, NotificationService>();

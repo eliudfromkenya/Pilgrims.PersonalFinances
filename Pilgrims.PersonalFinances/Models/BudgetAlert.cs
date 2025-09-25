@@ -59,6 +59,24 @@ namespace Pilgrims.PersonalFinances.Models
         /// </summary>
         public DateTime? ReadDate { get; set; }
 
+        /// <summary>
+        /// Whether the alert is active/enabled
+        /// </summary>
+        public bool IsActive { get; set; } = true;
+
+        /// <summary>
+        /// Alert severity level
+        /// </summary>
+        [Required]
+        public AlertSeverity Severity { get; set; } = AlertSeverity.Info;
+
+        /// <summary>
+        /// Threshold percentage that triggers this alert
+        /// </summary>
+        [Required]
+        [Column(TypeName = "decimal(5,2)")]
+        public decimal ThresholdPercentage { get; set; }
+
         // Navigation properties
         /// <summary>
         /// Budget this alert belongs to
@@ -95,7 +113,7 @@ namespace Pilgrims.PersonalFinances.Models
         /// Alert severity for UI styling
         /// </summary>
         [NotMapped]
-        public string AlertSeverity => AlertLevel switch
+        public string AlertSeverityLevel => AlertLevel switch
         {
             50 => "Info",
             75 => "Warning",

@@ -30,6 +30,9 @@ public interface INotificationService
     Task CreateTransactionFailedNotificationAsync(ScheduledTransaction scheduledTransaction, string errorMessage);
     Task CreateApprovalRequestNotificationAsync(ScheduledTransaction scheduledTransaction);
     
+    // Budget Alert Notifications
+    Task CreateBudgetAlertNotificationAsync(BudgetAlert budgetAlert);
+    
     // Notification Statistics
     Task<int> GetUnreadCountAsync();
     Task<int> GetUnreadCountByTypeAsync(Pilgrims.PersonalFinances.Models.Enums.AppNotificationType type);

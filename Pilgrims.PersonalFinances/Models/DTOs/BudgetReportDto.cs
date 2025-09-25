@@ -80,6 +80,15 @@ namespace Pilgrims.PersonalFinances.Models.DTOs
         public string BudgetName { get; set; } = string.Empty;
         public DateTime ReportDate { get; set; }
         
+        // Additional properties for variance report
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
+        public decimal TotalBudgetedAmount { get; set; }
+        public decimal TotalActualAmount { get; set; }
+        public decimal TotalVariance { get; set; }
+        public List<BudgetVarianceItem> FavorableVariances { get; set; } = new();
+        public List<BudgetVarianceItem> UnfavorableVariances { get; set; } = new();
+        
         public List<BudgetVarianceItem> VarianceItems { get; set; } = new();
         
         [Column(TypeName = "decimal(18,2)")]

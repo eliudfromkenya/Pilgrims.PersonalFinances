@@ -367,5 +367,34 @@ public class NotificationService : INotificationService
         return notification;
     }
 
+    public async Task CreateBudgetAlertNotificationAsync(BudgetAlert budgetAlert)
+    {
+        var budget = await _context.Budgets.FindAsync(budgetAlert.BudgetId);
+        if (budget == null) return;
+
+        var notification = new TransactionNotification
+        {
+            Id = Guid.NewGuid().ToString(),
+            Title = $"Budget Alert: {budget.Name}",
+            Message = budgetAlert.Message,
+            NotificationType = AppNotificationType.BudgetAlert,
+            Priority = budgetAlert.AlertLevel switch
+            {
+                50 => NotificationPriority.Low,
+                75 => NotificationPriority.Medium,
+                90 => NotificationPriority.High,
+                100 => NotificationPriority.Critical,
+                _ => NotificationPriority.Medium
+            },
+            ScheduledDate = DateTime.UtcNow,
+            IsRead = false,
+            IsDismissed = false
+        };
+
+        _context.TransactionNotifications.Add(notification);
+        await _context.SaveChangesAsync();
+        NotificationCreated?.Invoke(this, notification);
+    }
+
     #endregion
 }
