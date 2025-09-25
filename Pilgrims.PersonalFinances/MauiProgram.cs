@@ -38,6 +38,7 @@ namespace Pilgrims.PersonalFinances
             builder.Services.AddScoped<IScheduledTransactionService, ScheduledTransactionService>();
             builder.Services.AddScoped<INotificationService, NotificationService>();
             builder.Services.AddScoped<IDebtService, DebtService>();
+            builder.Services.AddScoped<IIncomeService, IncomeService>();
             builder.Services.AddSingleton<IScheduledTransactionBackgroundService, ScheduledTransactionBackgroundService>();
             builder.Services.AddHostedService<ScheduledTransactionBackgroundService>();
 

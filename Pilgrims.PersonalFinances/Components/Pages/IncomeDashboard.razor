@@ -1,0 +1,309 @@
+@page "/income-dashboard"
+@using Pilgrims.PersonalFinances.Models
+@using Pilgrims.PersonalFinances.Services.Interfaces
+@inject IIncomeService IncomeService
+@inject NavigationManager Navigation
+@inject INotificationService NotificationService
+
+<PageTitle>Income Dashboard</PageTitle>
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h3 mb-0">Income Dashboard</h1>
+            <p class="text-muted">Track and manage your income sources</p>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-primary" @onclick="NavigateToAddIncome">
+                <i class="fas fa-plus me-2"></i>Add Income
+            </button>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Summary Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">This Month</h6>
+                                <h4 class="mb-0">@summary.ThisMonth.ToString("C")</h4>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-calendar-month fa-2x opacity-75"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">Last Month</h6>
+                                <h4 class="mb-0">@summary.LastMonth.ToString("C")</h4>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-calendar-check fa-2x opacity-75"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">Year to Date</h6>
+                                <h4 class="mb-0">@summary.YearToDate.ToString("C")</h4>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-calendar-year fa-2x opacity-75"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">Monthly Average</h6>
+                                <h4 class="mb-0">@monthlyAverage.ToString("C")</h4>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-chart-line fa-2x opacity-75"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Recent Incomes -->
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Recent Incomes</h5>
+                        <a href="/income-list" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                    <div class="card-body">
+                        @if (recentIncomes.Any())
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Type</th>
+                                            <th>Amount</th>
+                                            <th>Date</th>
+                                            <th>Category</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var income in recentIncomes)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <strong>@income.Name</strong>
+                                                    @if (!string.IsNullOrEmpty(income.Description))
+                                                    {
+                                                        <br><small class="text-muted">@income.Description</small>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-secondary">@income.IncomeTypeDisplay</span>
+                                                </td>
+                                                <td>
+                                                    <strong class="text-success">@income.Amount.ToString("C")</strong>
+                                                    @if (income.IsPreTax)
+                                                    {
+                                                        <br><small class="text-muted">Pre-tax</small>
+                                                    }
+                                                </td>
+                                                <td>@income.ReceivedDate.ToString("MMM dd, yyyy")</td>
+                                                <td>
+                                                    @if (income.IncomeCategory != null)
+                                                    {
+                                                        <span class="badge" style="background-color: @income.IncomeCategory.Color">
+                                                            @income.IncomeCategory.Name
+                                                        </span>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center py-4">
+                                <i class="fas fa-money-bill-wave fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">No income records found</p>
+                                <button class="btn btn-primary" @onclick="NavigateToAddIncome">
+                                    Add Your First Income
+                                </button>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Stats & Actions -->
+            <div class="col-lg-4">
+                <!-- Income Breakdown -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">Income by Type</h6>
+                    </div>
+                    <div class="card-body">
+                        @if (incomeByType.Any())
+                        {
+                            @foreach (var item in incomeByType)
+                            {
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span>@item.Key</span>
+                                    <strong>@item.Value.ToString("C")</strong>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <p class="text-muted mb-0">No data available</p>
+                        }
+                    </div>
+                </div>
+
+                <!-- Upcoming Incomes -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">Upcoming Incomes</h6>
+                    </div>
+                    <div class="card-body">
+                        @if (upcomingIncomes.Any())
+                        {
+                            @foreach (var income in upcomingIncomes.Take(5))
+                            {
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <strong>@income.Name</strong>
+                                        <br><small class="text-muted">@income.NextExpectedDate?.ToString("MMM dd")</small>
+                                    </div>
+                                    <strong class="text-success">@income.Amount.ToString("C")</strong>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <p class="text-muted mb-0">No upcoming incomes</p>
+                        }
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">Quick Actions</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-primary btn-sm" @onclick="NavigateToAddIncome">
+                                <i class="fas fa-plus me-2"></i>Add Income
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" @onclick="NavigateToIncomeList">
+                                <i class="fas fa-list me-2"></i>View All Incomes
+                            </button>
+                            <button class="btn btn-outline-info btn-sm" @onclick="NavigateToIncomeCategories">
+                                <i class="fas fa-tags me-2"></i>Manage Categories
+                            </button>
+                            <button class="btn btn-outline-success btn-sm" @onclick="NavigateToIncomeForecasting">
+                                <i class="fas fa-chart-line me-2"></i>Income Forecasting
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private bool isLoading = true;
+    private (decimal ThisMonth, decimal LastMonth, decimal YearToDate) summary;
+    private decimal monthlyAverage;
+    private List<Income> recentIncomes = new();
+    private List<Income> upcomingIncomes = new();
+    private Dictionary<string, decimal> incomeByType = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDashboardData();
+    }
+
+    private async Task LoadDashboardData()
+    {
+        try
+        {
+            isLoading = true;
+
+            // Load summary data
+            summary = await IncomeService.GetIncomeSummaryAsync();
+            monthlyAverage = await IncomeService.GetMonthlyIncomeAverageAsync();
+
+            // Load recent incomes
+            recentIncomes = (await IncomeService.GetRecentIncomesAsync(10)).ToList();
+
+            // Load upcoming incomes
+            upcomingIncomes = (await IncomeService.GetUpcomingIncomesAsync(30)).ToList();
+
+            // Load income breakdown by type
+            var startOfMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+            incomeByType = await IncomeService.GetIncomeByTypeBreakdownAsync(startOfMonth);
+        }
+        catch (Exception ex)
+        {
+            await NotificationService.ShowErrorAsync("Error loading dashboard data", ex.Message);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void NavigateToAddIncome()
+    {
+        Navigation.NavigateTo("/income-create");
+    }
+
+    private void NavigateToIncomeList()
+    {
+        Navigation.NavigateTo("/income-list");
+    }
+
+    private void NavigateToIncomeCategories()
+    {
+        Navigation.NavigateTo("/income-categories");
+    }
+
+    private void NavigateToIncomeForecasting()
+    {
+        Navigation.NavigateTo("/income-forecasting");
+    }
+}

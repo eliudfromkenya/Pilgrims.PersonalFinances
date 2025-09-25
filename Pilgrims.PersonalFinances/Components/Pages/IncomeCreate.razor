@@ -1,0 +1,438 @@
+@page "/income-create"
+@page "/income-edit/{IncomeId}"
+@using Pilgrims.PersonalFinances.Models
+@using Pilgrims.PersonalFinances.Services.Interfaces
+@inject IIncomeService IncomeService
+@inject NavigationManager Navigation
+@inject INotificationService NotificationService
+
+<PageTitle>@(IsEditMode ? "Edit Income" : "Add Income")</PageTitle>
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/income-dashboard">Income</a></li>
+                    <li class="breadcrumb-item"><a href="/income-list">Income List</a></li>
+                    <li class="breadcrumb-item active">@(IsEditMode ? "Edit" : "Add")</li>
+                </ol>
+            </nav>
+            <h1 class="h3 mb-0">@(IsEditMode ? "Edit Income" : "Add New Income")</h1>
+            <p class="text-muted">@(IsEditMode ? "Update income information" : "Add a new income source")</p>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-outline-secondary" @onclick="NavigateBack">
+                <i class="fas fa-arrow-left me-2"></i>Back
+            </button>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Income Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <EditForm Model="income" OnValidSubmit="SaveIncome">
+                            <DataAnnotationsValidator />
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-8">
+                                    <label class="form-label">Income Name <span class="text-danger">*</span></label>
+                                    <InputText @bind-Value="income.Name" class="form-control" placeholder="e.g., Monthly Salary, Freelance Project" />
+                                    <ValidationMessage For="@(() => income.Name)" class="text-danger" />
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Amount <span class="text-danger">*</span></label>
+                                    <InputNumber @bind-Value="income.Amount" class="form-control" placeholder="0.00" />
+                                    <ValidationMessage For="@(() => income.Amount)" class="text-danger" />
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Description</label>
+                                <InputTextArea @bind-Value="income.Description" class="form-control" rows="3" placeholder="Optional description..." />
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">Income Type <span class="text-danger">*</span></label>
+                                    <InputSelect @bind-Value="income.IncomeType" class="form-select">
+                                        <option value="">Select Type</option>
+                                        <option value="Salary">Salary/Wages</option>
+                                        <option value="Freelance">Freelance/Contract</option>
+                                        <option value="Investment">Investment Income</option>
+                                        <option value="Rental">Rental Income</option>
+                                        <option value="Other">Other</option>
+                                    </InputSelect>
+                                    <ValidationMessage For="@(() => income.IncomeType)" class="text-danger" />
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Frequency <span class="text-danger">*</span></label>
+                                    <InputSelect @bind-Value="income.Frequency" class="form-select">
+                                        <option value="">Select Frequency</option>
+                                        <option value="Weekly">Weekly</option>
+                                        <option value="Bi-weekly">Bi-weekly</option>
+                                        <option value="Monthly">Monthly</option>
+                                        <option value="Quarterly">Quarterly</option>
+                                        <option value="Annually">Annually</option>
+                                        <option value="One-time">One-time</option>
+                                    </InputSelect>
+                                    <ValidationMessage For="@(() => income.Frequency)" class="text-danger" />
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Category</label>
+                                    <InputSelect @bind-Value="income.IncomeCategoryId" class="form-select">
+                                        <option value="">Select Category</option>
+                                        @foreach (var category in categories)
+                                        {
+                                            <option value="@category.Id">@category.Name</option>
+                                        }
+                                    </InputSelect>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Received Date <span class="text-danger">*</span></label>
+                                    <InputDate @bind-Value="income.ReceivedDate" class="form-control" />
+                                    <ValidationMessage For="@(() => income.ReceivedDate)" class="text-danger" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Source</label>
+                                    <InputText @bind-Value="income.Source" class="form-control" placeholder="e.g., Company Name, Client Name" />
+                                </div>
+                            </div>
+
+                            <!-- Regular Income Settings -->
+                            <div class="card mb-3">
+                                <div class="card-header">
+                                    <div class="form-check">
+                                        <InputCheckbox @bind-Value="income.IsRegular" class="form-check-input" id="isRegular" />
+                                        <label class="form-check-label" for="isRegular">
+                                            <strong>Regular/Recurring Income</strong>
+                                        </label>
+                                    </div>
+                                    <small class="text-muted">Check if this income repeats on a regular schedule</small>
+                                </div>
+                                @if (income.IsRegular)
+                                {
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <label class="form-label">Start Date</label>
+                                                <InputDate @bind-Value="income.StartDate" class="form-control" />
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">End Date (Optional)</label>
+                                                <InputDate @bind-Value="income.EndDate" class="form-control" />
+                                            </div>
+                                        </div>
+                                        <div class="mt-3">
+                                            <label class="form-label">Next Expected Date</label>
+                                            <InputDate @bind-Value="income.NextExpectedDate" class="form-control" />
+                                            <small class="text-muted">When do you expect to receive this income next?</small>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+
+                            <!-- Tax Information -->
+                            <div class="card mb-3">
+                                <div class="card-header">
+                                    <h6 class="mb-0">Tax Information</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-check mb-3">
+                                                <InputCheckbox @bind-Value="income.IsPreTax" class="form-check-input" id="isPreTax" />
+                                                <label class="form-check-label" for="isPreTax">
+                                                    Pre-tax Income (subject to taxation)
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            @if (income.IsPreTax)
+                                            {
+                                                <label class="form-label">Tax Rate (%)</label>
+                                                <InputNumber @bind-Value="income.TaxRate" class="form-control" placeholder="0.00" />
+                                                <small class="text-muted">Enter the tax rate as a percentage (e.g., 25.5)</small>
+                                            }
+                                        </div>
+                                    </div>
+                                    @if (income.IsPreTax && income.TaxRate.HasValue)
+                                    {
+                                        <div class="alert alert-info mt-3">
+                                            <strong>Net Amount:</strong> @income.CalculatedNetAmount.ToString("C")
+                                            <br><small>Gross: @income.Amount.ToString("C") - Tax (@income.TaxRate.Value%): @((income.Amount * (income.TaxRate.Value / 100)).ToString("C"))</small>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+
+                            <!-- Additional Information -->
+                            <div class="card mb-3">
+                                <div class="card-header">
+                                    <h6 class="mb-0">Additional Information</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Payment Method</label>
+                                            <InputSelect @bind-Value="income.PaymentMethod" class="form-select">
+                                                <option value="">Select Method</option>
+                                                <option value="Direct Deposit">Direct Deposit</option>
+                                                <option value="Check">Check</option>
+                                                <option value="Cash">Cash</option>
+                                                <option value="Wire Transfer">Wire Transfer</option>
+                                                <option value="PayPal">PayPal</option>
+                                                <option value="Other">Other</option>
+                                            </InputSelect>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Reference Number</label>
+                                            <InputText @bind-Value="income.ReferenceNumber" class="form-control" placeholder="Invoice #, Transaction ID, etc." />
+                                        </div>
+                                    </div>
+                                    <div class="mt-3">
+                                        <div class="form-check">
+                                            <InputCheckbox @bind-Value="income.IsActive" class="form-check-input" id="isActive" />
+                                            <label class="form-check-label" for="isActive">
+                                                Active Income Source
+                                            </label>
+                                            <small class="form-text text-muted d-block">Uncheck to deactivate this income source</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between">
+                                <button type="button" class="btn btn-outline-secondary" @onclick="NavigateBack">
+                                    Cancel
+                                </button>
+                                <button type="submit" class="btn btn-primary" disabled="@isSaving">
+                                    @if (isSaving)
+                                    {
+                                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                    }
+                                    <i class="fas fa-save me-2"></i>
+                                    @(IsEditMode ? "Update Income" : "Save Income")
+                                </button>
+                            </div>
+                        </EditForm>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preview/Summary -->
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">Income Preview</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <strong>@(string.IsNullOrEmpty(income.Name) ? "Income Name" : income.Name)</strong>
+                            @if (!string.IsNullOrEmpty(income.Description))
+                            {
+                                <br><small class="text-muted">@income.Description</small>
+                            }
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h4 class="text-success mb-0">@income.Amount.ToString("C")</h4>
+                            @if (income.IsPreTax && income.TaxRate.HasValue)
+                            {
+                                <small class="text-muted">Net: @income.CalculatedNetAmount.ToString("C")</small>
+                            }
+                        </div>
+
+                        <div class="mb-3">
+                            @if (!string.IsNullOrEmpty(income.IncomeType))
+                            {
+                                <span class="badge bg-primary me-1">@income.IncomeType</span>
+                            }
+                            @if (!string.IsNullOrEmpty(income.Frequency))
+                            {
+                                <span class="badge bg-secondary me-1">@income.Frequency</span>
+                            }
+                            @if (income.IsRegular)
+                            {
+                                <span class="badge bg-success">Regular</span>
+                            }
+                        </div>
+
+                        @if (selectedCategory != null)
+                        {
+                            <div class="mb-3">
+                                <span class="badge" style="background-color: @selectedCategory.Color">
+                                    @selectedCategory.Name
+                                </span>
+                            </div>
+                        }
+
+                        <div class="mb-3">
+                            <small class="text-muted">
+                                <strong>Received:</strong> @income.ReceivedDate.ToString("MMM dd, yyyy")
+                                @if (income.IsRegular && income.NextExpectedDate.HasValue)
+                                {
+                                    <br><strong>Next Expected:</strong> @income.NextExpectedDate.Value.ToString("MMM dd, yyyy")
+                                }
+                            </small>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(income.Source))
+                        {
+                            <div class="mb-3">
+                                <small class="text-muted">
+                                    <strong>Source:</strong> @income.Source
+                                </small>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Quick Tips -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Tips</h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2"><small><i class="fas fa-check text-success me-2"></i>Use descriptive names for easy identification</small></li>
+                            <li class="mb-2"><small><i class="fas fa-check text-success me-2"></i>Set up regular incomes for automatic tracking</small></li>
+                            <li class="mb-2"><small><i class="fas fa-check text-success me-2"></i>Include tax information for accurate net calculations</small></li>
+                            <li><small><i class="fas fa-check text-success me-2"></i>Categorize incomes for better reporting</small></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string? IncomeId { get; set; }
+
+    private bool isLoading = true;
+    private bool isSaving = false;
+    private Income income = new();
+    private List<IncomeCategory> categories = new();
+    private IncomeCategory? selectedCategory;
+
+    private bool IsEditMode => !string.IsNullOrEmpty(IncomeId);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            isLoading = true;
+
+            // Load categories
+            categories = (await IncomeService.GetAllIncomeCategoriesAsync()).ToList();
+
+            if (IsEditMode)
+            {
+                // Load existing income
+                var existingIncome = await IncomeService.GetIncomeByIdAsync(IncomeId!);
+                if (existingIncome != null)
+                {
+                    income = existingIncome;
+                    UpdateSelectedCategory();
+                }
+                else
+                {
+                    await NotificationService.ShowErrorAsync("Error", "Income not found");
+                    NavigateBack();
+                    return;
+                }
+            }
+            else
+            {
+                // Initialize new income
+                income = new Income
+                {
+                    ReceivedDate = DateTime.Today,
+                    IsActive = true,
+                    IsRegular = false,
+                    IsPreTax = false
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            await NotificationService.ShowErrorAsync("Error loading data", ex.Message);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void UpdateSelectedCategory()
+    {
+        if (!string.IsNullOrEmpty(income.IncomeCategoryId))
+        {
+            selectedCategory = categories.FirstOrDefault(c => c.Id == income.IncomeCategoryId);
+        }
+        else
+        {
+            selectedCategory = null;
+        }
+    }
+
+    private async Task SaveIncome()
+    {
+        try
+        {
+            isSaving = true;
+
+            // Update selected category
+            UpdateSelectedCategory();
+
+            if (IsEditMode)
+            {
+                await IncomeService.UpdateIncomeAsync(income);
+                await NotificationService.ShowSuccessAsync("Income updated successfully");
+            }
+            else
+            {
+                await IncomeService.CreateIncomeAsync(income);
+                await NotificationService.ShowSuccessAsync("Income created successfully");
+            }
+
+            NavigateBack();
+        }
+        catch (Exception ex)
+        {
+            await NotificationService.ShowErrorAsync($"Error {(IsEditMode ? "updating" : "creating")} income", ex.Message);
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private void NavigateBack()
+    {
+        Navigation.NavigateTo("/income-list");
+    }
+}

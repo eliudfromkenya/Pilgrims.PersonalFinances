@@ -141,6 +141,50 @@
             </div>
         </div>
 
+        <!-- Income Management Section -->
+        <div class="px-2">
+            <!-- Main Income Management Link -->
+            <div class="flex items-center">
+                <button @onclick="() => ToggleSubmenu(SubmenuType.Income)" 
+                        class="flex items-center py-1 px-4 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md flex-1 w-full text-left">
+                    <span class="text-xl mr-3 group-hover:scale-110 transition-transform duration-300">💵</span> 
+                    <span class="font-medium">Income Management</span>
+                    <span class="text-sm transition-transform duration-300 ml-auto @(activeSubmenu == SubmenuType.Income ? "rotate-180" : "")">▼</span>
+                </button>               
+            </div>
+            
+            <!-- Income Management Submenu -->
+            <div class="overflow-hidden transition-all duration-300 @(activeSubmenu == SubmenuType.Income ? "max-h-96 opacity-100" : "max-h-0 opacity-0")">
+                <div class="ml-8 mt-2 space-y-1 border-l-2 border-blue-200 dark:border-blue-800 pl-4">
+                    <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
+                             href="income-dashboard">
+                        <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">📊</span> 
+                        <span>Dashboard</span>
+                    </NavLink>
+                    <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
+                             href="income-list">
+                        <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">📋</span> 
+                        <span>All Incomes</span>
+                    </NavLink>
+                    <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
+                             href="income-create">
+                        <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">➕</span> 
+                        <span>Add Income</span>
+                    </NavLink>
+                    <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
+                             href="income-categories">
+                        <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">🏷️</span> 
+                        <span>Categories</span>
+                    </NavLink>
+                    <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
+                             href="income-forecasting">
+                        <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">🔮</span> 
+                        <span>Forecasting</span>
+                    </NavLink>
+                </div>
+            </div>
+        </div>
+
         <!-- Investments -->
         <div class="px-2">
             <NavLink class="flex items-center py-1 px-4 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md" 
@@ -263,6 +307,7 @@
         Accounts,
         Transactions,
         Budget,
+        Income,
         Investments,
         Assets,
         Insurance,

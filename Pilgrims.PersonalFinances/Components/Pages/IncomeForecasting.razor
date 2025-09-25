@@ -1,0 +1,360 @@
+@page "/income-forecasting"
+@inject IIncomeService IncomeService
+@inject NavigationManager Navigation
+
+<PageTitle>Income Forecasting</PageTitle>
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/income-dashboard">Income</a></li>
+                    <li class="breadcrumb-item active">Forecasting</li>
+                </ol>
+            </nav>
+            <h1 class="h3 mb-0">Income Forecasting</h1>
+            <p class="text-muted">Project future income based on historical data and regular income patterns</p>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="d-flex justify-content-center align-items-center" style="height: 400px;">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Forecasting Controls -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Forecast Settings</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label class="form-label">Forecast Period</label>
+                                <select class="form-select" @bind="forecastMonths" @bind:after="UpdateForecast">
+                                    <option value="3">3 Months</option>
+                                    <option value="6">6 Months</option>
+                                    <option value="12">12 Months</option>
+                                    <option value="24">24 Months</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Income Type</label>
+                                <select class="form-select" @bind="selectedIncomeType" @bind:after="UpdateForecast">
+                                    <option value="">All Types</option>
+                                    <option value="Salary">Salary</option>
+                                    <option value="Freelance">Freelance</option>
+                                    <option value="Investment">Investment</option>
+                                    <option value="Rental">Rental</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Forecast Method</label>
+                                <select class="form-select" @bind="forecastMethod" @bind:after="UpdateForecast">
+                                    <option value="Conservative">Conservative</option>
+                                    <option value="Realistic">Realistic</option>
+                                    <option value="Optimistic">Optimistic</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check mt-4">
+                                    <input class="form-check-input" type="checkbox" @bind="includeRegularOnly" @bind:after="UpdateForecast" id="regularOnlyCheck">
+                                    <label class="form-check-label" for="regularOnlyCheck">
+                                        Regular Income Only
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">Total Projected</h6>
+                                <h4 class="mb-0">@totalProjected.ToString("C")</h4>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-chart-line fa-2x opacity-75"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">Monthly Average</h6>
+                                <h4 class="mb-0">@monthlyAverage.ToString("C")</h4>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-calendar-alt fa-2x opacity-75"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">Growth Rate</h6>
+                                <h4 class="mb-0">@growthRate.ToString("P1")</h4>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-trending-up fa-2x opacity-75"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">Confidence</h6>
+                                <h4 class="mb-0">@confidenceLevel%</h4>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-shield-alt fa-2x opacity-75"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Monthly Forecast Chart/Table -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Monthly Income Forecast</h5>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn @(chartView == "chart" ? "btn-primary" : "btn-outline-primary")" @onclick="@(() => chartView = "chart")">
+                                Chart
+                            </button>
+                            <button type="button" class="btn @(chartView == "table" ? "btn-primary" : "btn-outline-primary")" @onclick="@(() => chartView = "table")">
+                                Table
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        @if (chartView == "chart")
+                        {
+                            <!-- Chart placeholder -->
+                            <div class="chart-container" style="height: 400px; background: #f8f9fa; border: 2px dashed #dee2e6; display: flex; align-items: center; justify-content: center;">
+                                <div class="text-center">
+                                    <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                                    <h5 class="text-muted">Income Forecast Chart</h5>
+                                    <p class="text-muted">Chart visualization would be implemented here using Chart.js or similar library</p>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Month</th>
+                                            <th>Conservative</th>
+                                            <th>Realistic</th>
+                                            <th>Optimistic</th>
+                                            <th>Confidence</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var forecast in monthlyForecasts)
+                                        {
+                                            <tr>
+                                                <td>@forecast.Month.ToString("MMM yyyy")</td>
+                                                <td>@forecast.ConservativeAmount.ToString("C")</td>
+                                                <td>@forecast.RealisticAmount.ToString("C")</td>
+                                                <td>@forecast.OptimisticAmount.ToString("C")</td>
+                                                <td>
+                                                    <div class="progress" style="height: 20px;">
+                                                        <div class="progress-bar" role="progressbar" style="width: @(forecast.ConfidenceLevel)%" aria-valuenow="@forecast.ConfidenceLevel" aria-valuemin="0" aria-valuemax="100">
+                                                            @forecast.ConfidenceLevel%
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Quick Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex flex-wrap gap-2">
+                            <button class="btn btn-primary" @onclick="NavigateToAddIncome">
+                                <i class="fas fa-plus me-2"></i>Add New Income
+                            </button>
+                            <button class="btn btn-outline-primary" @onclick="NavigateToIncomeList">
+                                <i class="fas fa-list me-2"></i>View All Incomes
+                            </button>
+                            <button class="btn btn-outline-secondary" @onclick="ExportForecast">
+                                <i class="fas fa-download me-2"></i>Export Forecast
+                            </button>
+                            <button class="btn btn-outline-info" @onclick="RefreshForecast">
+                                <i class="fas fa-sync-alt me-2"></i>Refresh Data
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private bool isLoading = true;
+    private int forecastMonths = 12;
+    private string selectedIncomeType = "";
+    private string forecastMethod = "Realistic";
+    private bool includeRegularOnly = false;
+    private string chartView = "chart";
+
+    private decimal totalProjected = 0m;
+    private decimal monthlyAverage = 0m;
+    private decimal growthRate = 0.05m;
+    private int confidenceLevel = 85;
+
+    private List<MonthlyForecast> monthlyForecasts = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadForecastData();
+    }
+
+    private async Task LoadForecastData()
+    {
+        try
+        {
+            isLoading = true;
+            await UpdateForecast();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading forecast data: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task UpdateForecast()
+    {
+        try
+        {
+            // Get historical data for forecasting
+            monthlyAverage = await IncomeService.GetMonthlyIncomeAverageAsync();
+            
+            // Apply forecast method multiplier
+            var multiplier = forecastMethod switch
+            {
+                "Conservative" => 0.8m,
+                "Optimistic" => 1.2m,
+                _ => 1.0m // Realistic
+            };
+
+            totalProjected = monthlyAverage * forecastMonths * multiplier;
+            monthlyAverage = monthlyAverage * multiplier;
+
+            // Generate monthly forecasts
+            monthlyForecasts = GenerateMonthlyForecasts();
+            
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating forecast: {ex.Message}");
+        }
+    }
+
+    private List<MonthlyForecast> GenerateMonthlyForecasts()
+    {
+        var forecasts = new List<MonthlyForecast>();
+        var baseAmount = monthlyAverage;
+        var random = new Random();
+
+        for (int i = 0; i < forecastMonths; i++)
+        {
+            var month = DateTime.Now.AddMonths(i);
+            var variance = (decimal)(random.NextDouble() * 0.2 - 0.1); // ±10% variance
+
+            forecasts.Add(new MonthlyForecast
+            {
+                Month = month,
+                ConservativeAmount = baseAmount * 0.8m * (1 + variance),
+                RealisticAmount = baseAmount * (1 + variance),
+                OptimisticAmount = baseAmount * 1.2m * (1 + variance),
+                ConfidenceLevel = random.Next(70, 95)
+            });
+        }
+
+        return forecasts;
+    }
+
+    private void NavigateToAddIncome()
+    {
+        Navigation.NavigateTo("/income-create");
+    }
+
+    private void NavigateToIncomeList()
+    {
+        Navigation.NavigateTo("/income-list");
+    }
+
+    private async Task ExportForecast()
+    {
+        // Implement export functionality
+        await Task.Delay(100);
+    }
+
+    private async Task RefreshForecast()
+    {
+        await LoadForecastData();
+    }
+
+    public class MonthlyForecast
+    {
+        public DateTime Month { get; set; }
+        public decimal ConservativeAmount { get; set; }
+        public decimal RealisticAmount { get; set; }
+        public decimal OptimisticAmount { get; set; }
+        public int ConfidenceLevel { get; set; }
+    }
+}

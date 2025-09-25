@@ -90,7 +90,7 @@ namespace Pilgrims.PersonalFinances.Models
 
     public class InsurancePremiumPayment : BaseEntity
     {
-        public int InsuranceId { get; set; }
+        public string InsuranceId { get; set; } = string.Empty;
         public virtual Insurance Insurance { get; set; } = null!;
 
         [Column(TypeName = "decimal(18,2)")]
@@ -129,7 +129,7 @@ namespace Pilgrims.PersonalFinances.Models
 
     public class InsuranceClaim : BaseEntity
     {
-        public int InsuranceId { get; set; }
+        public string InsuranceId { get; set; } = string.Empty;
         public virtual Insurance Insurance { get; set; } = null!;
 
         [Required]
@@ -165,10 +165,10 @@ namespace Pilgrims.PersonalFinances.Models
 
     public class InsuranceDocument : BaseEntity
     {
-        public int InsuranceId { get; set; }
+        public string InsuranceId { get; set; } = string.Empty;
         public virtual Insurance Insurance { get; set; } = null!;
 
-        public int? ClaimId { get; set; }
+        public string? ClaimId { get; set; }
         public virtual InsuranceClaim? Claim { get; set; }
 
         [Required]
