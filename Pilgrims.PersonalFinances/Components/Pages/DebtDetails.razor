@@ -1,0 +1,493 @@
+@page "/debts/{id:int}"
+@using Pilgrims.PersonalFinances.Models
+@using Pilgrims.PersonalFinances.Models.DTOs
+@using Pilgrims.PersonalFinances.Models.Enums
+@using Pilgrims.PersonalFinances.Services
+@using Pilgrims.PersonalFinances.Services.Interfaces
+@inject IDebtService DebtService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Debt Details - Personal Finance</PageTitle>
+
+<div class="min-h-screen relative overflow-hidden" style="background: var(--primary-bg);">
+    <!-- Animated Background -->
+    <div class="absolute inset-0 overflow-hidden">
+        <div class="particles"></div>
+        <div class="absolute inset-0" style="background: linear-gradient(135deg, var(--accent-color)/5 0%, var(--secondary-color)/5 100%);"></div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="relative z-10 container mx-auto px-4 py-8">
+        @if (isLoading)
+        {
+            <div class="flex justify-center items-center py-20">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2" style="border-color: var(--accent-color);"></div>
+            </div>
+        }
+        else if (debt == null)
+        {
+            <div class="text-center py-20">
+                <div class="text-6xl mb-4">❌</div>
+                <h3 class="text-2xl font-bold mb-2" style="color: var(--text-primary);">Debt Not Found</h3>
+                <p class="mb-6" style="color: var(--text-secondary);">
+                    The debt you're looking for doesn't exist or has been deleted.
+                </p>
+                <button @onclick="GoBack" 
+                        class="px-6 py-3 rounded-lg transition-all duration-300 hover:scale-105 font-semibold"
+                        style="background: var(--accent-color); color: white;">
+                    Back to Debts
+                </button>
+            </div>
+        }
+        else
+        {
+            <!-- Header Section -->
+            <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-6 mb-8"
+                 style="background: var(--card-bg); border-color: var(--border-color);">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div class="flex items-center gap-4">
+                        <button @onclick="GoBack" 
+                                class="p-2 rounded-lg transition-all duration-300 hover:scale-105"
+                                style="background: var(--input-bg); color: var(--text-primary);">
+                            ←
+                        </button>
+                        <div>
+                            <h1 class="text-3xl font-bold mb-2" style="color: var(--text-primary);">
+                                @debt.Name
+                            </h1>
+                            <div class="flex flex-wrap gap-3 text-sm">
+                                <span class="flex items-center gap-1 px-3 py-1 rounded-full"
+                                      style="background: var(--accent-color)/20; color: var(--accent-color);">
+                                    @GetDebtTypeIcon(debt.DebtType) @debt.DebtType
+                                </span>
+                                <span class="flex items-center gap-1 px-3 py-1 rounded-full"
+                                      style="background: var(--secondary-color)/20; color: var(--secondary-color);">
+                                    @GetPriorityIcon(debt.Priority) @debt.Priority
+                                </span>
+                                @if (debt.Creditor != null)
+                                {
+                                    <span class="flex items-center gap-1 px-3 py-1 rounded-full"
+                                          style="background: var(--info-color)/20; color: var(--info-color);">
+                                        🏢 @debt.Creditor.Name
+                                    </span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm mb-1" style="color: var(--text-secondary);">Current Balance</div>
+                        <div class="text-3xl font-bold text-red-500">
+                            @debt.CurrentBalance.ToString("C")
+                        </div>
+                        <div class="text-sm" style="color: var(--text-secondary);">
+                            of @debt.PrincipalAmount.ToString("C") original
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-wrap gap-3 mt-6">
+                    <button @onclick="EditDebt" 
+                            class="px-4 py-2 rounded-lg transition-all duration-300 hover:scale-105 font-semibold"
+                            style="background: var(--accent-color); color: white;">
+                        ✏️ Edit Debt
+                    </button>
+                    <button @onclick="MakePayment" 
+                            class="px-4 py-2 rounded-lg transition-all duration-300 hover:scale-105 font-semibold"
+                            style="background: var(--success-color); color: white;">
+                        💰 Make Payment
+                    </button>
+                    <button @onclick="ViewPayoffCalculator" 
+                            class="px-4 py-2 rounded-lg transition-all duration-300 hover:scale-105 font-semibold"
+                            style="background: var(--info-color); color: white;">
+                        📊 Payoff Calculator
+                    </button>
+                    <button @onclick="ToggleDebtStatus" 
+                            class="px-4 py-2 rounded-lg transition-all duration-300 hover:scale-105 font-semibold"
+                            style="background: var(--warning-color); color: white;">
+                        @(debt.IsActive ? "⏸️ Deactivate" : "▶️ Activate")
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-4 text-center"
+                     style="background: var(--card-bg); border-color: var(--border-color);">
+                    <div class="text-2xl font-bold" style="color: var(--accent-color);">
+                        @debt.BalancePercentage.ToString("F1")%
+                    </div>
+                    <div class="text-sm" style="color: var(--text-secondary);">Remaining</div>
+                </div>
+                <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-4 text-center"
+                     style="background: var(--card-bg); border-color: var(--border-color);">
+                    <div class="text-2xl font-bold" style="color: var(--secondary-color);">
+                        @totalPayments
+                    </div>
+                    <div class="text-sm" style="color: var(--text-secondary);">Total Payments</div>
+                </div>
+                <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-4 text-center"
+                     style="background: var(--card-bg); border-color: var(--border-color);">
+                    <div class="text-2xl font-bold" style="color: var(--success-color);">
+                        @debt.TotalPaid.ToString("C")
+                    </div>
+                    <div class="text-sm" style="color: var(--text-secondary);">Total Paid</div>
+                </div>
+                <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-4 text-center"
+                     style="background: var(--card-bg); border-color: var(--border-color);">
+                    <div class="text-2xl font-bold" style="color: var(--info-color);">
+                        @(debt.InterestRate?.ToString("F2") ?? "N/A")%
+                    </div>
+                    <div class="text-sm" style="color: var(--text-secondary);">Interest Rate</div>
+                </div>
+            </div>
+
+            <!-- Content Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Payment Progress Chart -->
+                <div class="lg:col-span-2">
+                    <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-6"
+                         style="background: var(--card-bg); border-color: var(--border-color);">
+                        <h3 class="text-xl font-bold mb-4" style="color: var(--text-primary);">
+                            Payment Progress
+                        </h3>
+                        
+                        <!-- Progress Bar -->
+                        <div class="mb-6">
+                            <div class="flex justify-between text-sm mb-2" style="color: var(--text-secondary);">
+                                <span>Paid: @debt.TotalPaid.ToString("C")</span>
+                                <span>Remaining: @debt.CurrentBalance.ToString("C")</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-4">
+                                <div class="h-4 rounded-full transition-all duration-1000"
+                                     style="background: linear-gradient(90deg, var(--success-color), var(--accent-color)); width: @((100 - debt.BalancePercentage).ToString("F1"))%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Payoff Projection -->
+                        @if (payoffProjection != null)
+                        {
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="p-4 rounded-lg" style="background: var(--input-bg);">
+                                    <h4 class="font-semibold mb-2" style="color: var(--text-primary);">Minimum Payment Plan</h4>
+                                    <div class="text-sm" style="color: var(--text-secondary);">
+                                        <div>Monthly Payment: @payoffProjection?.MinimumPayment.ToString("C")</div>
+                                        <div>Payoff Date: @payoffProjection?.PayoffDate.ToString("MMM yyyy")</div>
+                                        <div>Total Interest: @payoffProjection?.TotalInterest.ToString("C")</div>
+                                    </div>
+                                </div>
+                                <div class="p-4 rounded-lg" style="background: var(--accent-color)/10;">
+                                    <h4 class="font-semibold mb-2" style="color: var(--text-primary);">Accelerated Plan</h4>
+                                    <div class="text-sm" style="color: var(--text-secondary);">
+                                        <div>Extra Payment: @((payoffProjection?.MinimumPayment * 1.5m) - payoffProjection?.MinimumPayment).ToString("C")</div>
+                                        <div>New Payoff: @payoffProjection?.PayoffDate.AddMonths(-6).ToString("MMM yyyy")</div>
+                                        <div>Interest Saved: @(payoffProjection?.TotalInterest * 0.3m).ToString("C")</div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Debt Information -->
+                <div class="space-y-6">
+                    <!-- Debt Details -->
+                    <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-6"
+                         style="background: var(--card-bg); border-color: var(--border-color);">
+                        <h3 class="text-xl font-bold mb-4" style="color: var(--text-primary);">
+                            Debt Information
+                        </h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between">
+                                <span style="color: var(--text-secondary);">Debt Type:</span>
+                                <span style="color: var(--text-primary);">@debt.DebtType</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span style="color: var(--text-secondary);">Priority:</span>
+                                <span style="color: var(--text-primary);">@debt.Priority</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span style="color: var(--text-secondary);">Interest Rate:</span>
+                                <span style="color: var(--text-primary);">@(debt.InterestRate?.ToString("F2") ?? "N/A")%</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span style="color: var(--text-secondary);">Minimum Payment:</span>
+                                <span style="color: var(--text-primary);">@(debt.MinimumPayment?.ToString("C") ?? "N/A")</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span style="color: var(--text-secondary);">Payment Due:</span>
+                                <span style="color: var(--text-primary);">@(debt.PaymentDueDay?.ToString() ?? "N/A") of month</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span style="color: var(--text-secondary);">Frequency:</span>
+                                <span style="color: var(--text-primary);">@debt.PaymentFrequency</span>
+                            </div>
+                            @if (debt.NextPaymentDue.HasValue)
+                            {
+                                <div class="flex justify-between">
+                                    <span style="color: var(--text-secondary);">Next Payment:</span>
+                                    <span style="color: var(--text-primary);">@debt.NextPaymentDue.Value.ToString("MMM dd, yyyy")</span>
+                                </div>
+                            }
+                            @if (!string.IsNullOrEmpty(debt.AccountNumber))
+                            {
+                                <div class="flex justify-between">
+                                    <span style="color: var(--text-secondary);">Account #:</span>
+                                    <span style="color: var(--text-primary);">****@debt.AccountNumber.Substring(Math.Max(0, debt.AccountNumber.Length - 4))</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Creditor Information -->
+                    @if (debt.Creditor != null)
+                    {
+                        <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-6"
+                             style="background: var(--card-bg); border-color: var(--border-color);">
+                            <h3 class="text-xl font-bold mb-4" style="color: var(--text-primary);">
+                                Creditor Information
+                            </h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between">
+                                    <span style="color: var(--text-secondary);">Name:</span>
+                                    <span style="color: var(--text-primary);">@debt.Creditor.Name</span>
+                                </div>
+                                @if (!string.IsNullOrEmpty(debt.Creditor.Phone))
+                                {
+                                    <div class="flex justify-between">
+                                        <span style="color: var(--text-secondary);">Phone:</span>
+                                        <span style="color: var(--text-primary);">@debt.Creditor.Phone</span>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(debt.Creditor.Email))
+                                {
+                                    <div class="flex justify-between">
+                                        <span style="color: var(--text-secondary);">Email:</span>
+                                        <span style="color: var(--text-primary);">@debt.Creditor.Email</span>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(debt.Creditor.Website))
+                                {
+                                    <div class="flex justify-between">
+                                        <span style="color: var(--text-secondary);">Website:</span>
+                                        <a href="@debt.Creditor.Website" target="_blank" 
+                                           class="text-blue-500 hover:underline">@debt.Creditor.Website</a>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Recent Payments -->
+            <div class="mt-8">
+                <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-6"
+                     style="background: var(--card-bg); border-color: var(--border-color);">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold" style="color: var(--text-primary);">
+                            Recent Payments
+                        </h3>
+                        <button @onclick="ViewAllPayments" 
+                                class="px-4 py-2 rounded-lg transition-all duration-300 hover:scale-105 font-semibold"
+                                style="background: var(--accent-color); color: white;">
+                            View All
+                        </button>
+                    </div>
+
+                    @if (recentPayments.Any())
+                    {
+                        <div class="space-y-3">
+                            @foreach (var payment in recentPayments.Take(5))
+                            {
+                                <div class="flex items-center justify-between p-4 rounded-lg transition-all duration-300 hover:scale-105"
+                                     style="background: var(--input-bg); border: 1px solid var(--border-color);">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg"
+                                             style="background: var(--success-color)/20; color: var(--success-color);">
+                                            💰
+                                        </div>
+                                        <div>
+                                            <div class="font-semibold" style="color: var(--text-primary);">
+                                                Payment
+                                            </div>
+                                            <div class="text-sm" style="color: var(--text-secondary);">
+                                                @payment.PaymentDate.ToString("MMM dd, yyyy") • @payment.PaymentMethod
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="font-bold text-green-500">
+                                            @payment.Amount.ToString("C")
+                                        </div>
+                                        @if (payment.PrincipalAmount.HasValue && payment.InterestAmount.HasValue)
+                                        {
+                                            <div class="text-sm" style="color: var(--text-secondary);">
+                                                Principal: @payment.PrincipalAmount.Value.ToString("C") | Interest: @payment.InterestAmount.Value.ToString("C")
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-12" style="color: var(--text-secondary);">
+                            <div class="text-4xl mb-4">💳</div>
+                            <p>No payments recorded yet</p>
+                            <p class="text-sm mt-2">Start making payments to track your progress</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Particle Animation Styles -->
+<style>
+    .particles {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        z-index: 1;
+    }
+
+    .particles::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background-image: 
+            radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+            radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.3) 0%, transparent 50%);
+        animation: float 20s ease-in-out infinite;
+    }
+
+    @@keyframes float {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        33% { transform: translate(30px, -30px) rotate(120deg); }
+        66% { transform: translate(-20px, 20px) rotate(240deg); }
+    }
+</style>
+
+@code {
+    [Parameter] public string? Id { get; set; }
+    
+    private Debt? debt;
+    private List<DebtPayment> recentPayments = new();
+    private bool isLoading = true;
+    private int totalPayments = 0;
+    private PayoffProjection? payoffProjection;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDebtDetails();
+        await JSRuntime.InvokeVoidAsync("initializeParticles");
+    }
+
+    private async Task LoadDebtDetails()
+    {
+        try
+        {
+            isLoading = true;
+            
+            if (!string.IsNullOrEmpty(Id))
+            {
+                // Load debt details
+                debt = await DebtService.GetDebtByIdAsync(Id);
+                
+                if (debt != null)
+                {
+                    // Load recent payments
+                    recentPayments = (await DebtService.GetPaymentsByDebtAsync(Id)).ToList();
+                    totalPayments = recentPayments.Count;
+                    
+                    // Calculate payoff projection
+                    if (debt.MinimumPayment.HasValue && debt.InterestRate.HasValue)
+                    {
+                        payoffProjection = await DebtService.CalculatePayoffProjectionAsync(Id, debt.MinimumPayment.Value);
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle error - could show notification
+            Console.WriteLine($"Error loading debt details: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private string GetDebtTypeIcon(DebtType debtType)
+    {
+        return debtType switch
+        {
+            DebtType.CreditCard => "💳",
+            DebtType.PersonalLoan => "💰",
+            DebtType.Mortgage => "🏠",
+            DebtType.AutoLoan => "🚗",
+            DebtType.StudentLoan => "🎓",
+            DebtType.BusinessLoan => "🏢",
+            DebtType.Other => "📄",
+            _ => "💳"
+        };
+    }
+
+    private string GetPriorityIcon(DebtPriority priority)
+    {
+        return priority switch
+        {
+            DebtPriority.High => "🔴",
+            DebtPriority.Medium => "🟡",
+            DebtPriority.Low => "🟢",
+            _ => "⚪"
+        };
+    }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/debts");
+    }
+
+    private void EditDebt()
+    {
+        NavigationManager.NavigateTo($"/debts/{Id}/edit");
+    }
+
+    private void MakePayment()
+    {
+        NavigationManager.NavigateTo($"/debts/{Id}/payment");
+    }
+
+    private void ViewPayoffCalculator()
+    {
+        NavigationManager.NavigateTo($"/debts/payoff-calculator?debtId={Id}");
+    }
+
+    private async Task ToggleDebtStatus()
+    {
+        if (debt != null)
+        {
+            debt.IsActive = !debt.IsActive;
+            await DebtService.UpdateDebtAsync(debt);
+            StateHasChanged();
+        }
+    }
+
+    private void ViewAllPayments()
+    {
+        NavigationManager.NavigateTo($"/debts/{Id}/payments");
+    }
+}
