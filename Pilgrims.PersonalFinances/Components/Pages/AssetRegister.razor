@@ -391,7 +391,7 @@
 
         if (!string.IsNullOrWhiteSpace(selectedCategoryId))
         {
-            query = query.Where(a => a.AssetCategoryId == selectedCategoryId);
+            query = query.Where(a => a.AssetCategoryId.ToString() == selectedCategoryId);
         }
 
         if (!string.IsNullOrWhiteSpace(selectedCondition))

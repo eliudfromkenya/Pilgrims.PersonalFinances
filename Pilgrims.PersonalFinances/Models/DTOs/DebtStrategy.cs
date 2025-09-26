@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Pilgrims.PersonalFinances.Models.Enums;
+using Pilgrims.PersonalFinances.Models;
 
 namespace Pilgrims.PersonalFinances.Models.DTOs
 {
@@ -10,6 +12,13 @@ namespace Pilgrims.PersonalFinances.Models.DTOs
         public decimal TotalInterest { get; set; }
         public decimal TotalPayments { get; set; }
         public List<DebtPaymentPlan> PaymentPlan { get; set; } = new();
+        
+        // Additional properties used in ObligationService
+        public DebtPriority Priority { get; set; }
+        public decimal ExtraPayment { get; set; }
+        public List<Obligation> Obligations { get; set; } = new();
+        public int TotalMonthsToPayoff { get; set; }
+        public decimal TotalInterestSaved { get; set; }
     }
 
     public class DebtPaymentPlan

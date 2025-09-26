@@ -603,10 +603,10 @@ public class AssetService : IAssetService
             return asset.PurchasePrice;
 
         var annualDepreciation = (asset.PurchasePrice - asset.SalvageValue) / asset.UsefulLifeYears;
-        var totalDepreciation = annualDepreciation * yearsElapsed;
+        var totalDepreciation = annualDepreciation * (yearsElapsed ?? 0m);
         var currentValue = asset.PurchasePrice - totalDepreciation;
 
-        return Functions.Max(currentValue, asset.SalvageValue);
+        return Functions.Max(currentValue ?? 0m, asset.SalvageValue);
     }
 
     private decimal? CalculateDecliningBalanceDepreciation(Asset asset, decimal? yearsElapsed)
@@ -615,7 +615,7 @@ public class AssetService : IAssetService
             return asset.PurchasePrice;
 
         var rate = asset.DepreciationRate / 100m;
-        var currentValue = asset.PurchasePrice * (decimal)Math.Pow((double)(1 - rate), (double)yearsElapsed);
+        var currentValue = asset.PurchasePrice * (decimal)Math.Pow((double)(1 - rate), (double)(yearsElapsed ?? 0m));
 
         return Functions.Max(currentValue, asset.SalvageValue);
     }

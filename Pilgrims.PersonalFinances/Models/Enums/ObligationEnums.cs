@@ -2,21 +2,57 @@ namespace Pilgrims.PersonalFinances.Models.Enums
 {
     public enum ObligationType
     {
-        GroupWelfare = 1,
-        Chama = 2,
-        Sacco = 3,
-        CooperativeSociety = 4,
-        SavingsGroup = 5,
-        InvestmentClub = 6,
-        CreditUnion = 7,
-        MicrofinanceGroup = 8,
-        TableBanking = 9,
-        RotatingSavings = 10,
-        ProfessionalAssociation = 11,
-        TradeUnion = 12,
-        CommunityGroup = 13,
-        ReligiousGroup = 14,
-        Other = 15
+        // Loan Management
+        Mortgage = 1,
+        PersonalLoan = 2,
+        StudentLoan = 3,
+        AutoLoan = 4,
+        BusinessLoan = 5,
+        
+        // Credit Card Debt
+        CreditCard = 6,
+        
+        // Subscription Services
+        MonthlySubscription = 7,
+        AnnualSubscription = 8,
+        Membership = 9,
+        
+        // Recurring Commitments
+        CharitableDonation = 10,
+        MembershipFee = 11,
+        ServiceContract = 12,
+        
+        // Tax Obligations
+        EstimatedTaxPayment = 13,
+        PropertyTax = 14,
+        TaxLiability = 15,
+        
+        // Group Financial Obligations (existing)
+        GroupWelfare = 16,
+        Chama = 17,
+        Sacco = 18,
+        CooperativeSociety = 19,
+        SavingsGroup = 20,
+        InvestmentClub = 21,
+        CreditUnion = 22,
+        MicrofinanceGroup = 23,
+        TableBanking = 24,
+        RotatingSavings = 25,
+        ProfessionalAssociation = 26,
+        TradeUnion = 27,
+        CommunityGroup = 28,
+        ReligiousGroup = 29,
+        
+        // Medical and Insurance
+        MedicalDebt = 30,
+        InsurancePremium = 31,
+        
+        // Utilities and Services
+        UtilityBill = 32,
+        InternetService = 33,
+        PhoneService = 34,
+        
+        Other = 99
     }
 
     public enum ObligationStatus

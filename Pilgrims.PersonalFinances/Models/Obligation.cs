@@ -13,8 +13,14 @@ namespace Pilgrims.PersonalFinances.Models
         [Required]
         public ObligationType Type { get; set; }
 
+        // Alias for Type for backward compatibility
+        public ObligationType ObligationType => Type;
+
         [StringLength(200)]
         public string OrganizationName { get; set; } = string.Empty;
+
+        // Alias for OrganizationName for backward compatibility
+        public string Organization => OrganizationName;
 
         [StringLength(100)]
         public string MembershipNumber { get; set; } = string.Empty;
@@ -22,23 +28,60 @@ namespace Pilgrims.PersonalFinances.Models
         [StringLength(500)]
         public string Description { get; set; } = string.Empty;
 
+        // Financial Details
         [Column(TypeName = "decimal(18,2)")]
         public decimal ContributionAmount { get; set; }
 
+        // Alias for ContributionAmount for backward compatibility
+        public decimal MonthlyContribution => ContributionAmount;
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? CurrentBalance { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? OriginalAmount { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? InterestRate { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? MinimumPayment { get; set; }
+
         public PaymentFrequency ContributionFrequency { get; set; }
 
+        // Alias for ContributionFrequency for backward compatibility
+        public PaymentFrequency PaymentFrequency => ContributionFrequency;
+
+        // Dates
         public DateTime StartDate { get; set; }
 
         public DateTime? EndDate { get; set; }
 
-        public DateTime NextContributionDueDate { get; set; }
+        public DateTime? NextContributionDueDate { get; set; }
 
+        // Alias for NextContributionDueDate for backward compatibility
+        public DateTime? NextContributionDue => NextContributionDueDate;
+
+        public DateTime? LastPaymentDate { get; set; }
+
+        // Status and Terms
         public ObligationStatus Status { get; set; }
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal? LateFeeAmount { get; set; }
 
         public int? GracePeriodDays { get; set; }
+
+        public int? TermInMonths { get; set; }
+
+        // Credit and Debt specific fields
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? CreditLimit { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? AvailableCredit { get; set; }
+
+        public bool IsCompoundInterest { get; set; } = false;
 
         [StringLength(15)]
         public string ContactPhone { get; set; } = string.Empty;
@@ -54,6 +97,11 @@ namespace Pilgrims.PersonalFinances.Models
 
         [StringLength(500)]
         public string Notes { get; set; } = string.Empty;
+
+        [StringLength(200)]
+        public string Website { get; set; } = string.Empty;
+
+        public int Priority { get; set; } = 1;
 
         // Benefits and returns
         [Column(TypeName = "decimal(18,2)")]
@@ -89,6 +137,7 @@ namespace Pilgrims.PersonalFinances.Models
         public decimal AnnualContribution => ContributionFrequency switch
         {
             PaymentFrequency.Weekly => ContributionAmount * 52,
+            PaymentFrequency.BiWeekly => ContributionAmount * 26,
             PaymentFrequency.Monthly => ContributionAmount * 12,
             PaymentFrequency.Quarterly => ContributionAmount * 4,
             PaymentFrequency.SemiAnnual => ContributionAmount * 2,
@@ -98,6 +147,31 @@ namespace Pilgrims.PersonalFinances.Models
 
         [NotMapped]
         public decimal TotalBenefitsReceived => Benefits?.Sum(b => b.Amount) ?? 0;
+
+        [NotMapped]
+        public decimal RemainingBalance => CurrentBalance ?? 0;
+
+        [NotMapped]
+        public decimal CreditUtilization => CreditLimit > 0 ? (CurrentBalance ?? 0) / CreditLimit.Value * 100 : 0;
+
+        [NotMapped]
+        public decimal MonthlyInterestRate => (InterestRate ?? 0) / 100 / 12;
+
+        [NotMapped]
+        public bool IsDebt => Type == ObligationType.CreditCard || Type == ObligationType.Mortgage || 
+                             Type == ObligationType.PersonalLoan || Type == ObligationType.StudentLoan || 
+                             Type == ObligationType.AutoLoan || Type == ObligationType.BusinessLoan || 
+                             Type == ObligationType.MedicalDebt;
+
+        [NotMapped]
+        public bool IsOverdue => NextContributionDueDate < DateTime.Now && Status == ObligationStatus.Active;
+
+        [NotMapped]
+        public int DaysOverdue => IsOverdue ? (DateTime.Now - NextContributionDueDate)?.Days??0 : 0;
+
+        [NotMapped]
+        public decimal TotalInterestPaid => Payments?.Where(p => p.PaymentStatus == PaymentStatus.Completed && p.InterestAmount.HasValue)
+                                                   .Sum(p => p.InterestAmount.Value) ?? 0;
 
         [NotMapped]
         public decimal NetContribution => TotalContributionsPaid - TotalBenefitsReceived;
@@ -133,6 +207,18 @@ namespace Pilgrims.PersonalFinances.Models
 
         [StringLength(100)]
         public string PaymentPeriod { get; set; } = string.Empty; // e.g., "January 2024", "Q1 2024"
+
+        // Interest and Principal breakdown for debt payments
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? PrincipalAmount { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? InterestAmount { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? RemainingBalance { get; set; }
+
+        public bool IsExtraPayment { get; set; } = false;
 
         // Calculated properties
         [NotMapped]

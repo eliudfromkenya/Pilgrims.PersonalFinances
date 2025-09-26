@@ -1,0 +1,832 @@
+@page "/obligations/dashboard"
+@using Pilgrims.PersonalFinances.Models
+@using Pilgrims.PersonalFinances.Models.Enums
+@using Pilgrims.PersonalFinances.Services.Interfaces
+@inject IObligationService ObligationService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Obligation Dashboard - Personal Finance</PageTitle>
+
+<div class="min-h-screen relative overflow-hidden" style="background: var(--primary-bg);">
+    <!-- Animated Background -->
+    <div class="absolute inset-0 overflow-hidden">
+        <div class="particles"></div>
+        <div class="absolute inset-0" style="background: linear-gradient(135deg, var(--accent-color)/5 0%, var(--secondary-color)/5 100%);"></div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="relative z-10 container mx-auto px-4 py-8">
+        <!-- Header Section -->
+        <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-6 mb-8 animate-slide-up"
+             style="background: var(--card-bg); border-color: var(--border-color);">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold mb-2 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                        Obligation Dashboard
+                    </h1>
+                    <p class="text-lg" style="color: var(--text-secondary);">
+                        Comprehensive analytics and insights for your financial obligations
+                    </p>
+                </div>
+                <div class="flex gap-3">
+                    <button @onclick="NavigateToPayoffCalculator" 
+                            class="btn-secondary transform hover:scale-105 transition-all duration-200">
+                        <i class="fas fa-calculator mr-2"></i>
+                        Payoff Calculator
+                    </button>
+                    <button @onclick="NavigateToList" 
+                            class="btn-secondary transform hover:scale-105 transition-all duration-200">
+                        <i class="fas fa-list mr-2"></i>
+                        View All
+                    </button>
+                    <button @onclick="AddNewObligation" 
+                            class="btn-primary transform hover:scale-105 transition-all duration-200">
+                        <i class="fas fa-plus mr-2"></i>
+                        Add Obligation
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        @if (isLoading)
+        {
+            <div class="flex justify-center items-center py-12">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+            </div>
+        }
+        else
+        {
+            <!-- Key Metrics -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="backdrop-blur-lg rounded-xl shadow-xl border p-6 animate-slide-up stagger-1"
+                     style="background: var(--card-bg); border-color: var(--border-color);">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-12 h-12 bg-gradient-to-r from-red-500 to-pink-600 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-credit-card text-white text-xl"></i>
+                            </div>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium" style="color: var(--text-secondary);">Total Debt</p>
+                            <p class="text-2xl font-bold" style="color: var(--text-primary);">@analytics.TotalDebt.ToString("C")</p>
+                            <p class="text-xs @(analytics.DebtTrend >= 0 ? "text-red-600" : "text-green-600")">
+                                <i class="fas @(analytics.DebtTrend >= 0 ? "fa-arrow-up" : "fa-arrow-down")"></i>
+                                @Math.Abs(analytics.DebtTrend).ToString("F1")% from last month
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="backdrop-blur-lg rounded-xl shadow-xl border p-6 animate-slide-up stagger-2"
+                     style="background: var(--card-bg); border-color: var(--border-color);">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-calendar-alt text-white text-xl"></i>
+                            </div>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium" style="color: var(--text-secondary);">Monthly Payments</p>
+                            <p class="text-2xl font-bold" style="color: var(--text-primary);">@analytics.MonthlyPayments.ToString("C")</p>
+                            <p class="text-xs" style="color: var(--text-secondary);">@analytics.ActiveObligations active obligations</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="backdrop-blur-lg rounded-xl shadow-xl border p-6 animate-slide-up stagger-3"
+                     style="background: var(--card-bg); border-color: var(--border-color);">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-percentage text-white text-xl"></i>
+                            </div>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium" style="color: var(--text-secondary);">Debt-to-Income</p>
+                            <p class="text-2xl font-bold @GetDebtToIncomeColor(analytics.DebtToIncomeRatio)" style="color: var(--text-primary);">
+                                @analytics.DebtToIncomeRatio.ToString("F1")%
+                            </p>
+                            <p class="text-xs" style="color: var(--text-secondary);">@GetDebtToIncomeStatus(analytics.DebtToIncomeRatio)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="backdrop-blur-lg rounded-xl shadow-xl border p-6 animate-slide-up stagger-4"
+                     style="background: var(--card-bg); border-color: var(--border-color);">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-12 h-12 bg-gradient-to-r from-yellow-500 to-orange-600 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-clock text-white text-xl"></i>
+                            </div>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium" style="color: var(--text-secondary);">Avg Payoff Time</p>
+                            <p class="text-2xl font-bold" style="color: var(--text-primary);">@analytics.AveragePayoffMonths mo</p>
+                            <p class="text-xs" style="color: var(--text-secondary);">With current payments</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts and Analytics Row -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <!-- Debt Breakdown Chart -->
+                <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-6 animate-slide-up stagger-5"
+                     style="background: var(--card-bg); border-color: var(--border-color);">
+                    <h2 class="text-xl font-semibold mb-6 flex items-center" style="color: var(--text-primary);">
+                        <i class="fas fa-chart-pie mr-3 text-indigo-600"></i>
+                        Debt Breakdown by Type
+                    </h2>
+                    <div class="h-64 flex items-center justify-center">
+                        @if (debtByType.Any())
+                        {
+                            <canvas id="debtBreakdownChart" class="max-w-full max-h-full"></canvas>
+                        }
+                        else
+                        {
+                            <div class="text-center" style="color: var(--text-secondary);">
+                                <i class="fas fa-chart-pie text-4xl mb-4"></i>
+                                <p>No debt data available</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Payment Timeline -->
+                <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-6 animate-slide-up stagger-6"
+                     style="background: var(--card-bg); border-color: var(--border-color);">
+                    <h2 class="text-xl font-semibold mb-6 flex items-center" style="color: var(--text-primary);">
+                        <i class="fas fa-chart-line mr-3 text-green-600"></i>
+                        Payment Timeline (Next 12 Months)
+                    </h2>
+                    <div class="h-64">
+                        <canvas id="paymentTimelineChart" class="max-w-full max-h-full"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Debt Management Tools -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+                <!-- Debt Avalanche Strategy -->
+                <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-6 animate-slide-up stagger-7"
+                     style="background: var(--card-bg); border-color: var(--border-color);">
+                    <h3 class="text-lg font-semibold mb-4 flex items-center" style="color: var(--text-primary);">
+                        <i class="fas fa-mountain mr-3 text-red-600"></i>
+                        Debt Avalanche Strategy
+                    </h3>
+                    <p class="text-sm mb-4" style="color: var(--text-secondary);">
+                        Pay minimums on all debts, then focus extra payments on highest interest rate debt.
+                    </p>
+                    
+                    @if (avalancheStrategy.Any())
+                    {
+                        <div class="space-y-3">
+                            @foreach (var debt in avalancheStrategy.Take(3))
+                            {
+                                <div class="flex justify-between items-center p-3 rounded-lg" style="background: var(--secondary-bg);">
+                                    <div>
+                                        <p class="font-medium text-sm" style="color: var(--text-primary);">@debt.Name</p>
+                                        <p class="text-xs" style="color: var(--text-secondary);">@debt.InterestRate?.ToString("F2")% APR</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="font-semibold text-sm" style="color: var(--text-primary);">@debt.CurrentBalance?.ToString("C")</p>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <div class="mt-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20">
+                            <p class="text-sm font-medium text-red-800 dark:text-red-200">
+                                Total Interest Savings: @avalancheSavings.ToString("C")
+                            </p>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-sm" style="color: var(--text-secondary);">No debt obligations found.</p>
+                    }
+                </div>
+
+                <!-- Debt Snowball Strategy -->
+                <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-6 animate-slide-up stagger-8"
+                     style="background: var(--card-bg); border-color: var(--border-color);">
+                    <h3 class="text-lg font-semibold mb-4 flex items-center" style="color: var(--text-primary);">
+                        <i class="fas fa-snowflake mr-3 text-blue-600"></i>
+                        Debt Snowball Strategy
+                    </h3>
+                    <p class="text-sm mb-4" style="color: var(--text-secondary);">
+                        Pay minimums on all debts, then focus extra payments on smallest balance debt.
+                    </p>
+                    
+                    @if (snowballStrategy.Any())
+                    {
+                        <div class="space-y-3">
+                            @foreach (var debt in snowballStrategy.Take(3))
+                            {
+                                <div class="flex justify-between items-center p-3 rounded-lg" style="background: var(--secondary-bg);">
+                                    <div>
+                                        <p class="font-medium text-sm" style="color: var(--text-primary);">@debt.Name</p>
+                                        <p class="text-xs" style="color: var(--text-secondary);">@debt.InterestRate?.ToString("F2")% APR</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="font-semibold text-sm" style="color: var(--text-primary);">@debt.CurrentBalance?.ToString("C")</p>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <div class="mt-4 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+                            <p class="text-sm font-medium text-blue-800 dark:text-blue-200">
+                                Psychological wins: @snowballStrategy.Count() debts to eliminate
+                            </p>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-sm" style="color: var(--text-secondary);">No debt obligations found.</p>
+                    }
+                </div>
+
+                <!-- Credit Utilization -->
+                <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-6 animate-slide-up stagger-9"
+                     style="background: var(--card-bg); border-color: var(--border-color);">
+                    <h3 class="text-lg font-semibold mb-4 flex items-center" style="color: var(--text-primary);">
+                        <i class="fas fa-credit-card mr-3 text-purple-600"></i>
+                        Credit Utilization
+                    </h3>
+                    <p class="text-sm mb-4" style="color: var(--text-secondary);">
+                        Monitor your credit card utilization to maintain good credit health.
+                    </p>
+                    
+                    @if (creditCards.Any())
+                    {
+                        <div class="space-y-4">
+                            @foreach (var card in creditCards)
+                            {
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span style="color: var(--text-primary);">@card.Name</span>
+                                        <span style="color: var(--text-primary);">@card.CreditUtilization.ToString("F1")%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="@GetUtilizationColor(card.CreditUtilization) h-2 rounded-full transition-all duration-300" 
+                                             style="width: @Math.Min(card.CreditUtilization, 100)%"></div>
+                                    </div>
+                                    <div class="flex justify-between text-xs mt-1" style="color: var(--text-secondary);">
+                                        <span>@card.CurrentBalance?.ToString("C")</span>
+                                        <span>@card.CreditLimit?.ToString("C")</span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <div class="mt-4 p-3 rounded-lg @GetOverallUtilizationBg(analytics.OverallCreditUtilization)">
+                            <p class="text-sm font-medium @GetOverallUtilizationText(analytics.OverallCreditUtilization)">
+                                Overall Utilization: @analytics.OverallCreditUtilization.ToString("F1")%
+                            </p>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-sm" style="color: var(--text-secondary);">No credit cards found.</p>
+                    }
+                </div>
+            </div>
+
+            <!-- Upcoming Payments and Alerts -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <!-- Upcoming Payments -->
+                <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-6 animate-slide-up stagger-10"
+                     style="background: var(--card-bg); border-color: var(--border-color);">
+                    <h2 class="text-xl font-semibold mb-6 flex items-center" style="color: var(--text-primary);">
+                        <i class="fas fa-calendar-check mr-3 text-green-600"></i>
+                        Upcoming Payments (Next 30 Days)
+                    </h2>
+                    
+                    @if (upcomingPayments.Any())
+                    {
+                        <div class="space-y-4 max-h-80 overflow-y-auto">
+                            @foreach (var payment in upcomingPayments)
+                            {
+                                <div class="flex justify-between items-center p-4 rounded-lg border @(payment.IsOverdue ? "border-red-300 bg-red-50 dark:bg-red-900/20" : "")"
+                                     style="background: var(--secondary-bg); border-color: var(--border-color);">
+                                    <div class="flex items-center">
+                                        <div class="w-10 h-10 rounded-lg flex items-center justify-center mr-3 @GetObligationTypeColor(payment.Type)">
+                                            <i class="@GetObligationTypeIcon(payment.Type) text-white text-sm"></i>
+                                        </div>
+                                        <div>
+                                            <p class="font-medium" style="color: var(--text-primary);">@payment.Name</p>
+                                            <p class="text-sm @(payment.IsOverdue ? "text-red-600" : "")" style="color: var(--text-secondary);">
+                                                Due: @(payment.NextContributionDueDate?.ToString("MMM dd, yyyy") ?? "Not set")
+                                                @if (payment.IsOverdue)
+                                                {
+                                                    <span class="text-red-600 font-semibold">(@payment.DaysOverdue days overdue)</span>
+                                                }
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="font-semibold" style="color: var(--text-primary);">
+                                            @((payment.MinimumPayment ?? payment.ContributionAmount).ToString("C"))
+                                        </p>
+                                        <button @onclick="() => MakePayment(payment.Id)" 
+                                                class="btn-primary text-xs px-3 py-1 mt-1">
+                                            Pay Now
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-8" style="color: var(--text-secondary);">
+                            <i class="fas fa-calendar-check text-4xl mb-4"></i>
+                            <p>No upcoming payments in the next 30 days</p>
+                        </div>
+                    }
+                </div>
+
+                <!-- Financial Health Score -->
+                <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-6 animate-slide-up stagger-11"
+                     style="background: var(--card-bg); border-color: var(--border-color);">
+                    <h2 class="text-xl font-semibold mb-6 flex items-center" style="color: var(--text-primary);">
+                        <i class="fas fa-heartbeat mr-3 text-pink-600"></i>
+                        Financial Health Score
+                    </h2>
+                    
+                    <div class="text-center mb-6">
+                        <div class="relative inline-flex items-center justify-center w-32 h-32">
+                            <svg class="w-32 h-32 transform -rotate-90" viewBox="0 0 36 36">
+                                <path class="text-gray-300" stroke="currentColor" stroke-width="3" fill="none"
+                                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                <path class="@GetHealthScoreColor(analytics.FinancialHealthScore)" stroke="currentColor" stroke-width="3" 
+                                      fill="none" stroke-linecap="round"
+                                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                      stroke-dasharray="@analytics.FinancialHealthScore, 100" />
+                            </svg>
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <span class="text-2xl font-bold" style="color: var(--text-primary);">@analytics.FinancialHealthScore</span>
+                            </div>
+                        </div>
+                        <p class="text-lg font-semibold @GetHealthScoreTextColor(analytics.FinancialHealthScore)">
+                            @GetHealthScoreLabel(analytics.FinancialHealthScore)
+                        </p>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span style="color: var(--text-secondary);">Debt-to-Income Ratio:</span>
+                            <span class="@GetDebtToIncomeColor(analytics.DebtToIncomeRatio)" style="color: var(--text-primary);">
+                                @GetScoreComponent(analytics.DebtToIncomeRatio, 36)
+                            </span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span style="color: var(--text-secondary);">Credit Utilization:</span>
+                            <span class="@GetUtilizationScoreColor(analytics.OverallCreditUtilization)" style="color: var(--text-primary);">
+                                @GetScoreComponent(analytics.OverallCreditUtilization, 30)
+                            </span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span style="color: var(--text-secondary);">Payment History:</span>
+                            <span class="text-green-600" style="color: var(--text-primary);">
+                                @GetScoreComponent(analytics.PaymentHistoryScore, 35)
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+                        <h4 class="font-semibold text-blue-800 dark:text-blue-200 mb-2">Recommendations:</h4>
+                        <ul class="text-sm text-blue-700 dark:text-blue-300 space-y-1">
+                            @foreach (var recommendation in GetRecommendations())
+                            {
+                                <li>• @recommendation</li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-6 animate-slide-up stagger-12"
+                 style="background: var(--card-bg); border-color: var(--border-color);">
+                <h2 class="text-xl font-semibold mb-6 flex items-center" style="color: var(--text-primary);">
+                    <i class="fas fa-bolt mr-3 text-yellow-600"></i>
+                    Quick Actions
+                </h2>
+                
+                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    <button @onclick="AddNewObligation" 
+                            class="flex flex-col items-center p-4 rounded-lg border hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+                            style="background: var(--secondary-bg); border-color: var(--border-color);">
+                        <i class="fas fa-plus text-2xl text-indigo-600 mb-2"></i>
+                        <span class="text-sm font-medium" style="color: var(--text-primary);">Add Obligation</span>
+                    </button>
+
+                    <button @onclick="NavigateToPayoffCalculator" 
+                            class="flex flex-col items-center p-4 rounded-lg border hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+                            style="background: var(--secondary-bg); border-color: var(--border-color);">
+                        <i class="fas fa-calculator text-2xl text-green-600 mb-2"></i>
+                        <span class="text-sm font-medium" style="color: var(--text-primary);">Calculate Payoff</span>
+                    </button>
+
+                    <button @onclick="ExportData" 
+                            class="flex flex-col items-center p-4 rounded-lg border hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+                            style="background: var(--secondary-bg); border-color: var(--border-color);">
+                        <i class="fas fa-download text-2xl text-blue-600 mb-2"></i>
+                        <span class="text-sm font-medium" style="color: var(--text-primary);">Export Data</span>
+                    </button>
+
+                    <button @onclick="SetupAlerts" 
+                            class="flex flex-col items-center p-4 rounded-lg border hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+                            style="background: var(--secondary-bg); border-color: var(--border-color);">
+                        <i class="fas fa-bell text-2xl text-yellow-600 mb-2"></i>
+                        <span class="text-sm font-medium" style="color: var(--text-primary);">Setup Alerts</span>
+                    </button>
+
+                    <button @onclick="ViewReports" 
+                            class="flex flex-col items-center p-4 rounded-lg border hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+                            style="background: var(--secondary-bg); border-color: var(--border-color);">
+                        <i class="fas fa-chart-bar text-2xl text-purple-600 mb-2"></i>
+                        <span class="text-sm font-medium" style="color: var(--text-primary);">View Reports</span>
+                    </button>
+
+                    <button @onclick="RefreshData" 
+                            class="flex flex-col items-center p-4 rounded-lg border hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+                            style="background: var(--secondary-bg); border-color: var(--border-color);">
+                        <i class="fas fa-sync-alt text-2xl text-gray-600 mb-2"></i>
+                        <span class="text-sm font-medium" style="color: var(--text-primary);">Refresh</span>
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private bool isLoading = true;
+    private List<Obligation> obligations = new();
+    private ObligationAnalytics analytics = new();
+    private List<Obligation> upcomingPayments = new();
+    private List<Obligation> avalancheStrategy = new();
+    private List<Obligation> snowballStrategy = new();
+    private List<Obligation> creditCards = new();
+    private Dictionary<ObligationType, decimal> debtByType = new();
+    private decimal avalancheSavings = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDashboardData();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !isLoading)
+        {
+            await InitializeCharts();
+        }
+    }
+
+    private async Task LoadDashboardData()
+    {
+        try
+        {
+            isLoading = true;
+            obligations = (await ObligationService.GetAllObligationsAsync()).ToList();
+            
+            // Calculate analytics locally
+            analytics = await CalculateAnalyticsAsync();
+            
+            // Get upcoming payments (next 30 days)
+            upcomingPayments = obligations
+                .Where(o => o.Status == ObligationStatus.Active && 
+                           o.NextContributionDueDate <= DateTime.Today.AddDays(30))
+                .OrderBy(o => o.NextContributionDueDate)
+                .ToList();
+
+            // Get debt strategies
+            var debts = obligations.Where(o => o.IsDebt && o.Status == ObligationStatus.Active).ToList();
+            avalancheStrategy = debts.OrderByDescending(o => o.InterestRate ?? 0).ToList();
+            snowballStrategy = debts.OrderBy(o => o.CurrentBalance ?? 0).ToList();
+            
+            // Calculate avalanche savings
+            avalancheSavings = await ObligationService.CalculateDebtAvalancheSavingsAsync();
+
+            // Get credit cards
+            creditCards = obligations
+                .Where(o => o.Type == ObligationType.CreditCard && o.Status == ObligationStatus.Active)
+                .ToList();
+
+            // Group debt by type
+            debtByType = obligations
+                .Where(o => o.IsDebt && o.CurrentBalance.HasValue)
+                .GroupBy(o => o.Type)
+                .ToDictionary(g => g.Key, g => g.Sum(o => o.CurrentBalance.Value));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading dashboard data: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task InitializeCharts()
+    {
+        try
+        {
+            // Initialize debt breakdown chart
+            if (debtByType.Any())
+            {
+                var chartData = new
+                {
+                    labels = debtByType.Keys.Select(GetObligationTypeDisplay).ToArray(),
+                    datasets = new[]
+                    {
+                        new
+                        {
+                            data = debtByType.Values.ToArray(),
+                            backgroundColor = new[]
+                            {
+                                "#ef4444", "#f97316", "#eab308", "#22c55e", 
+                                "#3b82f6", "#8b5cf6", "#ec4899", "#6b7280"
+                            }
+                        }
+                    }
+                };
+
+                await JSRuntime.InvokeVoidAsync("initializePieChart", "debtBreakdownChart", chartData);
+            }
+
+            // Initialize payment timeline chart
+            var timelineData = GeneratePaymentTimelineData();
+            await JSRuntime.InvokeVoidAsync("initializeLineChart", "paymentTimelineChart", timelineData);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error initializing charts: {ex.Message}");
+        }
+    }
+
+    private object GeneratePaymentTimelineData()
+    {
+        var months = Enumerable.Range(0, 12)
+            .Select(i => DateTime.Today.AddMonths(i).ToString("MMM yyyy"))
+            .ToArray();
+
+        var paymentAmounts = Enumerable.Range(0, 12)
+            .Select(i => obligations
+                .Where(o => o.Status == ObligationStatus.Active)
+                .Sum(o => o.MinimumPayment ?? o.ContributionAmount))
+            .ToArray();
+
+        return new
+        {
+            labels = months,
+            datasets = new[]
+            {
+                new
+                {
+                    label = "Monthly Payments",
+                    data = paymentAmounts,
+                    borderColor = "#3b82f6",
+                    backgroundColor = "rgba(59, 130, 246, 0.1)",
+                    tension = 0.4
+                }
+            }
+        };
+    }
+
+    // Navigation methods
+    private void AddNewObligation() => Navigation.NavigateTo("/obligations/add");
+    private void NavigateToList() => Navigation.NavigateTo("/obligations");
+    private void NavigateToPayoffCalculator() => Navigation.NavigateTo("/obligations/payoff-calculator");
+    private void MakePayment(string obligationId) => Navigation.NavigateTo($"/obligations/payment/{obligationId}");
+
+    // Action methods
+    private async Task RefreshData() => await LoadDashboardData();
+    private void ExportData() { /* TODO: Implement export functionality */ }
+    private void SetupAlerts() { /* TODO: Implement alert setup */ }
+    private void ViewReports() { /* TODO: Implement reports view */ }
+
+    // Helper methods for UI styling
+    private string GetDebtToIncomeColor(decimal ratio)
+    {
+        return ratio switch
+        {
+            <= 20 => "text-green-600",
+            <= 36 => "text-yellow-600",
+            _ => "text-red-600"
+        };
+    }
+
+    private string GetDebtToIncomeStatus(decimal ratio)
+    {
+        return ratio switch
+        {
+            <= 20 => "Excellent",
+            <= 36 => "Good",
+            _ => "High Risk"
+        };
+    }
+
+    private string GetUtilizationColor(decimal utilization)
+    {
+        return utilization switch
+        {
+            <= 30 => "bg-green-500",
+            <= 60 => "bg-yellow-500",
+            <= 90 => "bg-orange-500",
+            _ => "bg-red-500"
+        };
+    }
+
+    private string GetOverallUtilizationBg(decimal utilization)
+    {
+        return utilization switch
+        {
+            <= 30 => "bg-green-50 dark:bg-green-900/20",
+            <= 60 => "bg-yellow-50 dark:bg-yellow-900/20",
+            _ => "bg-red-50 dark:bg-red-900/20"
+        };
+    }
+
+    private string GetOverallUtilizationText(decimal utilization)
+    {
+        return utilization switch
+        {
+            <= 30 => "text-green-800 dark:text-green-200",
+            <= 60 => "text-yellow-800 dark:text-yellow-200",
+            _ => "text-red-800 dark:text-red-200"
+        };
+    }
+
+    private string GetHealthScoreColor(int score)
+    {
+        return score switch
+        {
+            >= 80 => "text-green-500",
+            >= 60 => "text-yellow-500",
+            >= 40 => "text-orange-500",
+            _ => "text-red-500"
+        };
+    }
+
+    private string GetHealthScoreTextColor(int score)
+    {
+        return score switch
+        {
+            >= 80 => "text-green-600",
+            >= 60 => "text-yellow-600",
+            >= 40 => "text-orange-600",
+            _ => "text-red-600"
+        };
+    }
+
+    private string GetHealthScoreLabel(int score)
+    {
+        return score switch
+        {
+            >= 80 => "Excellent",
+            >= 60 => "Good",
+            >= 40 => "Fair",
+            _ => "Poor"
+        };
+    }
+
+    private string GetUtilizationScoreColor(decimal utilization)
+    {
+        return utilization switch
+        {
+            <= 30 => "text-green-600",
+            <= 60 => "text-yellow-600",
+            _ => "text-red-600"
+        };
+    }
+
+    private string GetScoreComponent(decimal value, int maxPoints)
+    {
+        var points = Math.Max(0, maxPoints - (int)(value * maxPoints / 100));
+        return $"{points}/{maxPoints}";
+    }
+
+    private List<string> GetRecommendations()
+    {
+        var recommendations = new List<string>();
+
+        if (analytics.DebtToIncomeRatio > 36)
+            recommendations.Add("Consider debt consolidation to reduce monthly payments");
+
+        if (analytics.OverallCreditUtilization > 30)
+            recommendations.Add("Pay down credit card balances to improve credit score");
+
+        if (upcomingPayments.Any(p => p.IsOverdue))
+            recommendations.Add("Make overdue payments immediately to avoid late fees");
+
+        if (analytics.AveragePayoffMonths > 60)
+            recommendations.Add("Increase monthly payments to reduce payoff time");
+
+        if (!recommendations.Any())
+            recommendations.Add("Great job! Keep maintaining your current payment schedule");
+
+        return recommendations;
+    }
+
+    private string GetObligationTypeDisplay(ObligationType type)
+    {
+        return type switch
+        {
+            ObligationType.CreditCard => "Credit Card",
+            ObligationType.PersonalLoan => "Personal Loan",
+            ObligationType.StudentLoan => "Student Loan",
+            ObligationType.AutoLoan => "Auto Loan",
+            ObligationType.BusinessLoan => "Business Loan",
+            ObligationType.MedicalDebt => "Medical Debt",
+            _ => type.ToString()
+        };
+    }
+
+    private string GetObligationTypeIcon(ObligationType type)
+    {
+        return type switch
+        {
+            ObligationType.CreditCard => "fas fa-credit-card",
+            ObligationType.Mortgage => "fas fa-home",
+            ObligationType.PersonalLoan or ObligationType.StudentLoan or ObligationType.AutoLoan or ObligationType.BusinessLoan => "fas fa-hand-holding-usd",
+            ObligationType.MedicalDebt => "fas fa-user-md",
+            _ => "fas fa-file-contract"
+        };
+    }
+
+    private string GetObligationTypeColor(ObligationType type)
+    {
+        return type switch
+        {
+            ObligationType.CreditCard => "bg-gradient-to-r from-red-500 to-pink-600",
+            ObligationType.Mortgage => "bg-gradient-to-r from-green-500 to-emerald-600",
+            ObligationType.PersonalLoan or ObligationType.StudentLoan or ObligationType.AutoLoan or ObligationType.BusinessLoan => "bg-gradient-to-r from-blue-500 to-indigo-600",
+            ObligationType.MedicalDebt => "bg-gradient-to-r from-purple-500 to-violet-600",
+            _ => "bg-gradient-to-r from-gray-500 to-slate-600"
+        };
+    }
+
+    // Analytics model
+    public class ObligationAnalytics
+    {
+        public decimal TotalDebt { get; set; }
+        public decimal MonthlyPayments { get; set; }
+        public decimal DebtToIncomeRatio { get; set; }
+        public int AveragePayoffMonths { get; set; }
+        public int ActiveObligations { get; set; }
+        public decimal DebtTrend { get; set; }
+        public decimal OverallCreditUtilization { get; set; }
+        public int FinancialHealthScore { get; set; }
+        public decimal PaymentHistoryScore { get; set; }
+    }
+
+    private async Task<ObligationAnalytics> CalculateAnalyticsAsync()
+    {
+        var analytics = new ObligationAnalytics();
+        
+        // Calculate monthly payments
+        analytics.MonthlyPayments = obligations
+            .Where(o => o.Status == ObligationStatus.Active)
+            .Sum(o => o.MonthlyContribution);
+        
+        // Calculate active obligations count
+        analytics.ActiveObligations = obligations.Count(o => o.Status == ObligationStatus.Active);
+        
+        // Calculate total debt
+        analytics.TotalDebt = obligations
+            .Where(o => o.IsDebt && o.Status == ObligationStatus.Active)
+            .Sum(o => o.CurrentBalance ?? 0);
+        
+        // Calculate average payoff months (simplified calculation)
+        var activeDebts = obligations.Where(o => o.IsDebt && o.Status == ObligationStatus.Active && o.CurrentBalance > 0).ToList();
+        if (activeDebts.Any())
+        {
+            analytics.AveragePayoffMonths = (int)activeDebts.Average(d => 
+                d.CurrentBalance > 0 && d.MonthlyContribution > 0 
+                    ? Math.Ceiling((double)(d.CurrentBalance / d.MonthlyContribution)) 
+                    : 0);
+        }
+        
+        // Calculate credit utilization for credit cards
+        var creditCards = obligations.Where(o => o.ObligationType == ObligationType.CreditCard && o.Status == ObligationStatus.Active).ToList();
+        if (creditCards.Any())
+        {
+            var totalUsed = creditCards.Sum(c => c.CurrentBalance ?? 0);
+            var totalLimit = creditCards.Sum(c => c.CreditLimit ?? 0);
+            analytics.OverallCreditUtilization = totalLimit > 0 ? (totalUsed / totalLimit) * 100 : 0;
+        }
+        
+        // Set default values for other properties
+        analytics.DebtTrend = 0; // Would need historical data
+        analytics.DebtToIncomeRatio = 0; // Would need income data
+        analytics.FinancialHealthScore = 750; // Default score
+        analytics.PaymentHistoryScore = 95; // Default score
+        
+        return analytics;
+    }
+}

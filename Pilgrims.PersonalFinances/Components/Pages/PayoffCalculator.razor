@@ -1,9 +1,9 @@
-@page "/debts/payoff-calculator"
+@page "/obligations/payoff-calculator"
 @using Pilgrims.PersonalFinances.Models
 @using Pilgrims.PersonalFinances.Models.Enums
-@using Pilgrims.PersonalFinances.Services
-@inject IDebtService DebtService
-@inject NavigationManager NavigationManager
+@using Pilgrims.PersonalFinances.Services.Interfaces
+@inject IObligationService ObligationService
+@inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
 
 <PageTitle>Payoff Calculator - Personal Finance</PageTitle>
@@ -18,551 +18,732 @@
     <!-- Main Content -->
     <div class="relative z-10 container mx-auto px-4 py-8">
         <!-- Header Section -->
-        <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-6 mb-8"
+        <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-6 mb-8 animate-slide-up"
              style="background: var(--card-bg); border-color: var(--border-color);">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 class="text-3xl font-bold mb-2" style="color: var(--text-primary);">
+                    <h1 class="text-3xl font-bold mb-2 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
                         Debt Payoff Calculator
                     </h1>
                     <p class="text-lg" style="color: var(--text-secondary);">
-                        Calculate payoff scenarios and optimize your debt repayment strategy
+                        Calculate optimal debt payoff strategies and compare scenarios
                     </p>
                 </div>
                 <div class="flex gap-3">
-                    <button @onclick="LoadDebtStrategies" 
-                            class="px-4 py-2 rounded-lg transition-all duration-300 hover:scale-105 font-semibold"
-                            style="background: var(--info-color); color: white;">
-                        📊 Debt Strategies
+                    <button @onclick="NavigateToDashboard" 
+                            class="btn-secondary transform hover:scale-105 transition-all duration-200">
+                        <i class="fas fa-chart-line mr-2"></i>
+                        Dashboard
                     </button>
-                    <button @onclick="ExportResults" 
-                            class="px-4 py-2 rounded-lg transition-all duration-300 hover:scale-105 font-semibold"
-                            style="background: var(--secondary-color); color: white;">
-                        📄 Export Results
+                    <button @onclick="NavigateToList" 
+                            class="btn-secondary transform hover:scale-105 transition-all duration-200">
+                        <i class="fas fa-list mr-2"></i>
+                        All Obligations
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- Calculator Input Section -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            <!-- Debt Selection and Parameters -->
-            <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-6"
-                 style="background: var(--card-bg); border-color: var(--border-color);">
-                <h3 class="text-xl font-bold mb-4" style="color: var(--text-primary);">
-                    Calculator Parameters
-                </h3>
-                
-                <div class="space-y-4">
-                    <!-- Debt Selection -->
-                    <div>
-                        <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">Select Debt</label>
-                        <select @bind="selectedDebtId" @bind:after="OnDebtSelected"
-                                class="w-full px-3 py-2 rounded-lg border"
-                                style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);">
-                            <option value="0">Select a debt...</option>
+        @if (isLoading)
+        {
+            <div class="flex justify-center items-center py-12">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+            </div>
+        }
+        else
+        {
+            <!-- Calculator Controls -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+                <!-- Debt Selection -->
+                <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-6 animate-slide-up stagger-1"
+                     style="background: var(--card-bg); border-color: var(--border-color);">
+                    <h2 class="text-xl font-semibold mb-6 flex items-center" style="color: var(--text-primary);">
+                        <i class="fas fa-list-check mr-3 text-indigo-600"></i>
+                        Select Debts to Include
+                    </h2>
+
+                    @if (availableDebts.Any())
+                    {
+                        <div class="space-y-3 max-h-80 overflow-y-auto">
                             @foreach (var debt in availableDebts)
                             {
-                                <option value="@debt.Id">@debt.Name - @debt.CurrentBalance.ToString("C")</option>
+                                <label class="flex items-center p-3 rounded-lg border cursor-pointer hover:shadow-md transition-all duration-200 @(selectedDebtIds.Contains(debt.Id) ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20" : "")"
+                                       style="background: var(--secondary-bg); border-color: var(--border-color);">
+                                    <input type="checkbox" 
+                                           checked="@selectedDebtIds.Contains(debt.Id)"
+                                           @onchange="@((e) => ToggleDebtSelection(debt.Id, (bool)e.Value!))"
+                                           class="mr-3 h-4 w-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500" />
+                                    <div class="flex-1">
+                                        <div class="flex justify-between items-start">
+                                            <div>
+                                                <p class="font-medium" style="color: var(--text-primary);">@debt.Name</p>
+                                                <p class="text-sm" style="color: var(--text-secondary);">
+                                                    @debt.InterestRate?.ToString("F2")% APR
+                                                </p>
+                                            </div>
+                                            <div class="text-right">
+                                                <p class="font-semibold" style="color: var(--text-primary);">
+                                                    @debt.CurrentBalance?.ToString("C")
+                                                </p>
+                                                <p class="text-sm" style="color: var(--text-secondary);">
+                                                    Min: @debt.MinimumPayment?.ToString("C")
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </label>
                             }
-                        </select>
-                    </div>
+                        </div>
 
-                    @if (selectedDebt != null)
-                    {
-                        <!-- Current Debt Information -->
-                        <div class="p-4 rounded-lg" style="background: var(--input-bg);">
-                            <h4 class="font-semibold mb-2" style="color: var(--text-primary);">Current Debt Details</h4>
-                            <div class="grid grid-cols-2 gap-2 text-sm">
-                                <div>
-                                    <span style="color: var(--text-secondary);">Balance:</span>
-                                    <span style="color: var(--text-primary);">@selectedDebt.CurrentBalance.ToString("C")</span>
-                                </div>
-                                <div>
-                                    <span style="color: var(--text-secondary);">Interest Rate:</span>
-                                    <span style="color: var(--text-primary);">@(selectedDebt.InterestRate?.ToString("F2") ?? "N/A")%</span>
-                                </div>
-                                <div>
-                                    <span style="color: var(--text-secondary);">Min Payment:</span>
-                                    <span style="color: var(--text-primary);">@(selectedDebt.MinimumPayment?.ToString("C") ?? "N/A")</span>
-                                </div>
-                                <div>
-                                    <span style="color: var(--text-secondary);">Type:</span>
-                                    <span style="color: var(--text-primary);">@selectedDebt.DebtType</span>
-                                </div>
+                        <div class="mt-4 pt-4 border-t" style="border-color: var(--border-color);">
+                            <div class="flex justify-between text-sm">
+                                <span style="color: var(--text-secondary);">Selected Debts:</span>
+                                <span class="font-semibold" style="color: var(--text-primary);">@selectedDebts.Count</span>
                             </div>
-                        </div>
-
-                        <!-- Payment Scenarios -->
-                        <div>
-                            <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">Monthly Payment Amount</label>
-                            <input @bind="monthlyPayment" @oninput="CalculatePayoff" type="number" step="0.01" min="0"
-                                   class="w-full px-3 py-2 rounded-lg border"
-                                   style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);"
-                                   placeholder="Enter monthly payment amount" />
-                        </div>
-
-                        <!-- Extra Payment -->
-                        <div>
-                            <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">Extra Monthly Payment (Optional)</label>
-                            <input @bind="extraPayment" @oninput="CalculatePayoff" type="number" step="0.01" min="0"
-                                   class="w-full px-3 py-2 rounded-lg border"
-                                   style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);"
-                                   placeholder="Additional payment amount" />
-                        </div>
-
-                        <!-- One-time Payment -->
-                        <div>
-                            <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">One-time Payment (Optional)</label>
-                            <div class="grid grid-cols-2 gap-2">
-                                <input @bind="oneTimePayment" @oninput="CalculatePayoff" type="number" step="0.01" min="0"
-                                       class="px-3 py-2 rounded-lg border"
-                                       style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);"
-                                       placeholder="Amount" />
-                                <input @bind="oneTimePaymentDate" @bind:after="CalculatePayoff" type="date"
-                                       class="px-3 py-2 rounded-lg border"
-                                       style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);" />
+                            <div class="flex justify-between text-sm">
+                                <span style="color: var(--text-secondary);">Total Balance:</span>
+                                <span class="font-semibold" style="color: var(--text-primary);">
+                                    @selectedDebts.Sum(d => d.CurrentBalance ?? 0).ToString("C")
+                                </span>
                             </div>
-                        </div>
-
-                        <!-- Quick Scenarios -->
-                        <div>
-                            <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">Quick Scenarios</label>
-                            <div class="grid grid-cols-3 gap-2">
-                                <button @onclick="() => SetQuickScenario(1.0m)" 
-                                        class="px-3 py-2 rounded-lg transition-all duration-300 hover:scale-105 text-sm font-semibold"
-                                        style="background: var(--accent-color)/20; color: var(--accent-color);">
-                                    Minimum Only
-                                </button>
-                                <button @onclick="() => SetQuickScenario(1.5m)" 
-                                        class="px-3 py-2 rounded-lg transition-all duration-300 hover:scale-105 text-sm font-semibold"
-                                        style="background: var(--secondary-color)/20; color: var(--secondary-color);">
-                                    +50% Extra
-                                </button>
-                                <button @onclick="() => SetQuickScenario(2.0m)" 
-                                        class="px-3 py-2 rounded-lg transition-all duration-300 hover:scale-105 text-sm font-semibold"
-                                        style="background: var(--success-color)/20; color: var(--success-color);">
-                                    Double Payment
-                                </button>
+                            <div class="flex justify-between text-sm">
+                                <span style="color: var(--text-secondary);">Min Payments:</span>
+                                <span class="font-semibold" style="color: var(--text-primary);">
+                                    @selectedDebts.Sum(d => d.MinimumPayment ?? 0).ToString("C")
+                                </span>
                             </div>
                         </div>
                     }
+                    else
+                    {
+                        <div class="text-center py-8" style="color: var(--text-secondary);">
+                            <i class="fas fa-credit-card text-4xl mb-4"></i>
+                            <p>No debt obligations found</p>
+                            <button @onclick="AddNewDebt" class="btn-primary mt-4">
+                                <i class="fas fa-plus mr-2"></i>
+                                Add Debt
+                            </button>
+                        </div>
+                    }
                 </div>
-            </div>
 
-            <!-- Results Summary -->
-            <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-6"
-                 style="background: var(--card-bg); border-color: var(--border-color);">
-                <h3 class="text-xl font-bold mb-4" style="color: var(--text-primary);">
-                    Payoff Results
-                </h3>
+                <!-- Payment Strategy -->
+                <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-6 animate-slide-up stagger-2"
+                     style="background: var(--card-bg); border-color: var(--border-color);">
+                    <h2 class="text-xl font-semibold mb-6 flex items-center" style="color: var(--text-primary);">
+                        <i class="fas fa-strategy mr-3 text-green-600"></i>
+                        Payment Strategy
+                    </h2>
 
-                @if (payoffResult != null)
-                {
                     <div class="space-y-4">
-                        <!-- Key Metrics -->
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="text-center p-4 rounded-lg" style="background: var(--accent-color)/10;">
-                                <div class="text-2xl font-bold" style="color: var(--accent-color);">
-                                    @payoffResult.MonthsToPayoff
-                                </div>
-                                <div class="text-sm" style="color: var(--text-secondary);">Months to Payoff</div>
-                            </div>
-                            <div class="text-center p-4 rounded-lg" style="background: var(--secondary-color)/10;">
-                                <div class="text-2xl font-bold" style="color: var(--secondary-color);">
-                                    @payoffResult.PayoffDate.ToString("MMM yyyy")
-                                </div>
-                                <div class="text-sm" style="color: var(--text-secondary);">Payoff Date</div>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="text-center p-4 rounded-lg" style="background: var(--info-color)/10;">
-                                <div class="text-2xl font-bold" style="color: var(--info-color);">
-                                    @payoffResult.TotalInterest.ToString("C")
-                                </div>
-                                <div class="text-sm" style="color: var(--text-secondary);">Total Interest</div>
-                            </div>
-                            <div class="text-center p-4 rounded-lg" style="background: var(--success-color)/10;">
-                                <div class="text-2xl font-bold" style="color: var(--success-color);">
-                                    @payoffResult.TotalPayments.ToString("C")
-                                </div>
-                                <div class="text-sm" style="color: var(--text-secondary);">Total Payments</div>
-                            </div>
-                        </div>
-
-                        <!-- Comparison with Minimum Payment -->
-                        @if (minimumPayoffResult != null && payoffResult != minimumPayoffResult)
-                        {
-                            <div class="p-4 rounded-lg" style="background: var(--success-color)/10;">
-                                <h4 class="font-semibold mb-2" style="color: var(--success-color);">Savings vs Minimum Payment</h4>
-                                <div class="grid grid-cols-2 gap-2 text-sm">
-                                    <div>
-                                        <span style="color: var(--text-secondary);">Time Saved:</span>
-                                        <span style="color: var(--text-primary);">@(minimumPayoffResult.MonthsToPayoff - payoffResult.MonthsToPayoff) months</span>
-                                    </div>
-                                    <div>
-                                        <span style="color: var(--text-secondary);">Interest Saved:</span>
-                                        <span style="color: var(--text-primary);">@((minimumPayoffResult.TotalInterest - payoffResult.TotalInterest).ToString("C"))</span>
-                                    </div>
-                                </div>
-                            </div>
-                        }
-
-                        <!-- Progress Visualization -->
+                        <!-- Strategy Selection -->
                         <div>
-                            <h4 class="font-semibold mb-2" style="color: var(--text-primary);">Payment Breakdown</h4>
-                            <div class="space-y-2">
-                                <div class="flex justify-between text-sm">
-                                    <span style="color: var(--text-secondary);">Principal</span>
-                                    <span style="color: var(--text-primary);">@selectedDebt.CurrentBalance.ToString("C")</span>
-                                </div>
-                                <div class="flex justify-between text-sm">
-                                    <span style="color: var(--text-secondary);">Interest</span>
-                                    <span style="color: var(--text-primary);">@payoffResult.TotalInterest.ToString("C")</span>
-                                </div>
-                                <div class="w-full bg-gray-200 rounded-full h-4">
-                                    <div class="h-4 rounded-full"
-                                         style="background: linear-gradient(90deg, var(--success-color) 0%, var(--success-color) @(((double)selectedDebt.CurrentBalance / (double)payoffResult.TotalPayments * 100).ToString("F1"))%, var(--warning-color) @(((double)selectedDebt.CurrentBalance / (double)payoffResult.TotalPayments * 100).ToString("F1"))%, var(--warning-color) 100%); width: 100%"></div>
-                                </div>
-                                <div class="flex justify-between text-xs" style="color: var(--text-secondary);">
-                                    <span>Principal (@(((double)selectedDebt.CurrentBalance / (double)payoffResult.TotalPayments * 100).ToString("F1"))%)</span>
-                                    <span>Interest (@(((double)payoffResult.TotalInterest / (double)payoffResult.TotalPayments * 100).ToString("F1"))%)</span>
-                                </div>
+                            <label class="block text-sm font-medium mb-2" style="color: var(--text-primary);">
+                                Payoff Strategy
+                            </label>
+                            <select @bind="selectedStrategy" @bind:after="CalculatePayoffScenarios"
+                                    class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                    style="background: var(--secondary-bg); border-color: var(--border-color); color: var(--text-primary);">
+                                <option value="avalanche">Debt Avalanche (Highest Interest First)</option>
+                                <option value="snowball">Debt Snowball (Smallest Balance First)</option>
+                                <option value="custom">Custom Priority</option>
+                            </select>
+                        </div>
+
+                        <!-- Extra Payment Amount -->
+                        <div>
+                            <label class="block text-sm font-medium mb-2" style="color: var(--text-primary);">
+                                Extra Monthly Payment
+                            </label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-3 text-gray-500">$</span>
+                                <input type="number" @bind="extraPayment" @bind:after="CalculatePayoffScenarios"
+                                       step="0.01" min="0" placeholder="0.00"
+                                       class="w-full pl-8 pr-3 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                       style="background: var(--secondary-bg); border-color: var(--border-color); color: var(--text-primary);" />
                             </div>
                         </div>
-                    </div>
-                }
-                else
-                {
-                    <div class="text-center py-12" style="color: var(--text-secondary);">
-                        <div class="text-4xl mb-4">🧮</div>
-                        <p>Select a debt and enter payment amount to see results</p>
-                    </div>
-                }
-            </div>
-        </div>
 
-        <!-- Debt Strategy Comparison -->
-        @if (showStrategies && allDebts.Any())
-        {
-            <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-6 mb-8"
-                 style="background: var(--card-bg); border-color: var(--border-color);">
-                <h3 class="text-xl font-bold mb-4" style="color: var(--text-primary);">
-                    Debt Repayment Strategies
-                </h3>
+                        <!-- Payment Frequency -->
+                        <div>
+                            <label class="block text-sm font-medium mb-2" style="color: var(--text-primary);">
+                                Payment Frequency
+                            </label>
+                            <select @bind="paymentFrequency" @bind:after="CalculatePayoffScenarios"
+                                    class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                    style="background: var(--secondary-bg); border-color: var(--border-color); color: var(--text-primary);">
+                                <option value="monthly">Monthly</option>
+                                <option value="biweekly">Bi-weekly</option>
+                                <option value="weekly">Weekly</option>
+                            </select>
+                        </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <!-- Debt Snowball -->
-                    <div class="p-4 rounded-lg" style="background: var(--accent-color)/10;">
-                        <h4 class="font-semibold mb-2" style="color: var(--accent-color);">🏔️ Debt Snowball</h4>
-                        <p class="text-sm mb-3" style="color: var(--text-secondary);">Pay minimums on all debts, extra on smallest balance</p>
-                        @if (snowballStrategy != null)
-                        {
-                            <div class="space-y-1 text-sm">
-                                <div class="flex justify-between">
-                                    <span>Total Time:</span>
-                                    <span>@snowballStrategy.TotalMonths months</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span>Total Interest:</span>
-                                    <span>@snowballStrategy.TotalInterest.ToString("C")</span>
-                                </div>
+                        <!-- Target Payoff Date -->
+                        <div>
+                            <label class="block text-sm font-medium mb-2" style="color: var(--text-primary);">
+                                Target Payoff Date (Optional)
+                            </label>
+                            <input type="date" @bind="targetPayoffDate" @bind:after="CalculatePayoffScenarios"
+                                   class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                   style="background: var(--secondary-bg); border-color: var(--border-color); color: var(--text-primary);" />
+                        </div>
+
+                        <!-- Calculate Button -->
+                        <button @onclick="CalculatePayoffScenarios" 
+                                class="w-full btn-primary transform hover:scale-105 transition-all duration-200"
+                                disabled="@(!selectedDebts.Any())">
+                            <i class="fas fa-calculator mr-2"></i>
+                            Calculate Payoff Scenarios
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-6 animate-slide-up stagger-3"
+                     style="background: var(--card-bg); border-color: var(--border-color);">
+                    <h2 class="text-xl font-semibold mb-6 flex items-center" style="color: var(--text-primary);">
+                        <i class="fas fa-tachometer-alt mr-3 text-purple-600"></i>
+                        Quick Stats
+                    </h2>
+
+                    <div class="space-y-4">
+                        <div class="p-4 rounded-lg" style="background: var(--secondary-bg);">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm" style="color: var(--text-secondary);">Current Total Balance</span>
+                                <span class="font-semibold text-lg" style="color: var(--text-primary);">
+                                    @selectedDebts.Sum(d => d.CurrentBalance ?? 0).ToString("C")
+                                </span>
                             </div>
-                        }
-                    </div>
+                        </div>
 
-                    <!-- Debt Avalanche -->
-                    <div class="p-4 rounded-lg" style="background: var(--secondary-color)/10;">
-                        <h4 class="font-semibold mb-2" style="color: var(--secondary-color);">⛰️ Debt Avalanche</h4>
-                        <p class="text-sm mb-3" style="color: var(--text-secondary);">Pay minimums on all debts, extra on highest interest rate</p>
-                        @if (avalancheStrategy != null)
-                        {
-                            <div class="space-y-1 text-sm">
-                                <div class="flex justify-between">
-                                    <span>Total Time:</span>
-                                    <span>@avalancheStrategy.TotalMonths months</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span>Total Interest:</span>
-                                    <span>@avalancheStrategy.TotalInterest.ToString("C")</span>
-                                </div>
+                        <div class="p-4 rounded-lg" style="background: var(--secondary-bg);">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm" style="color: var(--text-secondary);">Minimum Payments</span>
+                                <span class="font-semibold text-lg" style="color: var(--text-primary);">
+                                    @selectedDebts.Sum(d => d.MinimumPayment ?? 0).ToString("C")
+                                </span>
                             </div>
-                        }
-                    </div>
+                        </div>
 
-                    <!-- Custom Strategy -->
-                    <div class="p-4 rounded-lg" style="background: var(--info-color)/10;">
-                        <h4 class="font-semibold mb-2" style="color: var(--info-color);">🎯 Custom Priority</h4>
-                        <p class="text-sm mb-3" style="color: var(--text-secondary);">Pay based on your custom debt priorities</p>
-                        @if (customStrategy != null)
+                        <div class="p-4 rounded-lg" style="background: var(--secondary-bg);">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm" style="color: var(--text-secondary);">Weighted Avg Interest</span>
+                                <span class="font-semibold text-lg" style="color: var(--text-primary);">
+                                    @CalculateWeightedAverageInterest().ToString("F2")%
+                                </span>
+                            </div>
+                        </div>
+
+                        @if (payoffResults != null)
                         {
-                            <div class="space-y-1 text-sm">
-                                <div class="flex justify-between">
-                                    <span>Total Time:</span>
-                                    <span>@customStrategy.TotalMonths months</span>
+                            <div class="p-4 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-sm font-medium text-green-800 dark:text-green-200">Payoff Time</span>
+                                    <span class="font-bold text-lg text-green-800 dark:text-green-200">
+                                        @payoffResults.PayoffMonths months
+                                    </span>
                                 </div>
-                                <div class="flex justify-between">
-                                    <span>Total Interest:</span>
-                                    <span>@customStrategy.TotalInterest.ToString("C")</span>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm font-medium text-green-800 dark:text-green-200">Total Interest</span>
+                                    <span class="font-bold text-lg text-green-800 dark:text-green-200">
+                                        @payoffResults.TotalInterest.ToString("C")
+                                    </span>
                                 </div>
                             </div>
                         }
                     </div>
                 </div>
-
-                <!-- Strategy Recommendation -->
-                @if (recommendedStrategy != null)
-                {
-                    <div class="mt-6 p-4 rounded-lg" style="background: var(--success-color)/10;">
-                        <h4 class="font-semibold mb-2" style="color: var(--success-color);">💡 Recommended Strategy</h4>
-                        <p style="color: var(--text-primary);">
-                            Based on your debts, the <strong>@recommendedStrategy.StrategyName</strong> strategy would save you the most money.
-                            You'll pay <strong>@recommendedStrategy.TotalInterest.ToString("C")</strong> in total interest 
-                            and be debt-free in <strong>@recommendedStrategy.TotalMonths months</strong>.
-                        </p>
-                    </div>
-                }
             </div>
-        }
 
-        <!-- Amortization Schedule -->
-        @if (payoffResult != null && amortizationSchedule.Any())
-        {
-            <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-6"
-                 style="background: var(--card-bg); border-color: var(--border-color);">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-bold" style="color: var(--text-primary);">
-                        Amortization Schedule
-                    </h3>
-                    <button @onclick="ToggleScheduleView" 
-                            class="px-4 py-2 rounded-lg transition-all duration-300 hover:scale-105 font-semibold"
-                            style="background: var(--accent-color); color: white;">
-                        @(showFullSchedule ? "Show Summary" : "Show All Payments")
-                    </button>
-                </div>
+            @if (payoffResults != null)
+            {
+                <!-- Results Section -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    <!-- Strategy Comparison -->
+                    <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-6 animate-slide-up stagger-4"
+                         style="background: var(--card-bg); border-color: var(--border-color);">
+                        <h2 class="text-xl font-semibold mb-6 flex items-center" style="color: var(--text-primary);">
+                            <i class="fas fa-balance-scale mr-3 text-blue-600"></i>
+                            Strategy Comparison
+                        </h2>
 
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead>
-                            <tr class="border-b" style="border-color: var(--border-color);">
-                                <th class="text-left p-2" style="color: var(--text-secondary);">Payment #</th>
-                                <th class="text-left p-2" style="color: var(--text-secondary);">Date</th>
-                                <th class="text-right p-2" style="color: var(--text-secondary);">Payment</th>
-                                <th class="text-right p-2" style="color: var(--text-secondary);">Principal</th>
-                                <th class="text-right p-2" style="color: var(--text-secondary);">Interest</th>
-                                <th class="text-right p-2" style="color: var(--text-secondary);">Balance</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var payment in (showFullSchedule ? amortizationSchedule : amortizationSchedule.Take(12)))
+                        <div class="space-y-6">
+                            <!-- Current Strategy Results -->
+                            <div class="p-4 rounded-lg border-2 border-indigo-200 bg-indigo-50 dark:bg-indigo-900/20">
+                                <h3 class="font-semibold text-indigo-800 dark:text-indigo-200 mb-3">
+                                    @GetStrategyName(selectedStrategy) Strategy
+                                </h3>
+                                <div class="grid grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <span class="text-indigo-600 dark:text-indigo-300">Payoff Time:</span>
+                                        <p class="font-semibold text-indigo-800 dark:text-indigo-200">
+                                            @payoffResults.PayoffMonths months
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <span class="text-indigo-600 dark:text-indigo-300">Total Interest:</span>
+                                        <p class="font-semibold text-indigo-800 dark:text-indigo-200">
+                                            @payoffResults.TotalInterest.ToString("C")
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <span class="text-indigo-600 dark:text-indigo-300">Total Payments:</span>
+                                        <p class="font-semibold text-indigo-800 dark:text-indigo-200">
+                                            @payoffResults.TotalPayments.ToString("C")
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <span class="text-indigo-600 dark:text-indigo-300">Monthly Payment:</span>
+                                        <p class="font-semibold text-indigo-800 dark:text-indigo-200">
+                                            @((selectedDebts.Sum(d => d.MinimumPayment ?? 0) + extraPayment).ToString("C"))
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Alternative Strategies -->
+                            @if (alternativeResults.Any())
                             {
-                                <tr class="border-b" style="border-color: var(--border-color);">
-                                    <td class="p-2" style="color: var(--text-primary);">@payment.PaymentNumber</td>
-                                    <td class="p-2" style="color: var(--text-primary);">@payment.PaymentDate.ToString("MMM yyyy")</td>
-                                    <td class="p-2 text-right" style="color: var(--text-primary);">@payment.PaymentAmount.ToString("C")</td>
-                                    <td class="p-2 text-right" style="color: var(--success-color);">@payment.PrincipalAmount.ToString("C")</td>
-                                    <td class="p-2 text-right" style="color: var(--warning-color);">@payment.InterestAmount.ToString("C")</td>
-                                    <td class="p-2 text-right font-semibold" style="color: var(--text-primary);">@payment.RemainingBalance.ToString("C")</td>
-                                </tr>
+                                @foreach (var alternative in alternativeResults)
+                                {
+                                    <div class="p-4 rounded-lg" style="background: var(--secondary-bg);">
+                                        <h3 class="font-semibold mb-3" style="color: var(--text-primary);">
+                                            @GetStrategyName(alternative.Strategy) Strategy
+                                        </h3>
+                                        <div class="grid grid-cols-2 gap-4 text-sm">
+                                            <div>
+                                                <span style="color: var(--text-secondary);">Payoff Time:</span>
+                                                <p class="font-semibold @GetComparisonColor(alternative.PayoffMonths, payoffResults.PayoffMonths, true)">
+                                                    @alternative.PayoffMonths months
+                                                    @if (alternative.PayoffMonths != payoffResults.PayoffMonths)
+                                                    {
+                                                        <span class="text-xs">
+                                                            (@((alternative.PayoffMonths - payoffResults.PayoffMonths > 0 ? "+" : ""))@(alternative.PayoffMonths - payoffResults.PayoffMonths))
+                                                        </span>
+                                                    }
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <span style="color: var(--text-secondary);">Total Interest:</span>
+                                                <p class="font-semibold @GetComparisonColor(alternative.TotalInterest, payoffResults.TotalInterest, true)">
+                                                    @alternative.TotalInterest.ToString("C")
+                                                    @if (alternative.TotalInterest != payoffResults.TotalInterest)
+                                                    {
+                                                        <span class="text-xs">
+                                                            (@((alternative.TotalInterest - payoffResults.TotalInterest).ToString("C")))
+                                                        </span>
+                                                    }
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
                             }
-                        </tbody>
-                    </table>
+                        </div>
+                    </div>
+
+                    <!-- Payoff Timeline Chart -->
+                    <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-6 animate-slide-up stagger-5"
+                         style="background: var(--card-bg); border-color: var(--border-color);">
+                        <h2 class="text-xl font-semibold mb-6 flex items-center" style="color: var(--text-primary);">
+                            <i class="fas fa-chart-area mr-3 text-green-600"></i>
+                            Payoff Timeline
+                        </h2>
+                        <div class="h-80">
+                            <canvas id="payoffTimelineChart" class="max-w-full max-h-full"></canvas>
+                        </div>
+                    </div>
                 </div>
 
-                @if (!showFullSchedule && amortizationSchedule.Count > 12)
-                {
-                    <div class="text-center mt-4" style="color: var(--text-secondary);">
-                        Showing first 12 payments of @amortizationSchedule.Count total payments
+                <!-- Detailed Payoff Schedule -->
+                <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-6 animate-slide-up stagger-6"
+                     style="background: var(--card-bg); border-color: var(--border-color);">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-semibold flex items-center" style="color: var(--text-primary);">
+                            <i class="fas fa-table mr-3 text-purple-600"></i>
+                            Detailed Payoff Schedule
+                        </h2>
+                        <div class="flex gap-2">
+                            <button @onclick="() => showAmortization = !showAmortization"
+                                    class="btn-secondary text-sm">
+                                <i class="fas @(showAmortization ? "fa-eye-slash" : "fa-eye") mr-2"></i>
+                                @(showAmortization ? "Hide" : "Show") Amortization
+                            </button>
+                            <button @onclick="ExportSchedule" class="btn-secondary text-sm">
+                                <i class="fas fa-download mr-2"></i>
+                                Export
+                            </button>
+                        </div>
                     </div>
-                }
+
+                    @if (payoffResults.PayoffSchedule.Any())
+                    {
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="border-b" style="border-color: var(--border-color);">
+                                        <th class="text-left py-3 px-4" style="color: var(--text-primary);">Debt</th>
+                                        <th class="text-right py-3 px-4" style="color: var(--text-primary);">Current Balance</th>
+                                        <th class="text-right py-3 px-4" style="color: var(--text-primary);">Monthly Payment</th>
+                                        <th class="text-right py-3 px-4" style="color: var(--text-primary);">Payoff Date</th>
+                                        <th class="text-right py-3 px-4" style="color: var(--text-primary);">Total Interest</th>
+                                        @if (showAmortization)
+                                        {
+                                            <th class="text-center py-3 px-4" style="color: var(--text-primary);">Schedule</th>
+                                        }
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in payoffResults.PayoffSchedule)
+                                    {
+                                        <tr class="border-b hover:bg-gray-50 dark:hover:bg-gray-800/50" style="border-color: var(--border-color);">
+                                            <td class="py-3 px-4">
+                                                <div class="flex items-center">
+                                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center mr-3 @GetObligationTypeColor(item.ObligationType)">
+                                                        <i class="@GetObligationTypeIcon(item.ObligationType) text-white text-xs"></i>
+                                                    </div>
+                                                    <div>
+                                                        <p class="font-medium" style="color: var(--text-primary);">@item.DebtName</p>
+                                                        <p class="text-xs" style="color: var(--text-secondary);">@item.InterestRate.ToString("F2")% APR</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="text-right py-3 px-4 font-semibold" style="color: var(--text-primary);">
+                                                @item.CurrentBalance.ToString("C")
+                                            </td>
+                                            <td class="text-right py-3 px-4 font-semibold" style="color: var(--text-primary);">
+                                                @item.MonthlyPayment.ToString("C")
+                                            </td>
+                                            <td class="text-right py-3 px-4" style="color: var(--text-primary);">
+                                                @item.PayoffDate.ToString("MMM yyyy")
+                                            </td>
+                                            <td class="text-right py-3 px-4 font-semibold" style="color: var(--text-primary);">
+                                                @item.TotalInterest.ToString("C")
+                                            </td>
+                                            @if (showAmortization)
+                                            {
+                                                <td class="text-center py-3 px-4">
+                                                    <button @onclick="() => ShowAmortizationDetails(item.DebtId)" 
+                                                            class="btn-secondary text-xs">
+                                                        <i class="fas fa-chart-line mr-1"></i>
+                                                        View
+                                                    </button>
+                                                </td>
+                                            }
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-8" style="color: var(--text-secondary);">
+                            <i class="fas fa-table text-4xl mb-4"></i>
+                            <p>No payoff schedule available. Please select debts and calculate scenarios.</p>
+                        </div>
+                    }
+                </div>
+            }
+
+            <!-- Action Buttons -->
+            <div class="flex justify-center gap-4 mt-8">
+                <button @onclick="SavePayoffPlan" 
+                        class="btn-primary transform hover:scale-105 transition-all duration-200"
+                        disabled="@(payoffResults == null)">
+                    <i class="fas fa-save mr-2"></i>
+                    Save Payoff Plan
+                </button>
+                <button @onclick="SetupAutomation" 
+                        class="btn-secondary transform hover:scale-105 transition-all duration-200"
+                        disabled="@(payoffResults == null)">
+                    <i class="fas fa-robot mr-2"></i>
+                    Setup Automation
+                </button>
+                <button @onclick="ShareResults" 
+                        class="btn-secondary transform hover:scale-105 transition-all duration-200"
+                        disabled="@(payoffResults == null)">
+                    <i class="fas fa-share mr-2"></i>
+                    Share Results
+                </button>
             </div>
         }
     </div>
 </div>
 
-<!-- Particle Animation Styles -->
-<style>
-    .particles {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-        z-index: 1;
-    }
-
-    .particles::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background-image: 
-            radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
-            radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
-            radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.3) 0%, transparent 50%);
-        animation: float 20s ease-in-out infinite;
-    }
-
-    @@keyframes float {
-        0%, 100% { transform: translate(0, 0) rotate(0deg); }
-        33% { transform: translate(30px, -30px) rotate(120deg); }
-        66% { transform: translate(-20px, 20px) rotate(240deg); }
-    }
-</style>
-
 @code {
-    private List<Debt> availableDebts = new();
-    private List<Debt> allDebts = new();
-    private Debt? selectedDebt;
-    private string selectedDebtId = string.Empty;
-    private decimal monthlyPayment = 0;
+    private bool isLoading = true;
+    private List<Obligation> availableDebts = new();
+    private List<string> selectedDebtIds = new();
+    private List<Obligation> selectedDebts => availableDebts.Where(d => selectedDebtIds.Contains(d.Id)).ToList();
+    
+    private string selectedStrategy = "avalanche";
     private decimal extraPayment = 0;
-    private decimal oneTimePayment = 0;
-    private DateTime? oneTimePaymentDate;
-    
-    private PayoffProjection? payoffResult;
-    private PayoffProjection? minimumPayoffResult;
-    private List<AmortizationPayment> amortizationSchedule = new();
-    private bool showFullSchedule = false;
-    
-    // Strategy comparison
-    private bool showStrategies = false;
-    private DebtStrategy? snowballStrategy;
-    private DebtStrategy? avalancheStrategy;
-    private DebtStrategy? customStrategy;
-    private DebtStrategy? recommendedStrategy;
+    private string paymentFrequency = "monthly";
+    private DateTime? targetPayoffDate;
+    private bool showAmortization = false;
+
+    private PayoffScenario? payoffResults;
+    private List<PayoffScenario> alternativeResults = new();
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadDebts();
-        await JSRuntime.InvokeVoidAsync("initializeParticles");
-        
-        // Check if a specific debt was passed in the URL
-        var uri = new Uri(NavigationManager.Uri);
-        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
-        var debtIdParam = query["debtId"];
-        if (!string.IsNullOrEmpty(debtIdParam))
+        await LoadAvailableDebts();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && payoffResults != null)
         {
-            selectedDebtId = debtIdParam;
-            await OnDebtSelected();
+            await InitializeCharts();
         }
     }
 
-    private async Task LoadDebts()
+    private async Task LoadAvailableDebts()
     {
         try
         {
-            allDebts = (await DebtService.GetActiveDebtsAsync()).ToList();
-            availableDebts = allDebts.Where(d => d.CurrentBalance > 0).ToList();
+            isLoading = true;
+            var allObligations = await ObligationService.GetAllObligationsAsync();
+            availableDebts = allObligations
+                .Where(o => o.IsDebt && o.Status == ObligationStatus.Active && o.CurrentBalance > 0)
+                .OrderByDescending(o => o.CurrentBalance)
+                .ToList();
+
+            // Auto-select all debts by default
+            selectedDebtIds = availableDebts.Select(d => d.Id).ToList();
+
+            if (selectedDebts.Any())
+            {
+                await CalculatePayoffScenarios();
+            }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading debts: {ex.Message}");
         }
-    }
-
-    private async Task OnDebtSelected()
-    {
-        selectedDebt = availableDebts.FirstOrDefault(d => d.Id == selectedDebtId);
-        if (selectedDebt != null)
+        finally
         {
-            monthlyPayment = selectedDebt.MinimumPayment ?? 0;
-            await CalculateMinimumPayoff();
-            await CalculatePayoff();
+            isLoading = false;
+            StateHasChanged();
         }
     }
 
-    private async Task CalculateMinimumPayoff()
+    private void ToggleDebtSelection(string debtId, bool isSelected)
     {
-        if (selectedDebt?.MinimumPayment.HasValue == true && selectedDebt.InterestRate.HasValue)
+        if (isSelected && !selectedDebtIds.Contains(debtId))
         {
-            minimumPayoffResult = await DebtService.CalculatePayoffProjectionAsync(selectedDebt.Id, selectedDebt.MinimumPayment.Value);
+            selectedDebtIds.Add(debtId);
         }
+        else if (!isSelected && selectedDebtIds.Contains(debtId))
+        {
+            selectedDebtIds.Remove(debtId);
+        }
+        StateHasChanged();
     }
 
-    private async Task CalculatePayoff()
+    private async Task CalculatePayoffScenarios()
     {
-        if (selectedDebt == null || monthlyPayment <= 0)
-        {
-            payoffResult = null;
-            amortizationSchedule.Clear();
-            return;
-        }
+        if (!selectedDebts.Any()) return;
 
         try
         {
-            var totalPayment = monthlyPayment + extraPayment;
-            payoffResult = await DebtService.CalculatePayoffProjectionAsync(selectedDebt.Id, totalPayment);
+            // Calculate current strategy
+            payoffResults = await ObligationService.CalculatePayoffScenarioAsync(
+                selectedDebtIds, selectedStrategy, extraPayment, paymentFrequency, targetPayoffDate);
+
+            // Calculate alternative strategies for comparison
+            alternativeResults.Clear();
+            var strategies = new[] { "avalanche", "snowball" };
             
-            if (payoffResult != null)
+            foreach (var strategy in strategies.Where(s => s != selectedStrategy))
             {
-                amortizationSchedule = await DebtService.GetAmortizationScheduleAsync(
-                    selectedDebt.Id, totalPayment, true);
+                var result = await ObligationService.CalculatePayoffScenarioAsync(
+                    selectedDebtIds, strategy, extraPayment, paymentFrequency, targetPayoffDate);
+                result.Strategy = strategy;
+                alternativeResults.Add(result);
             }
+
+            await InitializeCharts();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error calculating payoff: {ex.Message}");
+            Console.WriteLine($"Error calculating payoff scenarios: {ex.Message}");
         }
-        
+
         StateHasChanged();
     }
 
-    private async Task SetQuickScenario(decimal multiplier)
+    private async Task InitializeCharts()
     {
-        if (selectedDebt?.MinimumPayment.HasValue == true)
-        {
-            monthlyPayment = selectedDebt.MinimumPayment.Value * multiplier;
-            extraPayment = 0;
-            await CalculatePayoff();
-        }
-    }
-
-    private async Task LoadDebtStrategies()
-    {
-        if (!allDebts.Any())
-            return;
+        if (payoffResults == null) return;
 
         try
         {
-            showStrategies = true;
-            
-            // Calculate total extra payment available (example: $200 extra per month)
-            var extraPaymentAmount = 200m;
-            
-            snowballStrategy = await DebtService.CalculateDebtStrategyAsync(DebtPriority.Low, extraPaymentAmount);
-            avalancheStrategy = await DebtService.CalculateDebtStrategyAsync(DebtPriority.High, extraPaymentAmount);
-            customStrategy = await DebtService.CalculateDebtStrategyAsync(DebtPriority.Medium, extraPaymentAmount);
-            
-            // Determine recommended strategy (lowest total interest)
-            var strategies = new[] { snowballStrategy, avalancheStrategy, customStrategy }
-                .Where(s => s != null)
-                .OrderBy(s => s.TotalInterest)
-                .ToList();
-                
-            recommendedStrategy = strategies.FirstOrDefault();
+            var chartData = GeneratePayoffChartData();
+            await JSRuntime.InvokeVoidAsync("initializePayoffChart", "payoffTimelineChart", chartData);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error loading debt strategies: {ex.Message}");
+            Console.WriteLine($"Error initializing charts: {ex.Message}");
         }
+    }
+
+    private object GeneratePayoffChartData()
+    {
+        if (payoffResults == null) return new { };
+
+        var months = Enumerable.Range(0, payoffResults.PayoffMonths + 1).ToArray();
+        var balanceData = new decimal[months.Length];
+        var interestData = new decimal[months.Length];
+
+        // Simulate balance reduction over time
+        var totalBalance = selectedDebts.Sum(d => d.CurrentBalance ?? 0);
+        var monthlyPayment = selectedDebts.Sum(d => d.MinimumPayment ?? 0) + extraPayment;
+
+        for (int i = 0; i < months.Length; i++)
+        {
+            var remainingBalance = Math.Max(0, totalBalance - (monthlyPayment * i * 0.8m)); // Simplified calculation
+            balanceData[i] = remainingBalance;
+            interestData[i] = payoffResults.TotalInterest * (remainingBalance / totalBalance);
+        }
+
+        return new
+        {
+            labels = months.Select(m => DateTime.Today.AddMonths(m).ToString("MMM yyyy")).ToArray(),
+            datasets = new[]
+            {
+                new
+                {
+                    label = "Remaining Balance",
+                    data = balanceData,
+                    borderColor = "#3b82f6",
+                    backgroundColor = "rgba(59, 130, 246, 0.1)",
+                    fill = true,
+                    tension = 0.4
+                },
+                new
+                {
+                    label = "Cumulative Interest",
+                    data = interestData,
+                    borderColor = "#ef4444",
+                    backgroundColor = "rgba(239, 68, 68, 0.1)",
+                    fill = true,
+                    tension = 0.4
+                }
+            }
+        };
+    }
+
+    private decimal CalculateWeightedAverageInterest()
+    {
+        if (!selectedDebts.Any()) return 0;
+
+        var totalBalance = selectedDebts.Sum(d => d.CurrentBalance ?? 0);
+        if (totalBalance == 0) return 0;
+
+        var weightedSum = selectedDebts.Sum(d => (d.InterestRate ?? 0) * (d.CurrentBalance ?? 0));
+        return weightedSum / totalBalance;
+    }
+
+    // Navigation methods
+    private void NavigateToDashboard() => Navigation.NavigateTo("/obligations/dashboard");
+    private void NavigateToList() => Navigation.NavigateTo("/obligations");
+    private void AddNewDebt() => Navigation.NavigateTo("/obligations/add");
+
+    // Action methods
+    private async Task SavePayoffPlan()
+    {
+        // TODO: Implement save payoff plan functionality
+        await JSRuntime.InvokeVoidAsync("alert", "Payoff plan saved successfully!");
+    }
+
+    private async Task SetupAutomation()
+    {
+        // TODO: Implement automation setup
+        await JSRuntime.InvokeVoidAsync("alert", "Automation setup coming soon!");
+    }
+
+    private async Task ShareResults()
+    {
+        // TODO: Implement share functionality
+        await JSRuntime.InvokeVoidAsync("alert", "Share functionality coming soon!");
+    }
+
+    private async Task ExportSchedule()
+    {
+        // TODO: Implement export functionality
+        await JSRuntime.InvokeVoidAsync("alert", "Export functionality coming soon!");
+    }
+
+    private void ShowAmortizationDetails(string debtId)
+    {
+        Navigation.NavigateTo($"/obligations/amortization/{debtId}");
+    }
+
+    // Helper methods
+    private string GetStrategyName(string strategy)
+    {
+        return strategy switch
+        {
+            "avalanche" => "Debt Avalanche",
+            "snowball" => "Debt Snowball",
+            "custom" => "Custom Priority",
+            _ => "Unknown"
+        };
+    }
+
+    private string GetComparisonColor(decimal value1, decimal value2, bool lowerIsBetter)
+    {
+        if (value1 == value2) return "text-gray-600";
         
-        StateHasChanged();
+        var isBetter = lowerIsBetter ? value1 < value2 : value1 > value2;
+        return isBetter ? "text-green-600" : "text-red-600";
     }
 
-    private void ToggleScheduleView()
+    private string GetObligationTypeIcon(ObligationType type)
     {
-        showFullSchedule = !showFullSchedule;
+        return type switch
+        {
+            ObligationType.CreditCard => "fas fa-credit-card",
+            ObligationType.Mortgage => "fas fa-home",
+            ObligationType.PersonalLoan or ObligationType.StudentLoan or ObligationType.AutoLoan or ObligationType.BusinessLoan => "fas fa-hand-holding-usd",
+            ObligationType.MedicalDebt => "fas fa-user-md",
+            _ => "fas fa-file-contract"
+        };
     }
 
-    private void ExportResults()
+    private string GetObligationTypeColor(ObligationType type)
     {
-        // Implementation for exporting results to PDF/Excel
-        // This would typically involve generating a report and downloading it
-        Console.WriteLine("Export functionality would be implemented here");
+        return type switch
+        {
+            ObligationType.CreditCard => "bg-gradient-to-r from-red-500 to-pink-600",
+            ObligationType.Mortgage => "bg-gradient-to-r from-green-500 to-emerald-600",
+            ObligationType.PersonalLoan or ObligationType.StudentLoan or ObligationType.AutoLoan or ObligationType.BusinessLoan => "bg-gradient-to-r from-blue-500 to-indigo-600",
+            ObligationType.MedicalDebt => "bg-gradient-to-r from-purple-500 to-violet-600",
+            _ => "bg-gradient-to-r from-gray-500 to-slate-600"
+        };
+    }
+
+    // Models for payoff calculations
+    public class PayoffResults
+    {
+        public string Strategy { get; set; } = "";
+        public int PayoffMonths { get; set; }
+        public decimal TotalInterest { get; set; }
+        public decimal TotalPayments { get; set; }
+        public List<DebtPayoffItem> PayoffSchedule { get; set; } = new();
+    }
+
+    public class DebtPayoffItem
+    {
+        public string DebtId { get; set; } = "";
+        public string DebtName { get; set; } = "";
+        public ObligationType ObligationType { get; set; }
+        public decimal CurrentBalance { get; set; }
+        public decimal InterestRate { get; set; }
+        public decimal MonthlyPayment { get; set; }
+        public DateTime PayoffDate { get; set; }
+        public decimal TotalInterest { get; set; }
     }
 }
