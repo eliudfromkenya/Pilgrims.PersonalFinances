@@ -1,0 +1,624 @@
+@page "/reconciliation/history"
+@using Pilgrims.PersonalFinances.Models
+@using Pilgrims.PersonalFinances.Models.Enums
+@using Pilgrims.PersonalFinances.Services
+@using Pilgrims.PersonalFinances.Services.Interfaces
+@inject IReconciliationService ReconciliationService
+@inject IAccountService AccountService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Reconciliation History</PageTitle>
+
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 p-6">
+    <!-- Header Section -->
+    <div class="mb-8 animate-fade-in">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+            <div class="mb-4 lg:mb-0">
+                <nav class="flex items-center space-x-2 text-sm text-slate-600 dark:text-slate-400 mb-2">
+                    <a href="/reconciliation" class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Reconciliation</a>
+                    <i class="fas fa-chevron-right text-xs"></i>
+                    <span class="text-slate-900 dark:text-white">History</span>
+                </nav>
+                <h1 class="text-4xl font-bold text-slate-900 dark:text-white mb-2">
+                    <i class="fas fa-history text-blue-600 dark:text-blue-400 mr-3"></i>
+                    Reconciliation History
+                </h1>
+                <p class="text-lg text-slate-600 dark:text-slate-300">
+                    View and manage all past reconciliation sessions
+                </p>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <button @onclick="ExportHistory" 
+                        class="btn-secondary group transform hover:scale-105 transition-all duration-200">
+                    <i class="fas fa-download mr-2 group-hover:scale-110 transition-transform duration-200"></i>
+                    Export History
+                </button>
+                <button @onclick="StartNewReconciliation" 
+                        class="btn-primary group transform hover:scale-105 transition-all duration-200">
+                    <i class="fas fa-plus mr-2 group-hover:rotate-90 transition-transform duration-200"></i>
+                    New Reconciliation
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 animate-slide-up">
+        <div class="card p-6 text-center transform hover:scale-105 transition-all duration-300">
+            <div class="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">
+                @totalSessions
+            </div>
+            <div class="text-sm text-slate-600 dark:text-slate-400">Total Sessions</div>
+        </div>
+        <div class="card p-6 text-center transform hover:scale-105 transition-all duration-300">
+            <div class="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">
+                @completedSessions
+            </div>
+            <div class="text-sm text-slate-600 dark:text-slate-400">Completed</div>
+        </div>
+        <div class="card p-6 text-center transform hover:scale-105 transition-all duration-300">
+            <div class="text-3xl font-bold text-orange-600 dark:text-orange-400 mb-2">
+                @inProgressSessions
+            </div>
+            <div class="text-sm text-slate-600 dark:text-slate-400">In Progress</div>
+        </div>
+        <div class="card p-6 text-center transform hover:scale-105 transition-all duration-300">
+            <div class="text-3xl font-bold text-red-600 dark:text-red-400 mb-2">
+                @totalDifferences.ToString("C")
+            </div>
+            <div class="text-sm text-slate-600 dark:text-slate-400">Total Differences</div>
+        </div>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="card mb-8 animate-slide-up" style="animation-delay: 200ms">
+        <div class="p-6">
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                <!-- Search -->
+                <div class="lg:col-span-2">
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        Search Sessions
+                    </label>
+                    <div class="relative">
+                        <input @bind="searchTerm" 
+                               @oninput="OnSearchChanged"
+                               type="text" 
+                               placeholder="Search by session name, account, or notes..."
+                               class="input-field pl-10" />
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-search text-slate-400"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Account Filter -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        Account
+                    </label>
+                    <select @bind="selectedAccountFilter" 
+                            class="input-field">
+                        <option value="">All Accounts</option>
+                        @foreach (var account in accounts)
+                        {
+                            <option value="@account.Id">@account.Name</option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Status Filter -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        Status
+                    </label>
+                    <select @bind="selectedStatusFilter" 
+                            class="input-field">
+                        <option value="">All Statuses</option>
+                        <option value="@ReconciliationStatus.InProgress">In Progress</option>
+                        <option value="@ReconciliationStatus.Completed">Completed</option>
+                        <option value="@ReconciliationStatus.Cancelled">Cancelled</option>
+                        <option value="@ReconciliationStatus.RequiresReview">Requires Review</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Date Range Filter -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        From Date
+                    </label>
+                    <input @bind="fromDate" 
+                           @bind:after="() => OnFilterChanged(null!)"
+                           type="date" 
+                           class="input-field" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        To Date
+                    </label>
+                    <input @bind="toDate" 
+                           @bind:after="() => OnFilterChanged(null!)"
+                           type="date" 
+                           class="input-field" />
+                </div>
+            </div>
+
+            <!-- Quick Filters -->
+            <div class="flex flex-wrap gap-2 mt-4">
+                <button @onclick="() => SetQuickFilter(QuickFilter.Today)" 
+                        class="btn-sm @(currentQuickFilter == QuickFilter.Today ? "btn-primary" : "btn-outline")">
+                    Today
+                </button>
+                <button @onclick="() => SetQuickFilter(QuickFilter.ThisWeek)" 
+                        class="btn-sm @(currentQuickFilter == QuickFilter.ThisWeek ? "btn-primary" : "btn-outline")">
+                    This Week
+                </button>
+                <button @onclick="() => SetQuickFilter(QuickFilter.ThisMonth)" 
+                        class="btn-sm @(currentQuickFilter == QuickFilter.ThisMonth ? "btn-primary" : "btn-outline")">
+                    This Month
+                </button>
+                <button @onclick="() => SetQuickFilter(QuickFilter.LastMonth)" 
+                        class="btn-sm @(currentQuickFilter == QuickFilter.LastMonth ? "btn-primary" : "btn-outline")">
+                    Last Month
+                </button>
+                <button @onclick="() => SetQuickFilter(QuickFilter.ThisYear)" 
+                        class="btn-sm @(currentQuickFilter == QuickFilter.ThisYear ? "btn-primary" : "btn-outline")">
+                    This Year
+                </button>
+                <button @onclick="ClearFilters" 
+                        class="btn-sm btn-outline text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
+                    <i class="fas fa-times mr-1"></i>
+                    Clear Filters
+                </button>
+            </div>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="flex items-center justify-center h-64">
+            <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600"></div>
+        </div>
+    }
+    else
+    {
+        <!-- Sessions List -->
+        <div class="card animate-slide-up" style="animation-delay: 400ms">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white">
+                        <i class="fas fa-list text-blue-600 dark:text-blue-400 mr-2"></i>
+                        Reconciliation Sessions
+                    </h2>
+                    <div class="flex items-center space-x-4">
+                        <span class="text-sm text-slate-600 dark:text-slate-400">
+                            Showing @filteredSessions.Count of @reconciliationSessions.Count sessions
+                        </span>
+                        <div class="flex rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+                            <button @onclick="() => SetViewMode(ViewMode.Grid)" 
+                                    class="px-3 py-2 text-sm transition-colors @(currentViewMode == ViewMode.Grid ? "bg-blue-600 text-white" : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700")">
+                                <i class="fas fa-th-large"></i>
+                            </button>
+                            <button @onclick="() => SetViewMode(ViewMode.List)" 
+                                    class="px-3 py-2 text-sm transition-colors @(currentViewMode == ViewMode.List ? "bg-blue-600 text-white" : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700")">
+                                <i class="fas fa-list"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                @if (filteredSessions.Any())
+                {
+                    @if (currentViewMode == ViewMode.Grid)
+                    {
+                        <!-- Grid View -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            @foreach (var session in filteredSessions)
+                            {
+                                <div class="card p-6 hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300 group cursor-pointer"
+                                     @onclick="() => ViewSession(session.Id)">
+                                    <div class="flex items-start justify-between mb-4">
+                                        <div class="flex-1">
+                                            <h3 class="font-semibold text-slate-900 dark:text-white mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                                @session.SessionName
+                                            </h3>
+                                            <p class="text-sm text-slate-600 dark:text-slate-400">
+                                                @GetAccountName(session.AccountId)
+                                            </p>
+                                        </div>
+                                        <span class="px-2 py-1 rounded-full text-xs font-medium @session.StatusCssClass">
+                                            @session.StatusDisplayName
+                                        </span>
+                                    </div>
+
+                                    <div class="space-y-3">
+                                        <div class="flex justify-between text-sm">
+                                            <span class="text-slate-600 dark:text-slate-400">Date:</span>
+                                            <span class="text-slate-900 dark:text-white">@session.ReconciliationDate.ToString("MMM dd, yyyy")</span>
+                                        </div>
+                                        <div class="flex justify-between text-sm">
+                                            <span class="text-slate-600 dark:text-slate-400">Statement Balance:</span>
+                                            <span class="text-slate-900 dark:text-white font-medium">@session.StatementEndingBalance.ToString("C")</span>
+                                        </div>
+                                        <div class="flex justify-between text-sm">
+                                            <span class="text-slate-600 dark:text-slate-400">Book Balance:</span>
+                                            <span class="text-slate-900 dark:text-white font-medium">@session.BookEndingBalance.ToString("C")</span>
+                                        </div>
+                                        <div class="flex justify-between text-sm">
+                                            <span class="text-slate-600 dark:text-slate-400">Difference:</span>
+                                            <span class="font-medium @(session.Difference == 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")">
+                                                @session.Difference.ToString("C")
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex justify-between items-center mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                                        <div class="text-xs text-slate-500 dark:text-slate-400">
+                                            @session.ReconciliationItems?.Count items
+                                        </div>
+                                        <div class="flex space-x-2">
+                                            @if (session.Status == ReconciliationStatus.InProgress)
+                                            {
+                                                <button @onclick:stopPropagation="true" 
+                                                        @onclick="() => ContinueSession(session.Id)"
+                                                        class="btn-xs btn-primary">
+                                                    <i class="fas fa-play mr-1"></i>Continue
+                                                </button>
+                                            }
+                                            <button @onclick:stopPropagation="true" 
+                                                    @onclick="() => GenerateReport(session.Id)"
+                                                    class="btn-xs btn-secondary">
+                                                <i class="fas fa-file-alt mr-1"></i>Report
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <!-- List View -->
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="border-b border-slate-200 dark:border-slate-700">
+                                        <th class="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Session</th>
+                                        <th class="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Account</th>
+                                        <th class="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Date</th>
+                                        <th class="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Statement Balance</th>
+                                        <th class="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Book Balance</th>
+                                        <th class="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Difference</th>
+                                        <th class="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Status</th>
+                                        <th class="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var session in filteredSessions)
+                                    {
+                                        <tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors duration-200 cursor-pointer"
+                                            @onclick="() => ViewSession(session.Id)">
+                                            <td class="py-4 px-4">
+                                                <div class="font-medium text-slate-900 dark:text-white">@session.SessionName</div>
+                                                <div class="text-sm text-slate-500 dark:text-slate-400">@session.ReconciliationItems?.Count items</div>
+                                            </td>
+                                            <td class="py-4 px-4">
+                                                <div class="text-slate-900 dark:text-white">@GetAccountName(session.AccountId)</div>
+                                            </td>
+                                            <td class="py-4 px-4">
+                                                <div class="text-slate-900 dark:text-white">@session.ReconciliationDate.ToString("MMM dd, yyyy")</div>
+                                                <div class="text-sm text-slate-500 dark:text-slate-400">@session.ReconciliationDate.ToString("h:mm tt")</div>
+                                            </td>
+                                            <td class="py-4 px-4">
+                                                <span class="font-medium text-slate-900 dark:text-white">
+                                                    @session.StatementEndingBalance.ToString("C")
+                                                </span>
+                                            </td>
+                                            <td class="py-4 px-4">
+                                                <span class="font-medium text-slate-900 dark:text-white">
+                                                    @session.BookEndingBalance.ToString("C")
+                                                </span>
+                                            </td>
+                                            <td class="py-4 px-4">
+                                                <span class="font-medium @(session.Difference == 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")">
+                                                    @session.Difference.ToString("C")
+                                                </span>
+                                            </td>
+                                            <td class="py-4 px-4">
+                                                <span class="px-2 py-1 rounded-full text-xs font-medium @session.StatusCssClass">
+                                                    @session.StatusDisplayName
+                                                </span>
+                                            </td>
+                                            <td class="py-4 px-4">
+                                                <div class="flex space-x-2">
+                                                    @if (session.Status == ReconciliationStatus.InProgress)
+                                                    {
+                                                        <button @onclick:stopPropagation="true" 
+                                                                @onclick="() => ContinueSession(session.Id)"
+                                                                class="btn-sm btn-primary hover:scale-105 transition-transform duration-200">
+                                                            <i class="fas fa-play mr-1"></i>
+                                                            Continue
+                                                        </button>
+                                                    }
+                                                    <button @onclick:stopPropagation="true" 
+                                                            @onclick="() => GenerateReport(session.Id)"
+                                                            class="btn-sm btn-secondary hover:scale-105 transition-transform duration-200">
+                                                        <i class="fas fa-file-alt mr-1"></i>
+                                                        Report
+                                                    </button>
+                                                    <button @onclick:stopPropagation="true" 
+                                                            @onclick="() => DeleteSession(session.Id)"
+                                                            class="btn-sm btn-danger hover:scale-105 transition-transform duration-200">
+                                                        <i class="fas fa-trash mr-1"></i>
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-center py-12">
+                        <div class="text-6xl text-slate-300 dark:text-slate-600 mb-4">
+                            <i class="fas fa-history"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-slate-900 dark:text-white mb-2">No Reconciliation Sessions Found</h3>
+                        <p class="text-slate-600 dark:text-slate-400 mb-6">
+                            @if (HasActiveFilters())
+                            {
+                                <span>No sessions match your current filters. Try adjusting your search criteria.</span>
+                            }
+                            else
+                            {
+                                <span>You haven't created any reconciliation sessions yet. Start your first reconciliation to see it here.</span>
+                            }
+                        </p>
+                        @if (!HasActiveFilters())
+                        {
+                            <button @onclick="StartNewReconciliation" 
+                                    class="btn-primary transform hover:scale-105 transition-all duration-200">
+                                <i class="fas fa-plus mr-2"></i>
+                                Start First Reconciliation
+                            </button>
+                        }
+                        else
+                        {
+                            <button @onclick="ClearFilters" 
+                                    class="btn-outline transform hover:scale-105 transition-all duration-200">
+                                <i class="fas fa-times mr-2"></i>
+                                Clear Filters
+                            </button>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private bool isLoading = true;
+    private List<ReconciliationSession> reconciliationSessions = new();
+    private List<Account> accounts = new();
+    private List<ReconciliationSession> filteredSessions => GetFilteredSessions();
+
+    // Filters
+    private string searchTerm = string.Empty;
+    private string selectedAccountFilter = string.Empty;
+    private string selectedStatusFilter = string.Empty;
+    private DateTime? fromDate;
+    private DateTime? toDate;
+    private QuickFilter currentQuickFilter = QuickFilter.None;
+    private ViewMode currentViewMode = ViewMode.Grid;
+
+    // Statistics
+    private int totalSessions => reconciliationSessions.Count;
+    private int completedSessions => reconciliationSessions.Count(s => s.Status == ReconciliationStatus.Completed);
+    private int inProgressSessions => reconciliationSessions.Count(s => s.Status == ReconciliationStatus.InProgress);
+    private decimal totalDifferences => reconciliationSessions.Sum(s => Math.Abs(s.Difference));
+
+    private enum QuickFilter { None, Today, ThisWeek, ThisMonth, LastMonth, ThisYear }
+    private enum ViewMode { Grid, List }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            isLoading = true;
+
+            // Load accounts
+            accounts = (await AccountService.GetAccountsAsync()).ToList();
+
+            // Load reconciliation sessions
+            reconciliationSessions = (await ReconciliationService.GetReconciliationHistoryAsync()).ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading data: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private List<ReconciliationSession> GetFilteredSessions()
+    {
+        var filtered = reconciliationSessions.AsEnumerable();
+
+        // Search filter
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            filtered = filtered.Where(s => 
+                s.SessionName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                GetAccountName(s.AccountId).Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                (s.Notes?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false));
+        }
+
+        // Account filter
+        if (!string.IsNullOrEmpty(selectedAccountFilter))
+        {
+            filtered = filtered.Where(s => s.AccountId == selectedAccountFilter);
+        }
+
+        // Status filter
+        if (!string.IsNullOrEmpty(selectedStatusFilter) && Enum.TryParse<ReconciliationStatus>(selectedStatusFilter, out var status))
+        {
+            filtered = filtered.Where(s => s.Status == status);
+        }
+
+        // Date range filter
+        if (fromDate.HasValue)
+        {
+            filtered = filtered.Where(s => s.ReconciliationDate.Date >= fromDate.Value.Date);
+        }
+
+        if (toDate.HasValue)
+        {
+            filtered = filtered.Where(s => s.ReconciliationDate.Date <= toDate.Value.Date);
+        }
+
+        return filtered.OrderByDescending(s => s.ReconciliationDate).ToList();
+    }
+
+    private string GetAccountName(string accountId)
+    {
+        return accounts.FirstOrDefault(a => a.Id == accountId)?.Name ?? "Unknown Account";
+    }
+
+    private bool HasActiveFilters()
+    {
+        return !string.IsNullOrWhiteSpace(searchTerm) ||
+               !string.IsNullOrEmpty(selectedAccountFilter) ||
+               !string.IsNullOrEmpty(selectedStatusFilter) ||
+               fromDate.HasValue ||
+               toDate.HasValue ||
+               currentQuickFilter != QuickFilter.None;
+    }
+
+    private async Task OnSearchChanged(ChangeEventArgs e)
+    {
+        searchTerm = e.Value?.ToString() ?? string.Empty;
+        await Task.Delay(300); // Debounce
+        StateHasChanged();
+    }
+
+    private void OnFilterChanged(ChangeEventArgs e)
+    {
+        currentQuickFilter = QuickFilter.None;
+        StateHasChanged();
+    }
+
+    private void SetQuickFilter(QuickFilter filter)
+    {
+        currentQuickFilter = filter;
+        var today = DateTime.Today;
+
+        switch (filter)
+        {
+            case QuickFilter.Today:
+                fromDate = today;
+                toDate = today;
+                break;
+            case QuickFilter.ThisWeek:
+                var startOfWeek = today.AddDays(-(int)today.DayOfWeek);
+                fromDate = startOfWeek;
+                toDate = startOfWeek.AddDays(6);
+                break;
+            case QuickFilter.ThisMonth:
+                fromDate = new DateTime(today.Year, today.Month, 1);
+                toDate = fromDate.Value.AddMonths(1).AddDays(-1);
+                break;
+            case QuickFilter.LastMonth:
+                var lastMonth = today.AddMonths(-1);
+                fromDate = new DateTime(lastMonth.Year, lastMonth.Month, 1);
+                toDate = fromDate.Value.AddMonths(1).AddDays(-1);
+                break;
+            case QuickFilter.ThisYear:
+                fromDate = new DateTime(today.Year, 1, 1);
+                toDate = new DateTime(today.Year, 12, 31);
+                break;
+        }
+
+        StateHasChanged();
+    }
+
+    private void ClearFilters()
+    {
+        searchTerm = string.Empty;
+        selectedAccountFilter = string.Empty;
+        selectedStatusFilter = string.Empty;
+        fromDate = null;
+        toDate = null;
+        currentQuickFilter = QuickFilter.None;
+        StateHasChanged();
+    }
+
+    private void SetViewMode(ViewMode mode)
+    {
+        currentViewMode = mode;
+        StateHasChanged();
+    }
+
+    private void ViewSession(string sessionId)
+    {
+        Navigation.NavigateTo($"/reconciliation/process/{sessionId}");
+    }
+
+    private void ContinueSession(string sessionId)
+    {
+        Navigation.NavigateTo($"/reconciliation/process/{sessionId}");
+    }
+
+    private void GenerateReport(string sessionId)
+    {
+        Navigation.NavigateTo($"/reconciliation/reports/{sessionId}");
+    }
+
+    private async Task DeleteSession(string sessionId)
+    {
+        if (await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this reconciliation session? This action cannot be undone."))
+        {
+            try
+            {
+                await ReconciliationService.DeleteReconciliationSessionAsync(sessionId);
+                await LoadData();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error deleting session: {ex.Message}");
+            }
+        }
+    }
+
+    private void StartNewReconciliation()
+    {
+        Navigation.NavigateTo("/reconciliation/new");
+    }
+
+    private async Task ExportHistory()
+    {
+        try
+        {
+            // TODO: Implement export functionality
+            await JSRuntime.InvokeVoidAsync("alert", "Export functionality will be implemented soon.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error exporting history: {ex.Message}");
+        }
+    }
+}

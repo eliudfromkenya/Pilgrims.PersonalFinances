@@ -21,6 +21,11 @@ namespace Pilgrims.PersonalFinances.Services
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<Account>> GetAccountsAsync()
+        {
+            return await GetAllAccountsAsync();
+        }
+
         public async Task<Account?> GetAccountByIdAsync(string? id)
         {
             return await _context.Accounts

@@ -260,6 +260,12 @@ public class Transaction : BaseEntity
     }
 
     /// <summary>
+    /// User who created this transaction
+    /// </summary>
+    [StringLength(100)]
+    public string? CreatedBy { get; set; }
+
+    /// <summary>
     /// Gets the effective amount based on transaction type
     /// (negative for expenses, positive for income)
     /// </summary>

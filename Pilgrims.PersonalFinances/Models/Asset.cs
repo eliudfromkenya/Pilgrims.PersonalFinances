@@ -17,6 +17,10 @@ namespace Pilgrims.PersonalFinances.Models
         public string AssetCategoryId { get; set; } = string.Empty;
         public virtual AssetCategory? AssetCategory { get; set; }
 
+        // Alias properties for backward compatibility
+        public string CategoryId => AssetCategoryId;
+        public AssetCategory? Category => AssetCategory;
+
         [Required(ErrorMessage = "Purchase date is required")]
         [DataType(DataType.Date)]
         public DateTime? PurchaseDate { get; set; }

@@ -7,6 +7,7 @@ namespace Pilgrims.PersonalFinances.Services
     {
         // Account CRUD operations
         Task<IEnumerable<Account>> GetAllAccountsAsync();
+        Task<IEnumerable<Account>> GetAccountsAsync(); // Alias for GetAllAccountsAsync
         Task<Account?> GetAccountByIdAsync(string? id);
         Task<Account> CreateAccountAsync(Account account);
         Task<Account> UpdateAccountAsync(Account account);

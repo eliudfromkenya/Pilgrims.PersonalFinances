@@ -1,0 +1,680 @@
+@page "/reconciliation/process/{SessionId}"
+@page "/reconciliation/new"
+@using Pilgrims.PersonalFinances.Models
+@using Pilgrims.PersonalFinances.Models.Enums
+@using Pilgrims.PersonalFinances.Services
+@using Pilgrims.PersonalFinances.Services.Interfaces
+@inject IReconciliationService ReconciliationService
+@inject IAccountService AccountService
+@inject ITransactionService TransactionService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<PageTitle>@(isNewSession ? "New Reconciliation" : $"Reconciliation - {session?.SessionName}")</PageTitle>
+
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 p-6">
+    <!-- Header Section -->
+    <div class="mb-8 animate-fade-in">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+            <div class="mb-4 lg:mb-0">
+                <nav class="flex items-center space-x-2 text-sm text-slate-600 dark:text-slate-400 mb-2">
+                    <a href="/reconciliation" class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Reconciliation</a>
+                    <i class="fas fa-chevron-right text-xs"></i>
+                    <span class="text-slate-900 dark:text-white">@(isNewSession ? "New Session" : "Process")</span>
+                </nav>
+                <h1 class="text-4xl font-bold text-slate-900 dark:text-white mb-2">
+                    <i class="fas fa-balance-scale text-blue-600 dark:text-blue-400 mr-3"></i>
+                    @(isNewSession ? "Start New Reconciliation" : session?.SessionName)
+                </h1>
+                @if (!isNewSession && session != null)
+                {
+                    <p class="text-lg text-slate-600 dark:text-slate-300">
+                        @GetAccountName(session.AccountId) • @session.ReconciliationDate.ToString("MMM dd, yyyy")
+                    </p>
+                }
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3">
+                @if (!isNewSession && session != null)
+                {
+                    @if (session.Status == ReconciliationStatus.InProgress)
+                    {
+                        <button @onclick="CompleteReconciliation" 
+                                disabled="@(!session.CanBeCompleted())"
+                                class="btn-success group transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <i class="fas fa-check mr-2 group-hover:rotate-12 transition-transform duration-200"></i>
+                            Complete Reconciliation
+                        </button>
+                        <button @onclick="SaveProgress" 
+                                class="btn-primary group transform hover:scale-105 transition-all duration-200">
+                            <i class="fas fa-save mr-2 group-hover:scale-110 transition-transform duration-200"></i>
+                            Save Progress
+                        </button>
+                    }
+                    <button @onclick="GenerateReport" 
+                            class="btn-secondary group transform hover:scale-105 transition-all duration-200">
+                        <i class="fas fa-file-alt mr-2 group-hover:rotate-12 transition-transform duration-200"></i>
+                        Generate Report
+                    </button>
+                }
+                <button @onclick="GoBack" 
+                        class="btn-outline group transform hover:scale-105 transition-all duration-200">
+                    <i class="fas fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform duration-200"></i>
+                    Back
+                </button>
+            </div>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="flex items-center justify-center h-64">
+            <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600"></div>
+        </div>
+    }
+    else if (isNewSession)
+    {
+        <!-- New Reconciliation Form -->
+        <div class="max-w-2xl mx-auto">
+            <div class="card animate-slide-up">
+                <div class="p-8">
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-6">
+                        <i class="fas fa-plus-circle text-blue-600 dark:text-blue-400 mr-2"></i>
+                        Create New Reconciliation Session
+                    </h2>
+
+                    <div class="space-y-6">
+                        <!-- Account Selection -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                Select Account
+                            </label>
+                            <select @bind="selectedAccountId" 
+                                    class="input-field">
+                                <option value="">Choose an account...</option>
+                                @foreach (var account in accounts)
+                                {
+                                    <option value="@account.Id">@account.Name (@account.Balance.ToString("C"))</option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Session Name -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                Session Name
+                            </label>
+                            <input @bind="newSessionName" 
+                                   type="text" 
+                                   placeholder="e.g., Monthly Reconciliation - January 2024"
+                                   class="input-field" />
+                        </div>
+
+                        <!-- Statement Date Range -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                    Statement Start Date
+                                </label>
+                                <input @bind="statementStartDate" 
+                                       type="date" 
+                                       class="input-field" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                    Statement End Date
+                                </label>
+                                <input @bind="statementEndDate" 
+                                       type="date" 
+                                       class="input-field" />
+                            </div>
+                        </div>
+
+                        <!-- Statement Balances -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                    Statement Starting Balance
+                                </label>
+                                <input @bind="statementStartingBalance" 
+                                       type="number" 
+                                       step="0.01" 
+                                       placeholder="0.00"
+                                       class="input-field" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                    Statement Ending Balance
+                                </label>
+                                <input @bind="statementEndingBalance" 
+                                       type="number" 
+                                       step="0.01" 
+                                       placeholder="0.00"
+                                       class="input-field" />
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex flex-col sm:flex-row gap-4 pt-6">
+                            <button @onclick="CreateReconciliationSession" 
+                                    disabled="@(!CanCreateSession())"
+                                    class="btn-primary flex-1 transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <i class="fas fa-rocket mr-2"></i>
+                                Start Reconciliation
+                            </button>
+                            <button @onclick="GoBack" 
+                                    class="btn-outline flex-1 transform hover:scale-105 transition-all duration-200">
+                                <i class="fas fa-times mr-2"></i>
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else if (session != null)
+    {
+        <!-- Reconciliation Process Interface -->
+        <div class="space-y-8">
+            <!-- Session Summary Card -->
+            <div class="card animate-slide-up">
+                <div class="p-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                        <!-- Statement Balance -->
+                        <div class="text-center">
+                            <div class="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                                @session.StatementEndingBalance.ToString("C")
+                            </div>
+                            <div class="text-sm text-slate-600 dark:text-slate-400">Statement Balance</div>
+                        </div>
+
+                        <!-- Book Balance -->
+                        <div class="text-center">
+                            <div class="text-3xl font-bold text-green-600 dark:text-green-400">
+                                @session.BookEndingBalance.ToString("C")
+                            </div>
+                            <div class="text-sm text-slate-600 dark:text-slate-400">Book Balance</div>
+                        </div>
+
+                        <!-- Difference -->
+                        <div class="text-center">
+                            <div class="text-3xl font-bold @(session.Difference == 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")">
+                                @session.Difference.ToString("C")
+                            </div>
+                            <div class="text-sm text-slate-600 dark:text-slate-400">Difference</div>
+                        </div>
+
+                        <!-- Status -->
+                        <div class="text-center">
+                            <span class="px-4 py-2 rounded-full text-lg font-medium @session.StatusCssClass">
+                                @session.StatusDisplayName
+                            </span>
+                            <div class="text-sm text-slate-600 dark:text-slate-400 mt-1">Status</div>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="mt-6">
+                        <div class="flex justify-between text-sm text-slate-600 dark:text-slate-400 mb-2">
+                            <span>Reconciliation Progress</span>
+                            <span>@clearedItemsCount / @totalItemsCount items cleared</span>
+                        </div>
+                        <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                            <div class="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-500" 
+                                 style="width: @(totalItemsCount > 0 ? (clearedItemsCount * 100 / totalItemsCount) : 0)%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 animate-slide-up" style="animation-delay: 200ms">
+                <button @onclick="AutoMatchTransactions" 
+                        class="card p-4 text-center hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300 group">
+                    <div class="text-3xl text-blue-500 mb-2 group-hover:scale-110 transition-transform duration-200">
+                        <i class="fas fa-magic"></i>
+                    </div>
+                    <h3 class="font-semibold text-slate-900 dark:text-white">Auto Match</h3>
+                    <p class="text-sm text-slate-600 dark:text-slate-400">Automatically match similar transactions</p>
+                </button>
+
+                <button @onclick="ShowAddAdjustmentModal" 
+                        class="card p-4 text-center hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300 group">
+                    <div class="text-3xl text-green-500 mb-2 group-hover:scale-110 transition-transform duration-200">
+                        <i class="fas fa-plus-circle"></i>
+                    </div>
+                    <h3 class="font-semibold text-slate-900 dark:text-white">Add Adjustment</h3>
+                    <p class="text-sm text-slate-600 dark:text-slate-400">Create adjustment entry for differences</p>
+                </button>
+
+                <button @onclick="BulkClearSelected" 
+                        disabled="@(!selectedItems.Any())"
+                        class="card p-4 text-center hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300 group disabled:opacity-50 disabled:cursor-not-allowed">
+                    <div class="text-3xl text-purple-500 mb-2 group-hover:scale-110 transition-transform duration-200">
+                        <i class="fas fa-check-double"></i>
+                    </div>
+                    <h3 class="font-semibold text-slate-900 dark:text-white">Bulk Clear</h3>
+                    <p class="text-sm text-slate-600 dark:text-slate-400">Clear selected items (@selectedItems.Count selected)</p>
+                </button>
+            </div>
+
+            <!-- Reconciliation Items -->
+            <div class="card animate-slide-up" style="animation-delay: 400ms">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-bold text-slate-900 dark:text-white">
+                            <i class="fas fa-list text-blue-600 dark:text-blue-400 mr-2"></i>
+                            Reconciliation Items
+                        </h2>
+                        <div class="flex items-center space-x-4">
+                            <!-- Filter Buttons -->
+                            <div class="flex rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+                                <button @onclick="() => SetFilter(ItemFilter.All)" 
+                                        class="px-4 py-2 text-sm font-medium transition-colors @(currentFilter == ItemFilter.All ? "bg-blue-600 text-white" : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700")">
+                                    All (@reconciliationItems.Count)
+                                </button>
+                                <button @onclick="() => SetFilter(ItemFilter.Unmatched)" 
+                                        class="px-4 py-2 text-sm font-medium transition-colors @(currentFilter == ItemFilter.Unmatched ? "bg-orange-600 text-white" : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700")">
+                                    Unmatched (@unmatchedItemsCount)
+                                </button>
+                                <button @onclick="() => SetFilter(ItemFilter.Cleared)" 
+                                        class="px-4 py-2 text-sm font-medium transition-colors @(currentFilter == ItemFilter.Cleared ? "bg-green-600 text-white" : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700")">
+                                    Cleared (@clearedItemsCount)
+                                </button>
+                            </div>
+
+                            <!-- Select All Checkbox -->
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" 
+                                       @onchange="ToggleSelectAll"
+                                       checked="@(selectedItems.Count == filteredItems.Count && filteredItems.Any())"
+                                       class="rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500" />
+                                <span class="text-sm text-slate-700 dark:text-slate-300">Select All</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    @if (filteredItems.Any())
+                    {
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="border-b border-slate-200 dark:border-slate-700">
+                                        <th class="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white w-12"></th>
+                                        <th class="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Date</th>
+                                        <th class="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Description</th>
+                                        <th class="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Amount</th>
+                                        <th class="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Type</th>
+                                        <th class="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Status</th>
+                                        <th class="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in filteredItems)
+                                    {
+                                        <tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors duration-200 @(selectedItems.Contains(item.Id) ? "bg-blue-50 dark:bg-blue-900/20" : "")">
+                                            <td class="py-4 px-4">
+                                                <input type="checkbox" 
+                                                       @onchange="(e) => ToggleItemSelection(item.Id, (bool)e.Value!)"
+                                                       checked="@selectedItems.Contains(item.Id)"
+                                                       class="rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500" />
+                                            </td>
+                                            <td class="py-4 px-4">
+                                                <div class="text-slate-900 dark:text-white">@item.TransactionDate.ToString("MMM dd")</div>
+                                                <div class="text-sm text-slate-500 dark:text-slate-400">@item.TransactionDate.ToString("yyyy")</div>
+                                            </td>
+                                            <td class="py-4 px-4">
+                                                <div class="font-medium text-slate-900 dark:text-white">@item.Description</div>
+                                                @if (!string.IsNullOrEmpty(item.Reference))
+                                                {
+                                                    <div class="text-sm text-slate-500 dark:text-slate-400">Ref: @item.Reference</div>
+                                                }
+                                            </td>
+                                            <td class="py-4 px-4">
+                                                <span class="font-medium @item.AmountCssClass">
+                                                    @item.FormattedAmount
+                                                </span>
+                                            </td>
+                                            <td class="py-4 px-4">
+                                                <span class="px-2 py-1 rounded-full text-xs font-medium @item.ItemTypeCssClass">
+                                                    @item.ItemTypeDisplayName
+                                                </span>
+                                            </td>
+                                            <td class="py-4 px-4">
+                                                <span class="px-2 py-1 rounded-full text-xs font-medium @item.StatusCssClass">
+                                                    @item.StatusDisplayName
+                                                </span>
+                                                @if (item.IsCleared)
+                                                {
+                                                    <div class="text-xs text-green-600 dark:text-green-400 mt-1">
+                                                        <i class="fas fa-check mr-1"></i>Cleared
+                                                    </div>
+                                                }
+                                            </td>
+                                            <td class="py-4 px-4">
+                                                <div class="flex space-x-2">
+                                                    @if (!item.IsCleared)
+                                                    {
+                                                        <button @onclick="() => MarkItemAsCleared(item.Id)" 
+                                                                class="btn-sm btn-success hover:scale-105 transition-transform duration-200">
+                                                            <i class="fas fa-check mr-1"></i>
+                                                            Clear
+                                                        </button>
+                                                    }
+                                                    @if (item.Status == ReconciliationItemStatus.Unmatched)
+                                                    {
+                                                        <button @onclick="() => ShowMatchTransactionModal(item)" 
+                                                                class="btn-sm btn-primary hover:scale-105 transition-transform duration-200">
+                                                            <i class="fas fa-link mr-1"></i>
+                                                            Match
+                                                        </button>
+                                                    }
+                                                    <button @onclick="() => MarkItemAsDisputed(item.Id)" 
+                                                            class="btn-sm btn-warning hover:scale-105 transition-transform duration-200">
+                                                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                                                        Dispute
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-12">
+                            <div class="text-6xl text-slate-300 dark:text-slate-600 mb-4">
+                                <i class="fas fa-inbox"></i>
+                            </div>
+                            <h3 class="text-xl font-semibold text-slate-900 dark:text-white mb-2">No Items Found</h3>
+                            <p class="text-slate-600 dark:text-slate-400">No reconciliation items match the current filter.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string? SessionId { get; set; }
+    [Parameter] [SupplyParameterFromQuery] public string? AccountId { get; set; }
+
+    private bool isLoading = true;
+    private bool isNewSession => string.IsNullOrEmpty(SessionId);
+    private ReconciliationSession? session;
+    private List<ReconciliationItem> reconciliationItems = new();
+    private List<Account> accounts = new();
+    private List<Transaction> unreconciledTransactions = new();
+    private HashSet<string> selectedItems = new();
+
+    // New session form fields
+    private string selectedAccountId = string.Empty;
+    private string newSessionName = string.Empty;
+    private DateTime statementStartDate = DateTime.Today.AddDays(-30);
+    private DateTime statementEndDate = DateTime.Today;
+    private decimal statementStartingBalance = 0;
+    private decimal statementEndingBalance = 0;
+
+    // Filtering and display
+    private ItemFilter currentFilter = ItemFilter.All;
+    private List<ReconciliationItem> filteredItems => GetFilteredItems();
+    private int totalItemsCount => reconciliationItems.Count;
+    private int clearedItemsCount => reconciliationItems.Count(i => i.IsCleared);
+    private int unmatchedItemsCount => reconciliationItems.Count(i => i.Status == ReconciliationItemStatus.Unmatched);
+
+    private enum ItemFilter { All, Unmatched, Cleared, Disputed }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!string.IsNullOrEmpty(AccountId))
+        {
+            selectedAccountId = AccountId;
+        }
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            isLoading = true;
+
+            // Load accounts
+            accounts = (await AccountService.GetAccountsAsync()).ToList();
+
+            if (!isNewSession && !string.IsNullOrEmpty(SessionId))
+            {
+                // Load existing session
+                session = await ReconciliationService.GetReconciliationSessionAsync(SessionId);
+                if (session != null)
+                {
+                    reconciliationItems = (await ReconciliationService.GetReconciliationItemsAsync(SessionId)).ToList();
+                }
+            }
+            else if (!string.IsNullOrEmpty(selectedAccountId))
+            {
+                // Generate default session name
+                newSessionName = $"Reconciliation - {DateTime.Today:yyyy-MM-dd}";
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading data: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private string GetAccountName(string accountId)
+    {
+        return accounts.FirstOrDefault(a => a.Id == accountId)?.Name ?? "Unknown Account";
+    }
+
+    private bool CanCreateSession()
+    {
+        return !string.IsNullOrEmpty(selectedAccountId) &&
+               !string.IsNullOrEmpty(newSessionName) &&
+               statementStartDate <= statementEndDate;
+    }
+
+    private async Task CreateReconciliationSession()
+    {
+        if (!CanCreateSession()) return;
+
+        try
+        {
+            isLoading = true;
+            
+            var newSession = await ReconciliationService.CreateReconciliationSessionAsync(
+                selectedAccountId,
+                newSessionName,
+                statementStartDate,
+                statementEndDate,
+                statementStartingBalance,
+                statementEndingBalance,
+                "User"
+            );
+
+            Navigation.NavigateTo($"/reconciliation/process/{newSession.Id}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error creating session: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private List<ReconciliationItem> GetFilteredItems()
+    {
+        return currentFilter switch
+        {
+            ItemFilter.Unmatched => reconciliationItems.Where(i => i.Status == ReconciliationItemStatus.Unmatched).ToList(),
+            ItemFilter.Cleared => reconciliationItems.Where(i => i.IsCleared).ToList(),
+            ItemFilter.Disputed => reconciliationItems.Where(i => i.Status == ReconciliationItemStatus.Disputed).ToList(),
+            _ => reconciliationItems
+        };
+    }
+
+    private void SetFilter(ItemFilter filter)
+    {
+        currentFilter = filter;
+        selectedItems.Clear();
+        StateHasChanged();
+    }
+
+    private void ToggleItemSelection(string itemId, bool isSelected)
+    {
+        if (isSelected)
+            selectedItems.Add(itemId);
+        else
+            selectedItems.Remove(itemId);
+    }
+
+    private void ToggleSelectAll(ChangeEventArgs e)
+    {
+        var isChecked = (bool)e.Value!;
+        selectedItems.Clear();
+        
+        if (isChecked)
+        {
+            foreach (var item in filteredItems)
+            {
+                selectedItems.Add(item.Id);
+            }
+        }
+    }
+
+    private async Task MarkItemAsCleared(string itemId)
+    {
+        try
+        {
+            await ReconciliationService.MarkItemAsClearedAsync(itemId, "User");
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error marking item as cleared: {ex.Message}");
+        }
+    }
+
+    private async Task MarkItemAsDisputed(string itemId)
+    {
+        try
+        {
+            await ReconciliationService.MarkItemAsDisputedAsync(itemId, "Disputed by user");
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error marking item as disputed: {ex.Message}");
+        }
+    }
+
+    private async Task BulkClearSelected()
+    {
+        if (!selectedItems.Any()) return;
+
+        try
+        {
+            await ReconciliationService.BulkMarkItemsAsClearedAsync(selectedItems, "User");
+            selectedItems.Clear();
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error bulk clearing items: {ex.Message}");
+        }
+    }
+
+    private async Task AutoMatchTransactions()
+    {
+        if (session == null) return;
+
+        try
+        {
+            isLoading = true;
+            await ReconciliationService.AutoMatchTransactionsAsync(session.Id);
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error auto-matching transactions: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task CompleteReconciliation()
+    {
+        if (session == null || !session.CanBeCompleted()) return;
+
+        try
+        {
+            isLoading = true;
+            await ReconciliationService.CompleteReconciliationAsync(session.Id, "User");
+            Navigation.NavigateTo("/reconciliation");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error completing reconciliation: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task SaveProgress()
+    {
+        if (session == null) return;
+
+        try
+        {
+            await ReconciliationService.UpdateReconciliationSessionAsync(session);
+            // Show success message
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving progress: {ex.Message}");
+        }
+    }
+
+    private void ShowMatchTransactionModal(ReconciliationItem item)
+    {
+        // TODO: Implement transaction matching modal
+    }
+
+    private void ShowAddAdjustmentModal()
+    {
+        // TODO: Implement adjustment modal
+    }
+
+    private void GenerateReport()
+    {
+        if (session != null)
+        {
+            Navigation.NavigateTo($"/reconciliation/reports/{session.Id}");
+        }
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/reconciliation");
+    }
+}

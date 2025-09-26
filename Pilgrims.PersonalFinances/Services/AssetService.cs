@@ -397,8 +397,7 @@ public class AssetService : IAssetService
             await _notificationService.CreateNotificationAsync(
                 "Maintenance Record Added",
                 $"Maintenance record for '{asset.Name}' has been added.",
-                AppNotificationType.SystemAlert,
-                NotificationPriority.Low
+                AppNotificationType.SystemAlert
             );
         }
 

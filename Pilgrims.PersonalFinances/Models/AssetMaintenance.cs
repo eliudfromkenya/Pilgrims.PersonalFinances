@@ -14,11 +14,17 @@ namespace Pilgrims.PersonalFinances.Models
         [MaxLength(200)]
         public string ServiceType { get; set; } = string.Empty; // Oil change, repair, inspection, etc.
 
+        // Alias property for backward compatibility
+        public string MaintenanceType => ServiceType;
+
         [MaxLength(1000)]
         public string? Description { get; set; }
 
         [Required]
         public DateTime ServiceDate { get; set; }
+
+        // Alias property for backward compatibility
+        public DateTime MaintenanceDate => ServiceDate;
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal Cost { get; set; }

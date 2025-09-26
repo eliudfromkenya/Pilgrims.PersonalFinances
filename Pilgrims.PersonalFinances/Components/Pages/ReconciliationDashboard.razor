@@ -1,0 +1,417 @@
+@page "/reconciliation"
+@using Pilgrims.PersonalFinances.Models
+@using Pilgrims.PersonalFinances.Models.Enums
+@using Pilgrims.PersonalFinances.Services
+@using Pilgrims.PersonalFinances.Services.Interfaces
+@inject IReconciliationService ReconciliationService
+@inject IAccountService AccountService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Reconciliation Dashboard</PageTitle>
+
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 p-6">
+    <!-- Header Section -->
+    <div class="mb-8 animate-fade-in">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+            <div class="mb-4 lg:mb-0">
+                <h1 class="text-4xl font-bold text-slate-900 dark:text-white mb-2">
+                    <i class="fas fa-balance-scale text-blue-600 dark:text-blue-400 mr-3"></i>
+                    Reconciliation Dashboard
+                </h1>
+                <p class="text-lg text-slate-600 dark:text-slate-300">
+                    Manage account reconciliations and ensure financial accuracy
+                </p>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <button @onclick="StartNewReconciliation" 
+                        class="btn-primary group transform hover:scale-105 transition-all duration-200">
+                    <i class="fas fa-plus mr-2 group-hover:rotate-90 transition-transform duration-200"></i>
+                    New Reconciliation
+                </button>
+                <button @onclick="ViewHistory" 
+                        class="btn-secondary group transform hover:scale-105 transition-all duration-200">
+                    <i class="fas fa-history mr-2 group-hover:rotate-12 transition-transform duration-200"></i>
+                    View History
+                </button>
+            </div>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="flex items-center justify-center h-64">
+            <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600"></div>
+        </div>
+    }
+    else
+    {
+        <!-- Account Overview Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            @foreach (var summary in accountSummaries)
+            {
+                <div class="card group hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 animate-slide-up" 
+                     style="animation-delay: @(accountSummaries.ToList().IndexOf(summary) * 100)ms">
+                    <div class="p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="p-3 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 text-white group-hover:scale-110 transition-transform duration-200">
+                                <i class="fas fa-university text-xl"></i>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-2xl font-bold text-slate-900 dark:text-white">
+                                    @summary.TotalSessions
+                                </div>
+                                <div class="text-sm text-slate-500 dark:text-slate-400">Sessions</div>
+                            </div>
+                        </div>
+                        <h3 class="font-semibold text-slate-900 dark:text-white mb-2 truncate">
+                            @summary.AccountName
+                        </h3>
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-slate-600 dark:text-slate-400">Completed:</span>
+                                <span class="font-medium text-green-600 dark:text-green-400">@summary.CompletedSessions</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-slate-600 dark:text-slate-400">Pending:</span>
+                                <span class="font-medium text-orange-600 dark:text-orange-400">@summary.PendingSessions</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-slate-600 dark:text-slate-400">Balance:</span>
+                                <span class="font-medium text-slate-900 dark:text-white">@summary.CurrentBookBalance.ToString("C")</span>
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                            <button @onclick="() => StartReconciliationForAccount(summary.AccountId)" 
+                                    class="w-full btn-sm btn-primary group-hover:bg-blue-700 transition-colors duration-200">
+                                <i class="fas fa-play mr-2"></i>
+                                Start Reconciliation
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Statistics Overview -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <!-- Total Reconciliations -->
+            <div class="card animate-slide-up" style="animation-delay: 400ms">
+                <div class="p-6">
+                    <div class="flex items-center">
+                        <div class="p-4 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 text-white mr-4">
+                            <i class="fas fa-check-circle text-2xl"></i>
+                        </div>
+                        <div>
+                            <div class="text-3xl font-bold text-slate-900 dark:text-white">
+                                @totalReconciliations
+                            </div>
+                            <div class="text-slate-600 dark:text-slate-400">Total Reconciliations</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Unreconciled Items -->
+            <div class="card animate-slide-up" style="animation-delay: 500ms">
+                <div class="p-6">
+                    <div class="flex items-center">
+                        <div class="p-4 rounded-full bg-gradient-to-r from-orange-500 to-red-600 text-white mr-4">
+                            <i class="fas fa-exclamation-triangle text-2xl"></i>
+                        </div>
+                        <div>
+                            <div class="text-3xl font-bold text-slate-900 dark:text-white">
+                                @totalUnreconciledItems
+                            </div>
+                            <div class="text-slate-600 dark:text-slate-400">Unreconciled Items</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Differences -->
+            <div class="card animate-slide-up" style="animation-delay: 600ms">
+                <div class="p-6">
+                    <div class="flex items-center">
+                        <div class="p-4 rounded-full bg-gradient-to-r from-purple-500 to-pink-600 text-white mr-4">
+                            <i class="fas fa-calculator text-2xl"></i>
+                        </div>
+                        <div>
+                            <div class="text-3xl font-bold text-slate-900 dark:text-white">
+                                @totalDifferences.ToString("C")
+                            </div>
+                            <div class="text-slate-600 dark:text-slate-400">Total Differences</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Reconciliation Sessions -->
+        <div class="card animate-slide-up" style="animation-delay: 700ms">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white">
+                        <i class="fas fa-clock text-blue-600 dark:text-blue-400 mr-2"></i>
+                        Recent Reconciliation Sessions
+                    </h2>
+                    <button @onclick="ViewAllSessions" 
+                            class="btn-secondary text-sm hover:scale-105 transition-transform duration-200">
+                        View All
+                    </button>
+                </div>
+
+                @if (recentSessions.Any())
+                {
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b border-slate-200 dark:border-slate-700">
+                                    <th class="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Session</th>
+                                    <th class="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Account</th>
+                                    <th class="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Date</th>
+                                    <th class="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Status</th>
+                                    <th class="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Difference</th>
+                                    <th class="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var session in recentSessions)
+                                {
+                                    <tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors duration-200">
+                                        <td class="py-4 px-4">
+                                            <div class="font-medium text-slate-900 dark:text-white">@session.SessionName</div>
+                                            <div class="text-sm text-slate-500 dark:text-slate-400">@session.Id[..8]...</div>
+                                        </td>
+                                        <td class="py-4 px-4">
+                                            <div class="text-slate-900 dark:text-white">@GetAccountName(session.AccountId)</div>
+                                        </td>
+                                        <td class="py-4 px-4">
+                                            <div class="text-slate-900 dark:text-white">@session.ReconciliationDate.ToString("MMM dd, yyyy")</div>
+                                            <div class="text-sm text-slate-500 dark:text-slate-400">@session.ReconciliationDate.ToString("HH:mm")</div>
+                                        </td>
+                                        <td class="py-4 px-4">
+                                            <span class="px-3 py-1 rounded-full text-sm font-medium @session.StatusCssClass">
+                                                @session.StatusDisplayName
+                                            </span>
+                                        </td>
+                                        <td class="py-4 px-4">
+                                            <span class="font-medium @(session.Difference == 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")">
+                                                @session.Difference.ToString("C")
+                                            </span>
+                                        </td>
+                                        <td class="py-4 px-4">
+                                            <div class="flex space-x-2">
+                                                @if (session.Status == ReconciliationStatus.InProgress)
+                                                {
+                                                    <button @onclick="() => ContinueReconciliation(session.Id)" 
+                                                            class="btn-sm btn-primary hover:scale-105 transition-transform duration-200">
+                                                        <i class="fas fa-play mr-1"></i>
+                                                        Continue
+                                                    </button>
+                                                }
+                                                else
+                                                {
+                                                    <button @onclick="() => ViewReconciliation(session.Id)" 
+                                                            class="btn-sm btn-secondary hover:scale-105 transition-transform duration-200">
+                                                        <i class="fas fa-eye mr-1"></i>
+                                                        View
+                                                    </button>
+                                                }
+                                                <button @onclick="() => GenerateReport(session.Id)" 
+                                                        class="btn-sm btn-outline hover:scale-105 transition-transform duration-200">
+                                                    <i class="fas fa-file-alt mr-1"></i>
+                                                    Report
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-12">
+                        <div class="text-6xl text-slate-300 dark:text-slate-600 mb-4">
+                            <i class="fas fa-inbox"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-slate-900 dark:text-white mb-2">No Recent Sessions</h3>
+                        <p class="text-slate-600 dark:text-slate-400 mb-6">Start your first reconciliation to see sessions here.</p>
+                        <button @onclick="StartNewReconciliation" 
+                                class="btn-primary hover:scale-105 transition-transform duration-200">
+                            <i class="fas fa-plus mr-2"></i>
+                            Start New Reconciliation
+                        </button>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
+            <button @onclick="ViewDisputedItems" 
+                    class="card p-6 text-center hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 group animate-slide-up" 
+                    style="animation-delay: 800ms">
+                <div class="text-4xl text-red-500 mb-4 group-hover:scale-110 transition-transform duration-200">
+                    <i class="fas fa-exclamation-circle"></i>
+                </div>
+                <h3 class="font-semibold text-slate-900 dark:text-white mb-2">Disputed Items</h3>
+                <p class="text-slate-600 dark:text-slate-400 text-sm">Review and resolve disputed transactions</p>
+            </button>
+
+            <button @onclick="ViewReports" 
+                    class="card p-6 text-center hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 group animate-slide-up" 
+                    style="animation-delay: 900ms">
+                <div class="text-4xl text-blue-500 mb-4 group-hover:scale-110 transition-transform duration-200">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <h3 class="font-semibold text-slate-900 dark:text-white mb-2">Reports</h3>
+                <p class="text-slate-600 dark:text-slate-400 text-sm">Generate reconciliation reports and analytics</p>
+            </button>
+
+            <button @onclick="ViewUnreconciledTransactions" 
+                    class="card p-6 text-center hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 group animate-slide-up" 
+                    style="animation-delay: 1000ms">
+                <div class="text-4xl text-orange-500 mb-4 group-hover:scale-110 transition-transform duration-200">
+                    <i class="fas fa-list-ul"></i>
+                </div>
+                <h3 class="font-semibold text-slate-900 dark:text-white mb-2">Unreconciled</h3>
+                <p class="text-slate-600 dark:text-slate-400 text-sm">View transactions awaiting reconciliation</p>
+            </button>
+
+            <button @onclick="ViewSettings" 
+                    class="card p-6 text-center hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 group animate-slide-up" 
+                    style="animation-delay: 1100ms">
+                <div class="text-4xl text-purple-500 mb-4 group-hover:scale-110 transition-transform duration-200">
+                    <i class="fas fa-cog"></i>
+                </div>
+                <h3 class="font-semibold text-slate-900 dark:text-white mb-2">Settings</h3>
+                <p class="text-slate-600 dark:text-slate-400 text-sm">Configure reconciliation preferences</p>
+            </button>
+        </div>
+    }
+</div>
+
+@code {
+    private bool isLoading = true;
+    private List<ReconciliationSummaryDto> accountSummaries = new();
+    private List<ReconciliationSession> recentSessions = new();
+    private List<Account> accounts = new();
+    private int totalReconciliations = 0;
+    private int totalUnreconciledItems = 0;
+    private decimal totalDifferences = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDashboardData();
+    }
+
+    private async Task LoadDashboardData()
+    {
+        try
+        {
+            isLoading = true;
+            
+            // Load accounts
+            accounts = (await AccountService.GetAccountsAsync()).ToList();
+            
+            // Load summaries for each account
+            accountSummaries.Clear();
+            foreach (var account in accounts)
+            {
+                var summary = await ReconciliationService.GetReconciliationSummaryAsync(account.Id);
+                accountSummaries.Add(summary);
+            }
+
+            // Load recent sessions across all accounts
+            var allRecentSessions = new List<ReconciliationSession>();
+            foreach (var account in accounts)
+            {
+                var sessions = await ReconciliationService.GetRecentReconciliationSessionsAsync(account.Id, 10);
+                allRecentSessions.AddRange(sessions);
+            }
+            
+            recentSessions = allRecentSessions
+                .OrderByDescending(s => s.ReconciliationDate)
+                .Take(10)
+                .ToList();
+
+            // Calculate totals
+            totalReconciliations = accountSummaries.Sum(s => s.TotalSessions);
+            totalUnreconciledItems = accountSummaries.Sum(s => s.UnreconciledTransactions);
+            totalDifferences = accountSummaries.Sum(s => s.TotalDifferences);
+        }
+        catch (Exception ex)
+        {
+            // Handle error - could show notification
+            Console.WriteLine($"Error loading dashboard data: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private string GetAccountName(string accountId)
+    {
+        return accounts.FirstOrDefault(a => a.Id == accountId)?.Name ?? "Unknown Account";
+    }
+
+    private void StartNewReconciliation()
+    {
+        Navigation.NavigateTo("/reconciliation/new");
+    }
+
+    private void StartReconciliationForAccount(string accountId)
+    {
+        Navigation.NavigateTo($"/reconciliation/new?accountId={accountId}");
+    }
+
+    private void ContinueReconciliation(string sessionId)
+    {
+        Navigation.NavigateTo($"/reconciliation/process/{sessionId}");
+    }
+
+    private void ViewReconciliation(string sessionId)
+    {
+        Navigation.NavigateTo($"/reconciliation/process/{sessionId}");
+    }
+
+    private void ViewHistory()
+    {
+        Navigation.NavigateTo("/reconciliation/history");
+    }
+
+    private void ViewAllSessions()
+    {
+        Navigation.NavigateTo("/reconciliation/history");
+    }
+
+    private void GenerateReport(string sessionId)
+    {
+        Navigation.NavigateTo($"/reconciliation/reports/{sessionId}");
+    }
+
+    private void ViewDisputedItems()
+    {
+        Navigation.NavigateTo("/reconciliation/disputed");
+    }
+
+    private void ViewReports()
+    {
+        Navigation.NavigateTo("/reconciliation/reports");
+    }
+
+    private void ViewUnreconciledTransactions()
+    {
+        Navigation.NavigateTo("/reconciliation/unreconciled");
+    }
+
+    private void ViewSettings()
+    {
+        Navigation.NavigateTo("/reconciliation/settings");
+    }
+}

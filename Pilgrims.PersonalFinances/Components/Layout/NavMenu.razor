@@ -97,6 +97,45 @@
             </div>
         </div>
 
+        <!-- Reconciliation Section -->
+        <div class="px-2">
+            <!-- Main Reconciliation Link -->
+            <div class="flex items-center">
+                <button @onclick="() => ToggleSubmenu(SubmenuType.Reconciliation)" 
+                        class="flex items-center py-1 px-4 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md flex-1 w-full text-left">
+                    <span class="text-xl mr-3 group-hover:scale-110 transition-transform duration-300">⚖️</span> 
+                    <span class="font-medium">Reconciliation</span>
+                    <span class="text-sm transition-transform duration-300 ml-auto @(activeSubmenu == SubmenuType.Reconciliation ? "rotate-180" : "")">▼</span>
+                </button>               
+            </div>
+            
+            <!-- Reconciliation Submenu -->
+            <div class="overflow-hidden transition-all duration-300 @(activeSubmenu == SubmenuType.Reconciliation ? "max-h-96 opacity-100" : "max-h-0 opacity-0")">
+                <div class="ml-8 mt-2 space-y-1 border-l-2 border-blue-200 dark:border-blue-800 pl-4">
+                    <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
+                             href="reconciliation">
+                        <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">📊</span> 
+                        <span>Dashboard</span>
+                    </NavLink>
+                    <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
+                             href="reconciliation/process">
+                        <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">⚙️</span> 
+                        <span>Start Reconciliation</span>
+                    </NavLink>
+                    <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
+                             href="reconciliation/history">
+                        <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">📋</span> 
+                        <span>History</span>
+                    </NavLink>
+                    <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
+                             href="reconciliation/reports">
+                        <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">📈</span> 
+                        <span>Reports</span>
+                    </NavLink>
+                </div>
+            </div>
+        </div>
+
         <!-- Budget Management Section -->
         <div class="px-2">
             <!-- Main Budget Link -->
@@ -326,6 +365,7 @@
     {
         Accounts,
         Transactions,
+        Reconciliation,
         Budget,
         Income,
         Investments,
