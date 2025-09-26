@@ -1,0 +1,566 @@
+@page "/assets/details/{AssetId}"
+@using Pilgrims.PersonalFinances.Models
+@using Pilgrims.PersonalFinances.Services.Interfaces
+@inject IAssetService AssetService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<PageTitle>@(asset?.Name ?? "Asset Details") - Personal Finance</PageTitle>
+
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
+    @if (isLoading)
+    {
+        <!-- Loading State -->
+        <div class="flex items-center justify-center min-h-screen">
+            <div class="text-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p class="text-slate-600 dark:text-slate-400">Loading asset details...</p>
+            </div>
+        </div>
+    }
+    else if (asset == null)
+    {
+        <!-- Asset Not Found -->
+        <div class="flex items-center justify-center min-h-screen">
+            <div class="text-center">
+                <svg class="w-16 h-16 text-slate-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 20.4a7.962 7.962 0 01-5-1.691V19a2 2 0 01-2-2V9a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2v-.291z"></path>
+                </svg>
+                <h2 class="text-xl font-semibold text-slate-900 dark:text-white mb-2">Asset Not Found</h2>
+                <p class="text-slate-600 dark:text-slate-400 mb-4">The asset you're looking for doesn't exist or has been deleted.</p>
+                <button @onclick="NavigateBack" 
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                    Back to Assets
+                </button>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Header Section -->
+        <div class="bg-white dark:bg-slate-800 shadow-sm border-b border-slate-200 dark:border-slate-700">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <button @onclick="NavigateBack" 
+                                class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors duration-200">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="flex items-center space-x-4">
+                            @if (category != null)
+                            {
+                                <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style="background-color: @category.Color">
+                                    @category.Icon
+                                </div>
+                            }
+                            <div>
+                                <h1 class="text-2xl font-bold text-slate-900 dark:text-white">@asset.Name</h1>
+                                <div class="flex items-center space-x-4 text-sm text-slate-600 dark:text-slate-400">
+                                    <span>@category?.Name</span>
+                                    <span>•</span>
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium @GetConditionBadgeClass(asset.Condition)">
+                                        @asset.Condition
+                                    </span>
+                                    @if (!asset.IsActive)
+                                    {
+                                        <span>•</span>
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400">
+                                            Inactive
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <button @onclick="EditAsset" 
+                                class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors duration-200">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                            </svg>
+                            Edit Asset
+                        </button>
+                        <button @onclick="ShowMoreActions" 
+                                class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg text-sm font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 shadow-lg">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
+                            </svg>
+                            Actions
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Main Content -->
+                <div class="lg:col-span-2 space-y-8">
+                    <!-- Asset Overview -->
+                    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+                        <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-6">Asset Overview</h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <h3 class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">Basic Information</h3>
+                                <div class="space-y-3">
+                                    @if (!string.IsNullOrEmpty(asset.Brand))
+                                    {
+                                        <div class="flex justify-between">
+                                            <span class="text-slate-600 dark:text-slate-400">Brand:</span>
+                                            <span class="text-slate-900 dark:text-white font-medium">@asset.Brand</span>
+                                        </div>
+                                    }
+                                    @if (!string.IsNullOrEmpty(asset.Model))
+                                    {
+                                        <div class="flex justify-between">
+                                            <span class="text-slate-600 dark:text-slate-400">Model:</span>
+                                            <span class="text-slate-900 dark:text-white font-medium">@asset.Model</span>
+                                        </div>
+                                    }
+                                    @if (!string.IsNullOrEmpty(asset.SerialNumber))
+                                    {
+                                        <div class="flex justify-between">
+                                            <span class="text-slate-600 dark:text-slate-400">Serial Number:</span>
+                                            <span class="text-slate-900 dark:text-white font-medium font-mono text-sm">@asset.SerialNumber</span>
+                                        </div>
+                                    }
+                                    @if (!string.IsNullOrEmpty(asset.Location))
+                                    {
+                                        <div class="flex justify-between">
+                                            <span class="text-slate-600 dark:text-slate-400">Location:</span>
+                                            <span class="text-slate-900 dark:text-white font-medium">@asset.Location</span>
+                                        </div>
+                                    }
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-600 dark:text-slate-400">Purchase Date:</span>
+                                        <span class="text-slate-900 dark:text-white font-medium">@asset.PurchaseDate?.ToString("MMM dd, yyyy")</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-600 dark:text-slate-400">Age:</span>
+                                        <span class="text-slate-900 dark:text-white font-medium">@GetAssetAge(asset?.PurchaseDate)</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h3 class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">Financial Details</h3>
+                                <div class="space-y-3">
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-600 dark:text-slate-400">Purchase Price:</span>
+                                        <span class="text-slate-900 dark:text-white font-medium">$@asset.PurchasePrice?.ToString("N2")</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-600 dark:text-slate-400">Current Value:</span>
+                                        <span class="text-slate-900 dark:text-white font-medium">$@asset.CurrentValue?.ToString("N2")</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-600 dark:text-slate-400">Depreciation:</span>
+                                        <span class="@GetDepreciationClass(asset.PurchasePrice - asset.CurrentValue) font-medium">
+                                            @GetDepreciationText(asset.PurchasePrice ?? 0, asset.CurrentValue ?? 0)
+                                        </span>
+                                    </div>
+                                    @if (asset.SalvageValue > 0)
+                                    {
+                                        <div class="flex justify-between">
+                                            <span class="text-slate-600 dark:text-slate-400">Salvage Value:</span>
+                                            <span class="text-slate-900 dark:text-white font-medium">$@asset.SalvageValue?.ToString("N2")</span>
+                                        </div>
+                                    }
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-600 dark:text-slate-400">Depreciation Method:</span>
+                                        <span class="text-slate-900 dark:text-white font-medium">@GetDepreciationMethodDisplay(asset.DepreciationMethod)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(asset.Description))
+                        {
+                            <div class="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
+                                <h3 class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">Description</h3>
+                                <p class="text-slate-700 dark:text-slate-300">@asset.Description</p>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Value History Chart -->
+                    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Value History</h2>
+                            <button @onclick="RecalculateValue" 
+                                    class="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
+                                Recalculate
+                            </button>
+                        </div>
+                        
+                        <div class="h-64 flex items-center justify-center bg-slate-50 dark:bg-slate-700 rounded-lg">
+                            <div class="text-center">
+                                <svg class="w-12 h-12 text-slate-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                </svg>
+                                <p class="text-slate-500 dark:text-slate-400">Depreciation Chart</p>
+                                <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Chart visualization would be implemented here</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Maintenance Records -->
+                    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Maintenance Records</h2>
+                            <button @onclick="AddMaintenanceRecord" 
+                                    class="inline-flex items-center px-3 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                </svg>
+                                Add Record
+                            </button>
+                        </div>
+
+                        @if (maintenanceRecords.Any())
+                        {
+                            <div class="space-y-4">
+                                @foreach (var record in maintenanceRecords.Take(5))
+                                {
+                                    <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-700 rounded-lg">
+                                        <div class="flex items-center space-x-4">
+                                            <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
+                                                <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <h4 class="font-medium text-slate-900 dark:text-white">@record.ServiceType</h4>
+                                                <p class="text-sm text-slate-600 dark:text-slate-400">@record.ServiceDate.ToString("MMM dd, yyyy")</p>
+                                            </div>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="font-medium text-slate-900 dark:text-white">$@record.Cost.ToString("N2")</p>
+                                            @if (!string.IsNullOrEmpty(record.ServiceProvider))
+                                            {
+                                                <p class="text-sm text-slate-600 dark:text-slate-400">@record.ServiceProvider</p>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                            
+                            @if (maintenanceRecords.Count > 5)
+                            {
+                                <div class="mt-4 text-center">
+                                    <button class="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
+                                        View all @maintenanceRecords.Count records
+                                    </button>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="text-center py-8">
+                                <svg class="w-12 h-12 text-slate-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                <p class="text-slate-500 dark:text-slate-400">No maintenance records yet</p>
+                                <button @onclick="AddMaintenanceRecord" 
+                                        class="mt-2 text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
+                                    Add the first record
+                                </button>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="space-y-8">
+                    <!-- Quick Stats -->
+                    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+                        <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">Quick Stats</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-600 dark:text-slate-400">Current Value</span>
+                                <span class="text-xl font-bold text-slate-900 dark:text-white">$@asset.CurrentValue?.ToString("N0")</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-600 dark:text-slate-400">Total Depreciation</span>
+                                <span class="text-lg font-semibold @GetDepreciationClass(asset.PurchasePrice - asset.CurrentValue)">
+                                    $@((asset.PurchasePrice - asset.CurrentValue)?.ToString("N0"))
+                                </span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-600 dark:text-slate-400">Maintenance Cost</span>
+                                <span class="text-lg font-semibold text-slate-900 dark:text-white">$@maintenanceRecords.Sum(m => m.Cost).ToString("N0")</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-600 dark:text-slate-400">Total Investment</span>
+                                <span class="text-lg font-semibold text-slate-900 dark:text-white">$@((asset.PurchasePrice + maintenanceRecords.Sum(m => m.Cost))?.ToString("N0"))</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Insurance Information -->
+                    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Insurance</h3>
+                            <button @onclick="ManageInsurance" 
+                                    class="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
+                                Manage
+                            </button>
+                        </div>
+
+                        @if (insuranceRecords.Any())
+                        {
+                            <div class="space-y-3">
+                                @foreach (var insurance in insuranceRecords)
+                                {
+                                    <div class="p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <span class="font-medium text-slate-900 dark:text-white">@insurance.InsuranceProvider</span>
+                                            <span class="text-sm @GetInsuranceStatusClass(insurance.PolicyEndDate)">
+                                                @GetInsuranceStatus(insurance.PolicyEndDate)
+                                            </span>
+                                        </div>
+                                        <div class="text-sm text-slate-600 dark:text-slate-400">
+                                            <p>Policy: @insurance.PolicyNumber</p>
+                                            <p>Coverage: $@insurance.CoverageAmount.ToString("N0")</p>
+                                            <p>Expires: @insurance.PolicyEndDate.ToString("MMM dd, yyyy")</p>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center py-4">
+                                <svg class="w-8 h-8 text-slate-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                </svg>
+                                <p class="text-slate-500 dark:text-slate-400 text-sm">No insurance records</p>
+                                <button @onclick="ManageInsurance" 
+                                        class="mt-1 text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
+                                    Add insurance
+                                </button>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Documents -->
+                    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Documents</h3>
+                            <button @onclick="ManageDocuments" 
+                                    class="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
+                                Manage
+                            </button>
+                        </div>
+
+                        @if (documents.Any())
+                        {
+                            <div class="space-y-2">
+                                @foreach (var doc in documents.Take(5))
+                                {
+                                    <div class="flex items-center justify-between p-2 hover:bg-slate-50 dark:hover:bg-slate-700 rounded">
+                                        <div class="flex items-center space-x-3">
+                                            <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                            </svg>
+                                            <div>
+                                                <p class="text-sm font-medium text-slate-900 dark:text-white">@doc.DocumentType</p>
+                                                <p class="text-xs text-slate-500 dark:text-slate-400">@doc.UploadDate.ToString("MMM dd, yyyy")</p>
+                                            </div>
+                                        </div>
+                                        <button class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center py-4">
+                                <svg class="w-8 h-8 text-slate-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707L16.414 6.5A1 1 0 0015.586 6H7a2 2 0 00-2 2v11a2 2 0 002 2z"></path>
+                                </svg>
+                                <p class="text-slate-500 dark:text-slate-400 text-sm">No documents uploaded</p>
+                                <button @onclick="ManageDocuments" 
+                                        class="mt-1 text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
+                                    Upload documents
+                                </button>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string AssetId { get; set; } = "";
+
+    private Models.Asset? asset;
+    private AssetCategory? category;
+    private List<AssetMaintenance> maintenanceRecords = new();
+    private List<AssetInsurance> insuranceRecords = new();
+    private List<AssetDocument> documents = new();
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAssetDetails();
+        isLoading = false;
+    }
+
+    private async Task LoadAssetDetails()
+    {
+        try
+        {
+            asset = await AssetService.GetAssetByIdAsync(AssetId);
+            if (asset != null)
+            {
+                category = await AssetService.GetAssetCategoryByIdAsync(asset.AssetCategoryId);
+                maintenanceRecords = (await AssetService.GetMaintenanceRecordsByAssetAsync(AssetId)).ToList();
+                insuranceRecords = (await AssetService.GetInsurancePoliciesByAssetAsync(AssetId)).ToList();
+                
+                // Get asset register first, then get documents
+                var assetRegister = await AssetService.GetAssetRegisterByAssetIdAsync(AssetId);
+                if (assetRegister != null)
+                {
+                    documents = (await AssetService.GetDocumentsByAssetRegisterAsync(assetRegister.Id)).ToList();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", "Error loading asset details:", ex.Message);
+        }
+    }
+
+    private void EditAsset()
+    {
+        Navigation.NavigateTo($"/assets/edit/{AssetId}");
+    }
+
+    private void NavigateBack()
+    {
+        Navigation.NavigateTo("/assets");
+    }
+
+    private async Task ShowMoreActions()
+    {
+        // Implement dropdown menu for more actions
+        await JSRuntime.InvokeVoidAsync("showToast", "info", "More actions menu would be implemented here");
+    }
+
+    private async Task RecalculateValue()
+    {
+        if (asset != null)
+        {
+            try
+            {
+                var newValue = await AssetService.CalculateCurrentValueAsync(asset.Id);
+                asset.CurrentValue = newValue;
+                await AssetService.UpdateAssetAsync(asset);
+                await JSRuntime.InvokeVoidAsync("showToast", "success", "Asset value recalculated");
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                await JSRuntime.InvokeVoidAsync("showToast", "error", $"Error recalculating value: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task AddMaintenanceRecord()
+    {
+        // Navigate to maintenance record creation page
+        await JSRuntime.InvokeVoidAsync("showToast", "info", "Maintenance record creation would be implemented here");
+    }
+
+    private async Task ManageInsurance()
+    {
+        // Navigate to insurance management page
+        await JSRuntime.InvokeVoidAsync("showToast", "info", "Insurance management would be implemented here");
+    }
+
+    private async Task ManageDocuments()
+    {
+        // Navigate to document management page
+        await JSRuntime.InvokeVoidAsync("showToast", "info", "Document management would be implemented here");
+    }
+
+    private string GetConditionBadgeClass(string condition)
+    {
+        return condition?.ToLower() switch
+        {
+            "excellent" => "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400",
+            "good" => "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400",
+            "fair" => "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400",
+            "poor" => "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400",
+            _ => "bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300"
+        };
+    }
+
+    private string GetAssetAge(DateTime? purchaseDate)
+    {
+        var age = (DateTime.Now - (purchaseDate ?? DateTime.Now.AddDays(-1)));
+        if (age.Days < 30)
+            return $"{age.Days} days";
+        else if (age.Days < 365)
+            return $"{age.Days / 30} months";
+        else
+            return $"{age.Days / 365} years";
+    }
+
+    private string GetDepreciationClass(decimal? depreciation)
+    {
+        return depreciation > 0 ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400";
+    }
+
+    private string GetDepreciationText(decimal purchasePrice, decimal currentValue)
+    {
+        var depreciation = purchasePrice - currentValue;
+        var percentage = purchasePrice > 0 ? (depreciation / purchasePrice) * 100 : 0;
+        return $"${depreciation:N2} ({percentage:F1}%)";
+    }
+
+    private string GetDepreciationMethodDisplay(string method)
+    {
+        return method?.ToLower() switch
+        {
+            "straight-line" => "Straight-Line",
+            "declining-balance" => "Declining Balance",
+            "custom" => "Custom",
+            _ => "Unknown"
+        };
+    }
+
+    private string GetInsuranceStatusClass(DateTime expiryDate)
+    {
+        var daysUntilExpiry = (expiryDate - DateTime.Now).Days;
+        if (daysUntilExpiry < 0)
+            return "text-red-600 dark:text-red-400";
+        else if (daysUntilExpiry < 30)
+            return "text-yellow-600 dark:text-yellow-400";
+        else
+            return "text-green-600 dark:text-green-400";
+    }
+
+    private string GetInsuranceStatus(DateTime expiryDate)
+    {
+        var daysUntilExpiry = (expiryDate - DateTime.Now).Days;
+        if (daysUntilExpiry < 0)
+            return "Expired";
+        else if (daysUntilExpiry < 30)
+            return $"Expires in {daysUntilExpiry} days";
+        else
+            return "Active";
+    }
+}

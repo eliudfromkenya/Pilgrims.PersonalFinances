@@ -1,0 +1,287 @@
+@using Pilgrims.PersonalFinances.Models
+@using System.Globalization
+
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
+    <div class="flex items-center justify-between mb-6">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+            <svg class="w-5 h-5 mr-2 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+            </svg>
+            Insurance Coverage
+        </h3>
+        <button @onclick="() => OnAddInsurance.InvokeAsync(Asset)" 
+                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
+            Add Policy
+        </button>
+    </div>
+
+    @if (Asset.InsurancePolicies?.Any() == true)
+    {
+        <!-- Insurance Summary -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-green-600 dark:text-green-400">
+                            Total Coverage
+                        </p>
+                        <p class="text-xl font-bold text-green-900 dark:text-green-100">
+                            @GetTotalCoverage().ToString("C", CultureInfo.CurrentCulture)
+                        </p>
+                    </div>
+                    <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-blue-600 dark:text-blue-400">
+                            Active Policies
+                        </p>
+                        <p class="text-xl font-bold text-blue-900 dark:text-blue-100">
+                            @GetActivePoliciesCount()
+                        </p>
+                    </div>
+                    <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-r from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 rounded-lg p-4 border border-yellow-200 dark:border-yellow-800">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-yellow-600 dark:text-yellow-400">
+                            Next Renewal
+                        </p>
+                        <p class="text-lg font-bold text-yellow-900 dark:text-yellow-100">
+                            @GetNextRenewalDate()
+                        </p>
+                    </div>
+                    <div class="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Insurance Policies List -->
+        <div class="space-y-4">
+            @foreach (var policy in Asset.InsurancePolicies.OrderByDescending(p => p.PolicyStartDate))
+            {
+                var isActive = policy.IsActive;
+                var isExpiringSoon = policy.RenewalDate.HasValue && policy.RenewalDate.Value <= DateTime.Now.AddDays(30);
+                
+                <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 @(isActive ? "bg-white dark:bg-gray-800" : "bg-gray-50 dark:bg-gray-700/50")">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-3 mb-2">
+                                <h4 class="text-lg font-semibold text-gray-900 dark:text-white">
+                                    @policy.PolicyNumber
+                                </h4>
+                                <span class="px-2 py-1 text-xs font-medium rounded-full @(isActive ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400" : "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400")">
+                                    @(isActive ? "Active" : "Inactive")
+                                </span>
+                                @if (isExpiringSoon && isActive)
+                                {
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400">
+                                        Expiring Soon
+                                    </span>
+                                }
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                                <div>
+                                    <p class="font-medium text-gray-700 dark:text-gray-300">Provider</p>
+                                    <p class="text-gray-900 dark:text-white">@policy.InsuranceProvider</p>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-700 dark:text-gray-300">Coverage Amount</p>
+                                    <p class="text-gray-900 dark:text-white font-semibold">
+                                        @policy.CoverageAmount.ToString("C", CultureInfo.CurrentCulture)
+                                    </p>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-700 dark:text-gray-300">Premium</p>
+                                    <p class="text-gray-900 dark:text-white">
+                                        @policy.AnnualPremium.ToString("C", CultureInfo.CurrentCulture)
+                                        @if (!string.IsNullOrEmpty(policy.PaymentFrequency))
+                                        {
+                                            <span class="text-gray-500 dark:text-gray-400">/@policy.PaymentFrequency</span>
+                                        }
+                                    </p>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-700 dark:text-gray-300">
+                                        @(policy.RenewalDate.HasValue ? "Renewal Date" : "End Date")
+                                    </p>
+                                    <p class="text-gray-900 dark:text-white">
+                                        @((policy.RenewalDate ?? policy.PolicyEndDate).ToString("MMM dd, yyyy") ?? "N/A")
+                                    </p>
+                                </div>
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(policy.Deductible.ToString()) && policy.Deductible > 0)
+                            {
+                                <div class="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                                    <div class="flex items-center space-x-2">
+                                        <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                                        </svg>
+                                        <span class="text-sm font-medium text-blue-800 dark:text-blue-200">
+                                            Deductible: @policy.Deductible.ToString("C", CultureInfo.CurrentCulture)
+                                        </span>
+                                    </div>
+                                </div>
+                            }
+
+                            @if (!string.IsNullOrEmpty(policy.Notes))
+                            {
+                                <div class="mt-3">
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                                        <span class="font-medium">Notes:</span> @policy.Notes
+                                    </p>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="flex items-center space-x-2 ml-4">
+                            <button @onclick="() => OnEditInsurance.InvokeAsync(policy)" 
+                                    class="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                            </button>
+                            <button @onclick="() => OnDeleteInsurance.InvokeAsync(policy)" 
+                                    class="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Coverage Analysis -->
+        <div class="mt-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+            <h4 class="text-md font-semibold text-gray-900 dark:text-white mb-3">
+                Coverage Analysis
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-gray-600 dark:text-gray-400">Coverage vs Asset Value</span>
+                        <span class="font-medium text-gray-900 dark:text-white">
+                            @GetCoverageRatio().ToString("P0")
+                        </span>
+                    </div>
+                    <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                        <div class="bg-gradient-to-r from-green-400 to-blue-500 h-2 rounded-full" 
+                             style="width: @Math.Min(100, GetCoverageRatio() * 100)%"></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600 dark:text-gray-400">Annual Premium Cost</span>
+                        <span class="font-medium text-gray-900 dark:text-white">
+                            @GetAnnualPremiumCost().ToString("C", CultureInfo.CurrentCulture)
+                        </span>
+                    </div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        @((GetAnnualPremiumCost() / Asset.CurrentValue * 100)?.ToString("F2"))% of asset value
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- No Insurance State -->
+        <div class="text-center py-12">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">
+                No insurance policies
+            </h3>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Protect your asset by adding insurance coverage.
+            </p>
+            <div class="mt-6">
+                <button @onclick="() => OnAddInsurance.InvokeAsync(Asset)" 
+                        class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    Add Insurance Policy
+                </button>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public Asset Asset { get; set; } = null!;
+    [Parameter] public EventCallback<Asset> OnAddInsurance { get; set; }
+    [Parameter] public EventCallback<AssetInsurance> OnEditInsurance { get; set; }
+    [Parameter] public EventCallback<AssetInsurance> OnDeleteInsurance { get; set; }
+
+    private decimal GetTotalCoverage()
+    {
+        return Asset.InsurancePolicies?.Where(p => p.IsActive).Sum(p => p.CoverageAmount) ?? 0;
+    }
+
+    private int GetActivePoliciesCount()
+    {
+        return Asset.InsurancePolicies?.Count(p => p.IsActive) ?? 0;
+    }
+
+    private string GetNextRenewalDate()
+    {
+        var nextRenewal = Asset.InsurancePolicies?
+            .Where(p => p.IsActive && p.RenewalDate.HasValue && p.RenewalDate.Value > DateTime.Now)
+            .OrderBy(p => p.RenewalDate)
+            .FirstOrDefault()?.RenewalDate;
+
+        return nextRenewal?.ToString("MMM dd") ?? "N/A";
+    }
+
+    private double GetCoverageRatio()
+    {
+        var totalCoverage = GetTotalCoverage();
+        return Asset.CurrentValue > 0 ? (double)(totalCoverage / Asset.CurrentValue) : 0;
+    }
+
+    private decimal GetAnnualPremiumCost()
+    {
+        return Asset.InsurancePolicies?
+            .Where(p => p.IsActive)
+            .Sum(p => p.AnnualPremium * GetPremiumMultiplier(p.PaymentFrequency)) ?? 0;
+    }
+
+    private decimal GetPremiumMultiplier(string? frequency)
+    {
+        return frequency?.ToLower() switch
+        {
+            "monthly" => 12,
+            "quarterly" => 4,
+            "semi-annually" or "semi-annual" => 2,
+            "annually" or "annual" => 1,
+            _ => 1
+        };
+    }
+}

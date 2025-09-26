@@ -105,7 +105,7 @@ namespace Pilgrims.PersonalFinances.Models
 
     public class ObligationPayment : BaseEntity
     {
-        public int ObligationId { get; set; }
+        public string ObligationId { get; set; } = string.Empty;
         public virtual Obligation Obligation { get; set; } = null!;
 
         [Column(TypeName = "decimal(18,2)")]
@@ -150,7 +150,7 @@ namespace Pilgrims.PersonalFinances.Models
 
     public class ObligationBenefit : BaseEntity
     {
-        public int ObligationId { get; set; }
+        public string ObligationId { get; set; } = string.Empty;
         public virtual Obligation Obligation { get; set; } = null!;
 
         [Required]
@@ -181,7 +181,7 @@ namespace Pilgrims.PersonalFinances.Models
 
     public class ObligationDocument : BaseEntity
     {
-        public int ObligationId { get; set; }
+        public string ObligationId { get; set; } = string.Empty;
         public virtual Obligation Obligation { get; set; } = null!;
 
         [Required]

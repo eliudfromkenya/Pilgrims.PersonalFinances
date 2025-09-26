@@ -58,5 +58,6 @@ namespace Pilgrims.PersonalFinances.Models
         // Navigation Properties
         public virtual ICollection<AssetDocument> Documents { get; set; } = new List<AssetDocument>();
         public virtual ICollection<MaintenanceRecord> MaintenanceRecords { get; set; } = new List<MaintenanceRecord>();
+        public string? Status { get; internal set; }
     }
 }

@@ -1,0 +1,439 @@
+@page "/assets/create"
+@using Pilgrims.PersonalFinances.Models
+@using Pilgrims.PersonalFinances.Services.Interfaces
+@using System.ComponentModel.DataAnnotations
+@inject IAssetService AssetService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Add New Asset - Personal Finance</PageTitle>
+
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
+    <!-- Header Section -->
+    <div class="bg-white dark:bg-slate-800 shadow-sm border-b border-slate-200 dark:border-slate-700">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <button @onclick="NavigateBack" 
+                            class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors duration-200">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                    </button>
+                    <div>
+                        <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Add New Asset</h1>
+                        <p class="text-sm text-slate-600 dark:text-slate-400">Register a new asset in your portfolio</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button @onclick="SaveDraft" disabled="@isSaving"
+                            class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors duration-200 disabled:opacity-50">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3-3m0 0l-3 3m3-3v12"></path>
+                        </svg>
+                        Save Draft
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Content -->
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <EditForm Model="@asset" OnValidSubmit="@HandleValidSubmit">
+            <DataAnnotationsValidator />
+            
+            <div class="space-y-8">
+                <!-- Basic Information -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+                    <div class="flex items-center mb-6">
+                        <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-4">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Basic Information</h2>
+                            <p class="text-sm text-slate-600 dark:text-slate-400">Essential details about your asset</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                Asset Name <span class="text-red-500">*</span>
+                            </label>
+                            <InputText @bind-Value="asset.Name" 
+                                       class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                                       placeholder="Enter asset name (e.g., MacBook Pro 2023)" />
+                            <ValidationMessage For="@(() => asset.Name)" class="text-red-500 text-sm mt-1" />
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                Category <span class="text-red-500">*</span>
+                            </label>
+                            <InputSelect @bind-Value="asset.AssetCategoryId" 
+                         class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                <option value="">Select a category</option>
+                @foreach (var category in categories)
+                {
+                    <option value="@category.Id">@category.Icon @category.Name</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => asset.AssetCategoryId)" class="text-red-500 text-sm mt-1" />
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                Condition <span class="text-red-500">*</span>
+                            </label>
+                            <InputSelect @bind-Value="asset.Condition" 
+                                         class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                                <option value="">Select condition</option>
+                                <option value="Excellent">Excellent</option>
+                                <option value="Good">Good</option>
+                                <option value="Fair">Fair</option>
+                                <option value="Poor">Poor</option>
+                            </InputSelect>
+                            <ValidationMessage For="@(() => asset.Condition)" class="text-red-500 text-sm mt-1" />
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Brand</label>
+                            <InputText @bind-Value="asset.Brand" 
+                                       class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                                       placeholder="e.g., Apple, Samsung, Toyota" />
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Model</label>
+                            <InputText @bind-Value="asset.Model" 
+                                       class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                                       placeholder="e.g., iPhone 15 Pro, Camry Hybrid" />
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Serial Number</label>
+                            <InputText @bind-Value="asset.SerialNumber" 
+                                       class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                                       placeholder="Enter serial number if available" />
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Location</label>
+                            <InputText @bind-Value="asset.Location" 
+                                       class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                                       placeholder="e.g., Home Office, Garage, Storage" />
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Description</label>
+                            <InputTextArea @bind-Value="asset.Description" 
+                                           class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                                           rows="3"
+                                           placeholder="Additional details about the asset..." />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Financial Information -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+                    <div class="flex items-center mb-6">
+                        <div class="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg flex items-center justify-center mr-4">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Financial Information</h2>
+                            <p class="text-sm text-slate-600 dark:text-slate-400">Purchase details and valuation</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                Purchase Date <span class="text-red-500">*</span>
+                            </label>
+                            <InputDate @bind-Value="asset.PurchaseDate" 
+                                       class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white" />
+                            <ValidationMessage For="@(() => asset.PurchaseDate)" class="text-red-500 text-sm mt-1" />
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                Purchase Price <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <span class="text-slate-500 dark:text-slate-400">$</span>
+                                </div>
+                                <InputNumber @bind-Value="asset.PurchasePrice" 
+                                             class="w-full pl-8 pr-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                                             placeholder="0.00" />
+                            </div>
+                            <ValidationMessage For="@(() => asset.PurchasePrice)" class="text-red-500 text-sm mt-1" />
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Current Value</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <span class="text-slate-500 dark:text-slate-400">$</span>
+                                </div>
+                                <InputNumber @bind-Value="asset.CurrentValue" 
+                                             class="w-full pl-8 pr-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                                             placeholder="0.00" />
+                            </div>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Leave empty to use purchase price initially</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Salvage Value</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <span class="text-slate-500 dark:text-slate-400">$</span>
+                                </div>
+                                <InputNumber @bind-Value="asset.SalvageValue" 
+                                             class="w-full pl-8 pr-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                                             placeholder="0.00" />
+                            </div>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Expected value at end of useful life</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Depreciation Settings -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+                    <div class="flex items-center mb-6">
+                        <div class="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-600 rounded-lg flex items-center justify-center mr-4">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Depreciation Settings</h2>
+                            <p class="text-sm text-slate-600 dark:text-slate-400">Configure how the asset value decreases over time</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Depreciation Method</label>
+                            <InputSelect @bind-Value="asset.DepreciationMethod" 
+                                         @onchange="OnDepreciationMethodChanged"
+                                         class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                                <option value="straight-line">Straight-Line</option>
+                                <option value="declining-balance">Declining Balance</option>
+                                <option value="custom">Custom (Manual)</option>
+                            </InputSelect>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">How depreciation is calculated</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Useful Life (Years)</label>
+                            <InputNumber @bind-Value="asset.UsefulLifeYears" 
+                                         class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                                         placeholder="5" />
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Expected lifespan of the asset</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Depreciation Rate (%)</label>
+                            <InputNumber @bind-Value="asset.DepreciationRate" 
+                                         class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                                         placeholder="20" />
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Annual depreciation percentage</p>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(asset.DepreciationMethod))
+                    {
+                        <div class="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                            <h4 class="text-sm font-medium text-blue-900 dark:text-blue-300 mb-2">Depreciation Method Info</h4>
+                            <p class="text-sm text-blue-700 dark:text-blue-400">
+                                @GetDepreciationMethodDescription(asset.DepreciationMethod)
+                            </p>
+                        </div>
+                    }
+                </div>
+
+                <!-- Form Actions -->
+                <div class="flex justify-end space-x-4 pt-6">
+                    <button type="button" @onclick="NavigateBack" 
+                            class="px-6 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors duration-200">
+                        Cancel
+                    </button>
+                    <button type="submit" disabled="@isSaving"
+                            class="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg text-sm font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:transform-none">
+                        @if (isSaving)
+                        {
+                            <svg class="animate-spin -ml-1 mr-3 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <text>Creating Asset</text>
+                        }
+                        else
+                        {
+                            <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <text>Create Asset</text>
+                        }
+                    </button>
+                </div>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    private Asset asset = new();
+    private List<AssetCategory> categories = new();
+    private bool isSaving = false;
+
+    public class Asset
+    {
+        [Required(ErrorMessage = "Asset name is required")]
+        [StringLength(200, ErrorMessage = "Asset name cannot exceed 200 characters")]
+        public string Name { get; set; } = "";
+
+        public string? Description { get; set; }
+
+        [Required(ErrorMessage = "Category is required")]
+        public string AssetCategoryId { get; set; } = "";
+
+        [Required(ErrorMessage = "Purchase date is required")]
+        public DateTime PurchaseDate { get; set; } = DateTime.Today;
+
+        [Required(ErrorMessage = "Purchase price is required")]
+        [Range(0.01, double.MaxValue, ErrorMessage = "Purchase price must be greater than 0")]
+        public decimal PurchasePrice { get; set; }
+
+        public decimal CurrentValue { get; set; }
+
+        public string? SerialNumber { get; set; }
+        public string? Model { get; set; }
+        public string? Brand { get; set; }
+        public string? Location { get; set; }
+
+        [Required(ErrorMessage = "Condition is required")]
+        public string Condition { get; set; } = "";
+
+        public string DepreciationMethod { get; set; } = "straight-line";
+        public decimal? DepreciationRate { get; set; }
+        public int? UsefulLifeYears { get; set; }
+        public decimal? SalvageValue { get; set; }
+        public bool? IsActive { get; set; } = true;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCategories();
+        SetDefaultValues();
+    }
+
+    private async Task LoadCategories()
+    {
+        try
+        {
+            categories = (await AssetService.GetAllAssetCategoriesAsync()).ToList();
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", "Error loading categories:", ex.Message);
+        }
+    }
+
+    private void SetDefaultValues()
+    {
+        asset.PurchaseDate = DateTime.Today;
+        asset.DepreciationMethod = "straight-line";
+        asset.UsefulLifeYears = 5;
+        asset.DepreciationRate = 20;
+        asset.IsActive = true;
+    }
+
+    private async Task OnDepreciationMethodChanged(ChangeEventArgs e)
+    {
+        asset.DepreciationMethod = e.Value?.ToString() ?? "straight-line";
+        
+        // Set default values based on selected category
+        if (!string.IsNullOrEmpty(asset.AssetCategoryId))
+        {
+            var category = categories.FirstOrDefault(c => c.Id == asset.AssetCategoryId);
+            if (category != null)
+            {
+                asset.DepreciationRate = category?.DefaultDepreciationRate ?? 0;
+                asset.UsefulLifeYears = category?.DefaultUsefulLifeYears ?? 0;
+            }
+        }
+        
+        StateHasChanged();
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        isSaving = true;
+        try
+        {
+            // Convert our form model to the actual Asset model
+            var newAsset = new Models.Asset
+            {
+                Name = asset.Name,
+                Description = asset.Description,
+                AssetCategoryId = asset.AssetCategoryId,
+                PurchaseDate = asset.PurchaseDate,
+                PurchasePrice = asset.PurchasePrice,
+                CurrentValue = asset.CurrentValue > 0 ? asset.CurrentValue : asset.PurchasePrice,
+                SerialNumber = asset.SerialNumber,
+                Model = asset.Model,
+                Brand = asset.Brand,
+                Location = asset.Location,
+                Condition = asset.Condition,
+                DepreciationMethod = asset.DepreciationMethod,
+                DepreciationRate = asset.DepreciationRate,
+                UsefulLifeYears = asset.UsefulLifeYears,
+                SalvageValue = asset.SalvageValue,
+                IsActive = asset.IsActive ?? false
+            };
+
+            var createdAsset = await AssetService.CreateAssetAsync(newAsset);
+            
+            await JSRuntime.InvokeVoidAsync("showToast", "success", "Asset created successfully!");
+            Navigation.NavigateTo($"/assets/details/{createdAsset.Id}");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("showToast", "error", $"Error creating asset: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private async Task SaveDraft()
+    {
+        // Implement draft saving logic if needed
+        await JSRuntime.InvokeVoidAsync("showToast", "info", "Draft saved locally");
+    }
+
+    private void NavigateBack()
+    {
+        Navigation.NavigateTo("/assets");
+    }
+
+    private string GetDepreciationMethodDescription(string method)
+    {
+        return method?.ToLower() switch
+        {
+            "straight-line" => "The asset loses value evenly over its useful life. Simple and commonly used method.",
+            "declining-balance" => "The asset loses value faster in early years, slower in later years. Good for technology and vehicles.",
+            "custom" => "You manually update the asset's current value. Use this for assets with unpredictable value changes.",
+            _ => "Select a depreciation method to see its description."
+        };
+    }
+}
