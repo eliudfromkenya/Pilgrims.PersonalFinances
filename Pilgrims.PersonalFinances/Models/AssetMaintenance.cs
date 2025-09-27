@@ -25,6 +25,7 @@ namespace Pilgrims.PersonalFinances.Models
 
         // Alias property for backward compatibility
         public DateTime MaintenanceDate => ServiceDate;
+        public DateTime? NextMaintenanceDate { get; set; }
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal Cost { get; set; }

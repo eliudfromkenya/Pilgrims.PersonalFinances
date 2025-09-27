@@ -1,0 +1,610 @@
+@page "/insurance/dashboard"
+@using Pilgrims.PersonalFinances.Models
+@using Pilgrims.PersonalFinances.Models.Enums
+@using Pilgrims.PersonalFinances.Services.Interfaces
+@inject IInsuranceService InsuranceService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Insurance Dashboard - Personal Finance Manager</PageTitle>
+
+<div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-4 sm:p-6 lg:p-8">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header Section -->
+        <div class="mb-8">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2">Insurance Dashboard</h1>
+                    <p class="text-gray-600">Comprehensive overview of your insurance portfolio and analytics</p>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button @onclick="NavigateToAddPolicy" 
+                            class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                        Add Policy
+                    </button>
+                    <button @onclick="RefreshData" 
+                            class="bg-white hover:bg-gray-50 text-gray-700 px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl border border-gray-200 transform hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        @if (isLoading)
+        {
+            <div class="flex items-center justify-center py-12">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                <span class="ml-3 text-gray-600">Loading dashboard data...</span>
+            </div>
+        }
+        else
+        {
+            <!-- Key Metrics Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-gradient-to-r from-emerald-500 to-teal-600 p-6 rounded-2xl text-white shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-emerald-100 text-sm font-medium">Total Coverage</p>
+                            <p class="text-3xl font-bold">@totalCoverage?.ToString("C0")</p>
+                            <p class="text-emerald-100 text-xs mt-1">Across @activePolicyCount policies</p>
+                        </div>
+                        <div class="bg-white bg-opacity-20 p-3 rounded-xl">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-r from-blue-500 to-cyan-600 p-6 rounded-2xl text-white shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-blue-100 text-sm font-medium">Annual Premiums</p>
+                            <p class="text-3xl font-bold">@totalAnnualPremiums.ToString("C0")</p>
+                            <p class="text-blue-100 text-xs mt-1">Monthly: @monthlyPremiums.ToString("C0")</p>
+                        </div>
+                        <div class="bg-white bg-opacity-20 p-3 rounded-xl">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-r from-purple-500 to-indigo-600 p-6 rounded-2xl text-white shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-purple-100 text-sm font-medium">Active Claims</p>
+                            <p class="text-3xl font-bold">@activeClaimsCount</p>
+                            <p class="text-purple-100 text-xs mt-1">Total value: @activeClaimsValue.ToString("C0")</p>
+                        </div>
+                        <div class="bg-white bg-opacity-20 p-3 rounded-xl">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-r from-orange-500 to-red-600 p-6 rounded-2xl text-white shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-orange-100 text-sm font-medium">Expiring Soon</p>
+                            <p class="text-3xl font-bold">@expiringPoliciesCount</p>
+                            <p class="text-orange-100 text-xs mt-1">Next 30 days</p>
+                        </div>
+                        <div class="bg-white bg-opacity-20 p-3 rounded-xl">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts and Analytics Row -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <!-- Coverage by Type Chart -->
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-semibold text-gray-900">Coverage by Policy Type</h2>
+                        <div class="text-sm text-gray-500">Total: @totalCoverage?.ToString("C0")</div>
+                    </div>
+                    <div class="space-y-4">
+                        @foreach (var item in coverageByType)
+                        {
+                            var percentage = totalCoverage > 0 ? (item.Value / totalCoverage) * 100 : 0;
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-4 h-4 rounded-full @GetPolicyTypeColor(item.Key)"></div>
+                                    <span class="text-sm font-medium text-gray-700">@item.Key</span>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-sm font-semibold text-gray-900">@item.Value?.ToString("C0")</div>
+                                    <div class="text-xs text-gray-500">@percentage?.ToString("F1")%</div>
+                                </div>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="@GetPolicyTypeColor(item.Key) h-2 rounded-full transition-all duration-500" style="width: @percentage?.ToString("F1")%"></div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Premium Payments Timeline -->
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-semibold text-gray-900">Premium Payment Timeline</h2>
+                        <div class="text-sm text-gray-500">Next 6 months</div>
+                    </div>
+                    <div class="space-y-4">
+                        @foreach (var payment in upcomingPayments.Take(6))
+                        {
+                            var daysUntilDue = (payment.DueDate - DateTime.Today).Days;
+                            <div class="flex items-center justify-between p-4 rounded-xl @GetPaymentUrgencyClass(daysUntilDue)">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-3 h-3 rounded-full @GetPaymentUrgencyDot(daysUntilDue)"></div>
+                                    <div>
+                                        <div class="text-sm font-medium text-gray-900">@payment.PolicyName</div>
+                                        <div class="text-xs text-gray-500">@payment.DueDate.ToString("MMM dd, yyyy")</div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-sm font-semibold text-gray-900">@payment.Amount.ToString("C")</div>
+                                    <div class="text-xs @GetPaymentUrgencyTextClass(daysUntilDue)">
+                                        @GetPaymentUrgencyText(daysUntilDue)
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Policy Status Overview and Recent Activity -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <!-- Policy Status Distribution -->
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-6">Policy Status</h2>
+                    <div class="space-y-4">
+                        @foreach (var status in policyStatusCounts)
+                        {
+                            var percentage = totalPolicyCount > 0 ? (status.Value / (double)totalPolicyCount) * 100 : 0;
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-3 h-3 rounded-full @GetStatusColor(status.Key)"></div>
+                                    <span class="text-sm font-medium text-gray-700">@status.Key</span>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-sm font-semibold text-gray-900">@status.Value</div>
+                                    <div class="text-xs text-gray-500">@percentage?.ToString("F1")%</div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-6">Quick Actions</h2>
+                    <div class="space-y-3">
+                        <button @onclick="NavigateToAddPolicy" 
+                                class="w-full flex items-center gap-3 p-3 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 transition-colors duration-200">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                            </svg>
+                            <span class="font-medium">Add New Policy</span>
+                        </button>
+                        <button @onclick="NavigateToClaims" 
+                                class="w-full flex items-center gap-3 p-3 rounded-xl bg-green-50 hover:bg-green-100 text-green-700 transition-colors duration-200">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                            </svg>
+                            <span class="font-medium">File New Claim</span>
+                        </button>
+                        <button @onclick="NavigateToPremiumTracking" 
+                                class="w-full flex items-center gap-3 p-3 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 transition-colors duration-200">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+                            </svg>
+                            <span class="font-medium">Track Premiums</span>
+                        </button>
+                        <button @onclick="NavigateToList" 
+                                class="w-full flex items-center gap-3 p-3 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-700 transition-colors duration-200">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                            </svg>
+                            <span class="font-medium">View All Policies</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Coverage Gaps Analysis -->
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-6">Coverage Analysis</h2>
+                    <div class="space-y-4">
+                        @if (coverageGaps.Any())
+                        {
+                            @foreach (var gap in coverageGaps)
+                            {
+                                <div class="p-3 rounded-xl bg-yellow-50 border border-yellow-200">
+                                    <div class="flex items-start gap-2">
+                                        <svg class="w-4 h-4 text-yellow-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                        </svg>
+                                        <div>
+                                            <div class="text-sm font-medium text-yellow-800">@gap.Type</div>
+                                            <div class="text-xs text-yellow-600">@gap.Description</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="p-3 rounded-xl bg-green-50 border border-green-200">
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                    <div class="text-sm font-medium text-green-800">Good Coverage</div>
+                                </div>
+                                <div class="text-xs text-green-600 mt-1">No significant coverage gaps detected</div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Policies and Expiring Policies -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Recent Policies -->
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-semibold text-gray-900">Recent Policies</h2>
+                        <button @onclick="NavigateToList" class="text-blue-600 hover:text-blue-800 text-sm font-medium">View All</button>
+                    </div>
+                    <div class="space-y-4">
+                        @foreach (var policy in recentPolicies.Take(5))
+                        {
+                            <div class="flex items-center justify-between p-4 rounded-xl hover:bg-gray-50 transition-colors duration-200">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-gradient-to-r @GetPolicyTypeGradient(policy.PolicyType) flex items-center justify-center">
+                                        <span class="text-white font-bold text-sm">@GetPolicyTypeIcon(policy.PolicyType)</span>
+                                    </div>
+                                    <div>
+                                        <div class="text-sm font-medium text-gray-900">@policy.PolicyName</div>
+                                        <div class="text-xs text-gray-500">@policy.InsuranceCompany</div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-sm font-semibold text-gray-900">@policy.CoverageAmount?.ToString("C0")</div>
+                                    <div class="text-xs text-gray-500">@policy.CreatedDate.ToString("MMM dd")</div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Expiring Policies -->
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-semibold text-gray-900">Expiring Policies</h2>
+                        <span class="text-sm text-gray-500">Next 90 days</span>
+                    </div>
+                    <div class="space-y-4">
+                        @if (expiringPolicies.Any())
+                        {
+                            @foreach (var policy in expiringPolicies.Take(5))
+                            {
+                                var daysUntilExpiry = (policy.PolicyEndDate - DateTime.Today)?.Days;
+                                <div class="flex items-center justify-between p-4 rounded-xl @GetExpiryUrgencyClass(daysUntilExpiry)">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-xl bg-gradient-to-r @GetPolicyTypeGradient(policy.PolicyType) flex items-center justify-center">
+                                            <span class="text-white font-bold text-sm">@GetPolicyTypeIcon(policy.PolicyType)</span>
+                                        </div>
+                                        <div>
+                                            <div class="text-sm font-medium text-gray-900">@policy.PolicyName</div>
+                                            <div class="text-xs text-gray-500">@policy.PolicyEndDate?.ToString("MMM dd, yyyy")</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-sm font-semibold @GetExpiryUrgencyTextClass(daysUntilExpiry)">
+                                            @GetExpiryText(daysUntilExpiry)
+                                        </div>
+                                        <button @onclick="() => ViewPolicy(policy.Id)" 
+                                                class="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                                            Renew
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="text-center py-8 text-gray-500">
+                                <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                <p>No policies expiring soon</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private bool isLoading = true;
+
+    // Dashboard metrics
+    private decimal? totalCoverage = 0;
+    private decimal totalAnnualPremiums = 0;
+    private decimal monthlyPremiums = 0;
+    private int activePolicyCount = 0;
+    private int activeClaimsCount = 0;
+    private decimal activeClaimsValue = 0;
+    private int expiringPoliciesCount = 0;
+    private int totalPolicyCount = 0;
+
+    // Data collections
+    private Dictionary<string, decimal?> coverageByType = new();
+    private Dictionary<string, int?> policyStatusCounts = new();
+    private List<Models.Insurance> recentPolicies = new();
+    private List<Models.Insurance> expiringPolicies = new();
+    private List<UpcomingPayment> upcomingPayments = new();
+    private List<CoverageGap> coverageGaps = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDashboardData();
+    }
+
+    private async Task LoadDashboardData()
+    {
+        isLoading = true;
+        try
+        {
+            // Load basic metrics
+            totalCoverage = await InsuranceService.GetTotalCoverageAmountAsync();
+            totalAnnualPremiums = await InsuranceService.GetTotalAnnualPremiumsAsync();
+            monthlyPremiums = totalAnnualPremiums / 12;
+            activePolicyCount = await InsuranceService.GetActivePolicyCountAsync();
+
+            // Load policies
+            var allPolicies = (await InsuranceService.GetAllInsurancePoliciesAsync()).ToList();
+            totalPolicyCount = allPolicies.Count;
+
+            // Load expiring policies
+            expiringPolicies = (await InsuranceService.GetPoliciesExpiringInDaysAsync(90)).ToList();
+            expiringPoliciesCount = (await InsuranceService.GetPoliciesExpiringInDaysAsync(30)).Count();
+
+            // Load recent policies
+            recentPolicies = allPolicies.OrderByDescending(p => p.CreatedDate).ToList();
+
+            // Load claims data
+            var allClaims = (await InsuranceService.GetAllClaimsAsync()).ToList();
+            var activeClaims = allClaims.Where(c => c.Status == ClaimStatus.Submitted || c.Status == ClaimStatus.UnderReview).ToList();
+            activeClaimsCount = activeClaims.Count;
+            activeClaimsValue = activeClaims.Sum(c => c.ClaimAmount);
+
+            // Calculate coverage by type
+            coverageByType = allPolicies
+                .Where(p => p.Status == InsuranceStatus.Active)
+                .GroupBy(p => p.PolicyType)
+                .ToDictionary(g => g.Key, g => g.Sum(p => p.CoverageAmount));
+
+            // Calculate policy status counts
+            policyStatusCounts = allPolicies
+                .GroupBy(p => p.Status.ToString())
+                .ToDictionary(g => g.Key, g => (int?)g.Count());
+
+            // Generate upcoming payments
+            upcomingPayments = GenerateUpcomingPayments(allPolicies);
+
+            // Analyze coverage gaps
+            coverageGaps = AnalyzeCoverageGaps(allPolicies);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading dashboard data: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private List<UpcomingPayment> GenerateUpcomingPayments(List<Models.Insurance> policies)
+    {
+        var payments = new List<UpcomingPayment>();
+        var currentDate = DateTime.Today;
+
+        foreach (var policy in policies.Where(p => p.Status == InsuranceStatus.Active))
+        {
+            var nextDue = policy.NextPremiumDueDate ?? currentDate.AddMonths(1);
+            
+            for (int i = 0; i < 12; i++) // Generate next 12 payments
+            {
+                var dueDate = nextDue.AddMonths(i);
+                if (dueDate > currentDate.AddMonths(6)) break; // Only show next 6 months
+
+                payments.Add(new UpcomingPayment
+                {
+                    PolicyName = policy.PolicyName,
+                    Amount = policy.PremiumAmount,
+                    DueDate = dueDate,
+                    PolicyId = policy.Id
+                });
+            }
+        }
+
+        return payments.OrderBy(p => p.DueDate).ToList();
+    }
+
+    private List<CoverageGap> AnalyzeCoverageGaps(List<Models.Insurance> policies)
+    {
+        var gaps = new List<CoverageGap>();
+        var activePolicies = policies.Where(p => p.Status == InsuranceStatus.Active).ToList();
+
+        // Check for missing essential coverage types
+        var essentialTypes = new[] { "Life", "Health", "Auto", "Property" };
+        var existingTypes = activePolicies.Select(p => p.PolicyType).Distinct().ToList();
+
+        foreach (var type in essentialTypes)
+        {
+            if (!existingTypes.Contains(type))
+            {
+                gaps.Add(new CoverageGap
+                {
+                    Type = $"Missing {type} Insurance",
+                    Description = $"Consider adding {type.ToLower()} insurance coverage"
+                });
+            }
+        }
+
+        // Check for low coverage amounts (this is a simplified example)
+        var lifeCoverage = activePolicies.Where(p => p.PolicyType == "Life").Sum(p => p.CoverageAmount);
+        if (lifeCoverage < 500000) // Example threshold
+        {
+            gaps.Add(new CoverageGap
+            {
+                Type = "Low Life Insurance Coverage",
+                Description = "Consider increasing life insurance coverage"
+            });
+        }
+
+        return gaps;
+    }
+
+    private async Task RefreshData()
+    {
+        await LoadDashboardData();
+    }
+
+    private void NavigateToAddPolicy() => Navigation.NavigateTo("/insurance/add");
+    private void NavigateToList() => Navigation.NavigateTo("/insurance/list");
+    private void NavigateToClaims() => Navigation.NavigateTo("/insurance/claims");
+    private void NavigateToPremiumTracking() => Navigation.NavigateTo("/insurance/premiums");
+    private void ViewPolicy(string policyId) => Navigation.NavigateTo($"/insurance/view/{policyId}");
+
+    // Helper methods for styling
+    private string GetPolicyTypeColor(string policyType) => policyType.ToLower() switch
+    {
+        "life" => "bg-purple-500",
+        "health" => "bg-green-500",
+        "auto" => "bg-blue-500",
+        "property" => "bg-orange-500",
+        "disability" => "bg-pink-500",
+        _ => "bg-gray-500"
+    };
+
+    private string GetPolicyTypeGradient(string policyType) => policyType.ToLower() switch
+    {
+        "life" => "from-purple-500 to-indigo-600",
+        "health" => "from-green-500 to-emerald-600",
+        "auto" => "from-blue-500 to-cyan-600",
+        "property" => "from-orange-500 to-red-600",
+        "disability" => "from-pink-500 to-rose-600",
+        _ => "from-gray-500 to-slate-600"
+    };
+
+    private string GetPolicyTypeIcon(string policyType) => policyType.ToLower() switch
+    {
+        "life" => "♥",
+        "health" => "⚕",
+        "auto" => "🚗",
+        "property" => "🏠",
+        "disability" => "🛡",
+        _ => "📋"
+    };
+
+    private string GetStatusColor(string status) => status.ToLower() switch
+    {
+        "active" => "bg-green-500",
+        "expired" => "bg-red-500",
+        "cancelled" => "bg-gray-500",
+        "suspended" => "bg-yellow-500",
+        _ => "bg-gray-500"
+    };
+
+    private string GetPaymentUrgencyClass(int? daysUntilDue) => daysUntilDue switch
+    {
+        <= 7 => "bg-red-50 border border-red-200",
+        <= 14 => "bg-orange-50 border border-orange-200",
+        <= 30 => "bg-yellow-50 border border-yellow-200",
+        _ => "bg-gray-50 border border-gray-200"
+    };
+
+    private string GetPaymentUrgencyDot(int? daysUntilDue) => daysUntilDue switch
+    {
+        <= 7 => "bg-red-500",
+        <= 14 => "bg-orange-500",
+        <= 30 => "bg-yellow-500",
+        _ => "bg-gray-400"
+    };
+
+    private string GetPaymentUrgencyTextClass(int? daysUntilDue) => daysUntilDue switch
+    {
+        <= 7 => "text-red-600",
+        <= 14 => "text-orange-600",
+        <= 30 => "text-yellow-600",
+        _ => "text-gray-500"
+    };
+
+    private string GetPaymentUrgencyText(int? daysUntilDue) => daysUntilDue switch
+    {
+        <= 0 => "Overdue",
+        1 => "Due tomorrow",
+        <= 7 => $"Due in {daysUntilDue} days",
+        <= 30 => $"Due in {daysUntilDue} days",
+        _ => $"{daysUntilDue} days"
+    };
+
+    private string GetExpiryUrgencyClass(int? daysUntilExpiry) => daysUntilExpiry switch
+    {
+        <= 30 => "bg-red-50 border border-red-200",
+        <= 60 => "bg-orange-50 border border-orange-200",
+        <= 90 => "bg-yellow-50 border border-yellow-200",
+        _ => "bg-gray-50 border border-gray-200"
+    };
+
+    private string GetExpiryUrgencyTextClass(int? daysUntilExpiry) => daysUntilExpiry switch
+    {
+        <= 30 => "text-red-600",
+        <= 60 => "text-orange-600",
+        <= 90 => "text-yellow-600",
+        _ => "text-gray-500"
+    };
+
+    private string GetExpiryText(int? daysUntilExpiry) => daysUntilExpiry switch
+    {
+        <= 0 => "Expired",
+        1 => "Expires tomorrow",
+        <= 30 => $"Expires in {daysUntilExpiry} days",
+        _ => $"{daysUntilExpiry} days remaining"
+    };
+
+    // Helper classes
+    public class UpcomingPayment
+    {
+        public string PolicyName { get; set; } = string.Empty;
+        public decimal Amount { get; set; }
+        public DateTime DueDate { get; set; }
+        public string PolicyId { get; set; } = string.Empty;
+    }
+
+    public class CoverageGap
+    {
+        public string Type { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+    }
+}

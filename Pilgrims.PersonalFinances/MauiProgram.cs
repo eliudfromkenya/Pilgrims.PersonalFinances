@@ -42,8 +42,10 @@ namespace Pilgrims.PersonalFinances
             builder.Services.AddScoped<IAssetService, AssetService>();
             builder.Services.AddScoped<IFileService, FileService>();
             builder.Services.AddScoped<IReconciliationService, ReconciliationService>();
+            builder.Services.AddScoped<IInsuranceService, InsuranceService>();
             builder.Services.AddSingleton<IScheduledTransactionBackgroundService, ScheduledTransactionBackgroundService>();
             builder.Services.AddHostedService<ScheduledTransactionBackgroundService>();
+            builder.Services.AddHostedService<InsuranceNotificationBackgroundService>();
 
 #if DEBUG
     		builder.Services.AddBlazorWebViewDeveloperTools();

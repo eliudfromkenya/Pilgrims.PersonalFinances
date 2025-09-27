@@ -107,7 +107,7 @@ namespace Pilgrims.PersonalFinances.Models
         /// </summary>
         public static InsuranceNotification CreatePolicyExpiryNotification(Insurance insurance, int daysInAdvance = 30)
         {
-            var scheduledDate = insurance.PolicyEndDate.AddDays(-daysInAdvance);
+            var scheduledDate = insurance.PolicyEndDate?.AddDays(-daysInAdvance) ?? DateTime.Now.AddDays(-daysInAdvance);
             return new InsuranceNotification
             {
                 InsuranceId = insurance.Id,

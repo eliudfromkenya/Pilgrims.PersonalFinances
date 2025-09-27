@@ -160,7 +160,7 @@
                                     <div class="flex justify-between">
                                         <span class="text-slate-600 dark:text-slate-400">Depreciation:</span>
                                         <span class="@GetDepreciationClass(asset.PurchasePrice - asset.CurrentValue) font-medium">
-                                            @GetDepreciationText(asset.PurchasePrice ?? 0, asset.CurrentValue ?? 0)
+                                            @GetDepreciationText(asset.PurchasePrice, asset.CurrentValue)
                                         </span>
                                     </div>
                                     @if (asset.SalvageValue > 0)
@@ -524,10 +524,12 @@
         return depreciation > 0 ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400";
     }
 
-    private string GetDepreciationText(decimal purchasePrice, decimal currentValue)
+    private string GetDepreciationText(decimal? purchasePrice, decimal? currentValue)
     {
-        var depreciation = purchasePrice - currentValue;
-        var percentage = purchasePrice > 0 ? (depreciation / purchasePrice) * 100 : 0;
+        var purchase = purchasePrice ?? 0m;
+        var current = currentValue ?? 0m;
+        var depreciation = purchase - current;
+        var percentage = purchase > 0 ? (depreciation / purchase) * 100 : 0;
         return $"${depreciation:N2} ({percentage:F1}%)";
     }
 

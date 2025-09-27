@@ -18,8 +18,10 @@ namespace Pilgrims.PersonalFinances.Models
         [MaxLength(200)]
         public string InsuranceProvider { get; set; } = string.Empty;
 
-        // Alias property for backward compatibility
-        public string InsuranceCompany => InsuranceProvider;
+        // Alias properties for backward compatibility
+        public string InsuranceCompany { get { return InsuranceProvider; } }
+        public DateTime ExpiryDate { get { return PolicyEndDate; } }
+        public decimal Premium { get { return AnnualPremium; } }
 
         [MaxLength(100)]
         public string? AgentName { get; set; }
@@ -47,9 +49,6 @@ namespace Pilgrims.PersonalFinances.Models
 
         [Required]
         public DateTime PolicyEndDate { get; set; }
-
-        // Alias property for backward compatibility
-        public DateTime ExpiryDate => PolicyEndDate;
 
         public DateTime? RenewalDate { get; set; }
 

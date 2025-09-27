@@ -54,10 +54,15 @@ namespace Pilgrims.PersonalFinances.Models
 
         public string? CreatedBy { get; set; }
         public string? UpdatedBy { get; set; }
+        public string? Notes { get; set; }
 
         // Navigation Properties
         public virtual ICollection<AssetDocument> Documents { get; set; } = new List<AssetDocument>();
         public virtual ICollection<MaintenanceRecord> MaintenanceRecords { get; set; } = new List<MaintenanceRecord>();
+        
+        // Alias Properties
+        public virtual ICollection<AssetDocument> AssetDocuments { get { return Documents; } }
+        
         public string? Status { get; internal set; }
     }
 }

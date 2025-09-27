@@ -90,8 +90,7 @@ public class AssetService : IAssetService
         await _notificationService.CreateNotificationAsync(
             "New Asset Added",
             $"Asset '{asset.Name}' has been successfully added to your portfolio.",
-            AppNotificationType.SystemAlert,
-            NotificationPriority.Low
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.SystemAlert
         );
 
         return asset;
@@ -397,7 +396,7 @@ public class AssetService : IAssetService
             await _notificationService.CreateNotificationAsync(
                 "Maintenance Record Added",
                 $"Maintenance record for '{asset.Name}' has been added.",
-                AppNotificationType.SystemAlert
+                Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.SystemAlert
             );
         }
 
@@ -581,43 +580,43 @@ public class AssetService : IAssetService
         return asset.PurchasePrice - currentValue;
     }
 
-    private async Task<decimal?> CalculateDepreciatedValue(Asset asset, DateTime asOfDate)
+    private async Task<decimal> CalculateDepreciatedValue(Asset asset, DateTime asOfDate)
     {
         if (asset.PurchaseDate > asOfDate)
-            return asset.PurchasePrice;
+            return asset.PurchasePrice ?? 0m;
 
-        var yearsElapsed = (decimal?)(asOfDate - asset.PurchaseDate)?.Days / 365.25m;
+        var yearsElapsed = (decimal)(asOfDate - asset.PurchaseDate.Value).Days / 365.25m;
 
         return asset.DepreciationMethod?.ToLower() switch
         {
             "straight-line" => CalculateStraightLineDepreciation(asset, yearsElapsed),
             "declining-balance" => CalculateDecliningBalanceDepreciation(asset, yearsElapsed),
-            "custom" => asset.CurrentValue, // Use manually set current value
+            "custom" => asset.CurrentValue ?? 0m, // Use manually set current value
             _ => CalculateStraightLineDepreciation(asset, yearsElapsed) // Default to straight-line
         };
     }
 
-    private decimal? CalculateStraightLineDepreciation(Asset asset, decimal? yearsElapsed)
+    private decimal CalculateStraightLineDepreciation(Asset asset, decimal yearsElapsed)
     {
-        if (asset.UsefulLifeYears <= 0)
-            return asset.PurchasePrice;
+        if ((asset.UsefulLifeYears ?? 0) <= 0)
+            return asset.PurchasePrice ?? 0m;
 
-        var annualDepreciation = (asset.PurchasePrice - asset.SalvageValue) / asset.UsefulLifeYears;
-        var totalDepreciation = annualDepreciation * (yearsElapsed ?? 0m);
-        var currentValue = asset.PurchasePrice - totalDepreciation;
+        var annualDepreciation = ((asset.PurchasePrice ?? 0m) - (asset.SalvageValue ?? 0m)) / (asset.UsefulLifeYears ?? 1);
+        var totalDepreciation = annualDepreciation * yearsElapsed;
+        var currentValue = (asset.PurchasePrice ?? 0m) - totalDepreciation;
 
-        return Functions.Max(currentValue ?? 0m, asset.SalvageValue);
+        return Math.Max(currentValue, asset.SalvageValue ?? 0m);
     }
 
-    private decimal? CalculateDecliningBalanceDepreciation(Asset asset, decimal? yearsElapsed)
+    private decimal CalculateDecliningBalanceDepreciation(Asset asset, decimal yearsElapsed)
     {
-        if (asset.DepreciationRate <= 0 || asset.UsefulLifeYears <= 0)
-            return asset.PurchasePrice;
+        if ((asset.DepreciationRate ?? 0) <= 0 || (asset.UsefulLifeYears ?? 0) <= 0)
+            return asset.PurchasePrice ?? 0m;
 
-        var rate = asset.DepreciationRate / 100m;
-        var currentValue = asset.PurchasePrice * (decimal)Math.Pow((double)(1 - rate), (double)(yearsElapsed ?? 0m));
+        var rate = (asset.DepreciationRate ?? 0m) / 100m;
+        var currentValue = (asset.PurchasePrice ?? 0m) * (decimal)Math.Pow((double)(1 - rate), (double)yearsElapsed);
 
-        return Functions.Max(currentValue, asset.SalvageValue);
+        return Math.Max(currentValue, asset.SalvageValue ?? 0m);
     }
 
     public async Task<Dictionary<string, decimal?>> GetAssetValuesByCategory()
@@ -727,7 +726,7 @@ public class AssetService : IAssetService
             decimal? totalValue = null;
             foreach (var asset in assets)
             {
-                totalValue += (await CalculateDepreciatedValue(asset, monthEnd)) ?? 0;
+                totalValue += await CalculateDepreciatedValue(asset, monthEnd);
             }
 
             result[monthEnd] = totalValue;

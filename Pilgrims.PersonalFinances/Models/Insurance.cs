@@ -22,22 +22,29 @@ namespace Pilgrims.PersonalFinances.Models
         [StringLength(200)]
         public string PolicyName { get; set; } = string.Empty;
 
+        [StringLength(200)]
+        public string? AgentName { get; set; } = string.Empty;
+        [StringLength(200)]
+        public string? AgentEmail { get; set; } = string.Empty;
+        [StringLength(200)]
+        public string? AgentPhone { get; set; } = string.Empty;
+
         [StringLength(500)]
         public string Description { get; set; } = string.Empty;
 
         [Column(TypeName = "decimal(18,2)")]
-        public decimal CoverageAmount { get; set; }
+        public decimal? CoverageAmount { get; set; }
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal PremiumAmount { get; set; }
 
         public PaymentFrequency PremiumFrequency { get; set; }
 
-        public DateTime PolicyStartDate { get; set; }
+        public DateTime? PolicyStartDate { get; set; }
 
-        public DateTime PolicyEndDate { get; set; }
+        public DateTime? PolicyEndDate { get; set; }
 
-        public DateTime NextPremiumDueDate { get; set; }
+        public DateTime? NextPremiumDueDate { get; set; }
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal DeductibleAmount { get; set; }
@@ -59,13 +66,18 @@ namespace Pilgrims.PersonalFinances.Models
         [StringLength(500)]
         public string Notes { get; set; } = string.Empty;
 
+        // Alias properties for backward compatibility
+        [NotMapped]
+        public DateTime CreatedDate => CreatedAt;
+
         // Navigation properties
         public virtual ICollection<InsurancePremiumPayment> PremiumPayments { get; set; } = new List<InsurancePremiumPayment>();
         public virtual ICollection<InsuranceClaim> Claims { get; set; } = new List<InsuranceClaim>();
         public virtual ICollection<InsuranceDocument> Documents { get; set; } = new List<InsuranceDocument>();
+        public virtual ICollection<InsuranceBeneficiary> Beneficiaries { get; set; } = new List<InsuranceBeneficiary>();
 
-        // Calculated properties
-        [NotMapped]
+       // Calculated properties
+       [NotMapped]
         public decimal TotalPremiumsPaid => PremiumPayments?.Where(p => p.PaymentStatus == PaymentStatus.Completed).Sum(p => p.Amount) ?? 0;
 
         [NotMapped]
@@ -75,7 +87,7 @@ namespace Pilgrims.PersonalFinances.Models
         public bool IsActive => Status == InsuranceStatus.Active && PolicyEndDate > DateTime.Now;
 
         [NotMapped]
-        public int DaysUntilExpiry => (PolicyEndDate - DateTime.Now).Days;
+        public int DaysUntilExpiry => (PolicyEndDate - DateTime.Now)?.Days ?? 0;
 
         [NotMapped]
         public decimal AnnualPremium => PremiumFrequency switch
@@ -96,7 +108,7 @@ namespace Pilgrims.PersonalFinances.Models
         [Column(TypeName = "decimal(18,2)")]
         public decimal Amount { get; set; }
 
-        public DateTime DueDate { get; set; }
+        public DateTime? DueDate { get; set; }
 
         public DateTime? PaymentDate { get; set; }
 
@@ -121,10 +133,12 @@ namespace Pilgrims.PersonalFinances.Models
         public bool IsOverdue => PaymentStatus == PaymentStatus.Pending && DueDate < DateTime.Now;
 
         [NotMapped]
-        public int DaysOverdue => IsOverdue ? (DateTime.Now - DueDate).Days : 0;
+        public int DaysOverdue => IsOverdue ? (DateTime.Now - DueDate)?.Days ?? 0 : 0;
 
         [NotMapped]
         public decimal TotalAmountDue => Amount + (LateFee ?? 0);
+
+        public DateTime NextDueDate { get; internal set; }
     }
 
     public class InsuranceClaim : BaseEntity
@@ -142,6 +156,9 @@ namespace Pilgrims.PersonalFinances.Models
 
         [StringLength(500)]
         public string Description { get; set; } = string.Empty;
+
+        [StringLength(200)]
+        public string? IncidentLocation { get; set; }
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal ClaimAmount { get; set; }
@@ -188,9 +205,51 @@ namespace Pilgrims.PersonalFinances.Models
 
         public long FileSize { get; set; }
 
-        public DateTime UploadDate { get; set; }
+        public DateTime? UploadDate { get; set; }
 
         [StringLength(500)]
         public string Description { get; set; } = string.Empty;
+        public DateTime? ExpiryDate { get; internal set; }
+    }
+
+    public class InsuranceBeneficiary : BaseEntity
+    {
+        public string InsuranceId { get; set; } = string.Empty;
+        public virtual Insurance Insurance { get; set; } = null!;
+
+        [Required]
+        [StringLength(200)]
+        public string FullName { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(100)]
+        public string Relationship { get; set; } = string.Empty;
+
+        [StringLength(15)]
+        public string Phone { get; set; } = string.Empty;
+
+        [StringLength(200)]
+        public string Email { get; set; } = string.Empty;
+
+        [StringLength(500)]
+        public string Address { get; set; } = string.Empty;
+
+        [Column(TypeName = "decimal(5,2)")]
+        [Range(0, 100)]
+        public decimal Percentage { get; set; }
+
+        public DateTime? DateOfBirth { get; set; }
+
+        [StringLength(50)]
+        public string IdentificationNumber { get; set; } = string.Empty;
+
+        [StringLength(500)]
+        public string Notes { get; set; } = string.Empty;
+
+        public bool IsActive { get; set; } = true;
+
+        // Alias properties for backward compatibility
+        [NotMapped]
+        public DateTime CreatedDate => CreatedAt;
     }
 }

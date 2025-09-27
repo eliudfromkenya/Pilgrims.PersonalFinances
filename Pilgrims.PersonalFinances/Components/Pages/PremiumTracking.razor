@@ -1,0 +1,722 @@
+@page "/insurance/premiums"
+@using Pilgrims.PersonalFinances.Models
+@using Pilgrims.PersonalFinances.Models.Enums
+@using Pilgrims.PersonalFinances.Services.Interfaces
+@inject IInsuranceService InsuranceService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Premium Tracking - Personal Finance Manager</PageTitle>
+
+<div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-4 sm:p-6 lg:p-8">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header Section -->
+        <div class="mb-8">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2">Premium Tracking</h1>
+                    <p class="text-gray-600">Monitor and manage your insurance premium payments</p>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button @onclick="RecordPayment" 
+                            class="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                        Record Payment
+                    </button>
+                    <button @onclick="RefreshData" 
+                            class="bg-white hover:bg-gray-50 text-gray-700 px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl border border-gray-200 transform hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        @if (isLoading)
+        {
+            <div class="flex items-center justify-center py-12">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                <span class="ml-3 text-gray-600">Loading premium data...</span>
+            </div>
+        }
+        else
+        {
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-gradient-to-r from-blue-500 to-cyan-600 p-6 rounded-2xl text-white shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-blue-100 text-sm font-medium">Total Annual Premiums</p>
+                            <p class="text-3xl font-bold">@totalAnnualPremiums.ToString("C0")</p>
+                            <p class="text-blue-100 text-xs mt-1">Monthly: @monthlyPremiums.ToString("C0")</p>
+                        </div>
+                        <div class="bg-white bg-opacity-20 p-3 rounded-xl">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-r from-green-500 to-emerald-600 p-6 rounded-2xl text-white shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-green-100 text-sm font-medium">Paid This Month</p>
+                            <p class="text-3xl font-bold">@paidThisMonth.ToString("C0")</p>
+                            <p class="text-green-100 text-xs mt-1">@paymentsThisMonth payments</p>
+                        </div>
+                        <div class="bg-white bg-opacity-20 p-3 rounded-xl">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-r from-orange-500 to-red-600 p-6 rounded-2xl text-white shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-orange-100 text-sm font-medium">Due This Month</p>
+                            <p class="text-3xl font-bold">@dueThisMonth.ToString("C0")</p>
+                            <p class="text-orange-100 text-xs mt-1">@paymentsDueThisMonth payments</p>
+                        </div>
+                        <div class="bg-white bg-opacity-20 p-3 rounded-xl">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-r from-purple-500 to-indigo-600 p-6 rounded-2xl text-white shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-purple-100 text-sm font-medium">Overdue Payments</p>
+                            <p class="text-3xl font-bold">@overdueAmount.ToString("C0")</p>
+                            <p class="text-purple-100 text-xs mt-1">@overdueCount payments</p>
+                        </div>
+                        <div class="bg-white bg-opacity-20 p-3 rounded-xl">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters and Search -->
+            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+                <div class="flex flex-col lg:flex-row gap-4 items-center justify-between">
+                    <div class="flex flex-col sm:flex-row gap-4 flex-1">
+                        <div class="relative">
+                            <input @bind="searchTerm" @oninput="OnSearchChanged" 
+                                   placeholder="Search policies..." 
+                                   class="pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-64" />
+                            <svg class="absolute left-3 top-3.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                        </div>
+                        <select @bind="selectedPolicyType" @bind:after="OnFilterChanged" 
+                                class="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">All Policy Types</option>
+                            <option value="Life">Life Insurance</option>
+                            <option value="Health">Health Insurance</option>
+                            <option value="Auto">Auto Insurance</option>
+                            <option value="Property">Property Insurance</option>
+                            <option value="Disability">Disability Insurance</option>
+                        </select>
+                        <select @bind="selectedStatus" @bind:after="OnFilterChanged" 
+                                class="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">All Statuses</option>
+                            <option value="Paid">Paid</option>
+                            <option value="Due">Due</option>
+                            <option value="Overdue">Overdue</option>
+                        </select>
+                    </div>
+                    <div class="flex gap-2">
+                        <button @onclick="() => SetTimeFilter(TimeFilter.ThisMonth)" 
+                                class="px-4 py-2 rounded-lg @(currentTimeFilter == TimeFilter.ThisMonth ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200") transition-colors duration-200">
+                            This Month
+                        </button>
+                        <button @onclick="() => SetTimeFilter(TimeFilter.NextMonth)" 
+                                class="px-4 py-2 rounded-lg @(currentTimeFilter == TimeFilter.NextMonth ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200") transition-colors duration-200">
+                            Next Month
+                        </button>
+                        <button @onclick="() => SetTimeFilter(TimeFilter.All)" 
+                                class="px-4 py-2 rounded-lg @(currentTimeFilter == TimeFilter.All ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200") transition-colors duration-200">
+                            All Time
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Premium Calendar View -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <!-- Upcoming Payments -->
+                <div class="lg:col-span-2 bg-white rounded-2xl shadow-lg p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-semibold text-gray-900">Upcoming Payments</h2>
+                        <div class="text-sm text-gray-500">Next 60 days</div>
+                    </div>
+                    <div class="space-y-4 max-h-96 overflow-y-auto">
+                        @foreach (var payment in upcomingPayments.Take(10))
+                        {
+                            var daysUntilDue = (payment.DueDate - DateTime.Today).Days;
+                            <div class="flex items-center justify-between p-4 rounded-xl @GetPaymentUrgencyClass(daysUntilDue) hover:shadow-md transition-all duration-200">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 rounded-xl bg-gradient-to-r @GetPolicyTypeGradient(payment.PolicyType) flex items-center justify-center">
+                                        <span class="text-white font-bold">@GetPolicyTypeIcon(payment.PolicyType)</span>
+                                    </div>
+                                    <div>
+                                        <div class="text-sm font-semibold text-gray-900">@payment.PolicyName</div>
+                                        <div class="text-xs text-gray-500">@payment.InsuranceCompany</div>
+                                        <div class="text-xs @GetPaymentUrgencyTextClass(daysUntilDue)">
+                                            @GetPaymentUrgencyText(daysUntilDue)
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-lg font-bold text-gray-900">@payment.Amount.ToString("C")</div>
+                                    <div class="text-xs text-gray-500">@payment.DueDate.ToString("MMM dd, yyyy")</div>
+                                    <div class="flex gap-2 mt-2">
+                                        <button @onclick="() => MarkAsPaid(payment)" 
+                                                class="text-xs bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1 rounded-lg transition-colors duration-200">
+                                            Mark Paid
+                                        </button>
+                                        <button @onclick="() => ViewPolicy(payment.PolicyId)" 
+                                                class="text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1 rounded-lg transition-colors duration-200">
+                                            View Policy
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Payment Summary -->
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-6">Payment Summary</h2>
+                    <div class="space-y-4">
+                        <div class="p-4 rounded-xl bg-green-50 border border-green-200">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                    <span class="text-sm font-medium text-green-800">Paid on Time</span>
+                                </div>
+                                <span class="text-sm font-bold text-green-900">@onTimePayments</span>
+                            </div>
+                        </div>
+                        <div class="p-4 rounded-xl bg-yellow-50 border border-yellow-200">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                    <span class="text-sm font-medium text-yellow-800">Due Soon</span>
+                                </div>
+                                <span class="text-sm font-bold text-yellow-900">@dueSoonPayments</span>
+                            </div>
+                        </div>
+                        <div class="p-4 rounded-xl bg-red-50 border border-red-200">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                    <span class="text-sm font-medium text-red-800">Overdue</span>
+                                </div>
+                                <span class="text-sm font-bold text-red-900">@overduePayments</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 pt-6 border-t border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+                        <div class="space-y-2">
+                            <button @onclick="SetupAutoPayReminders" 
+                                    class="w-full flex items-center gap-3 p-3 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 transition-colors duration-200">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h6v-2H4v2zM4 15h8v-2H4v2zM4 11h8V9H4v2z"/>
+                                </svg>
+                                <span class="font-medium">Setup Reminders</span>
+                            </button>
+                            <button @onclick="ExportPaymentHistory" 
+                                    class="w-full flex items-center gap-3 p-3 rounded-xl bg-green-50 hover:bg-green-100 text-green-700 transition-colors duration-200">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                <span class="font-medium">Export History</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment History Table -->
+            <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-xl font-semibold text-gray-900">Payment History</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Policy</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paid Date</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            @foreach (var payment in filteredPayments)
+                            {
+                                <tr class="hover:bg-gray-50 transition-colors duration-200">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <div class="w-10 h-10 rounded-lg bg-gradient-to-r @GetPolicyTypeGradient(payment.PolicyType) flex items-center justify-center mr-3">
+                                                <span class="text-white font-bold text-sm">@GetPolicyTypeIcon(payment.PolicyType)</span>
+                                            </div>
+                                            <div>
+                                                <div class="text-sm font-medium text-gray-900">@payment.PolicyName</div>
+                                                <div class="text-sm text-gray-500">@payment.InsuranceCompany</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-semibold text-gray-900">@payment.Amount.ToString("C")</div>
+                                        <div class="text-sm text-gray-500">@payment.PremiumFrequency</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900">@payment.DueDate.ToString("MMM dd, yyyy")</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900">
+                                            @(payment.PaidDate?.ToString("MMM dd, yyyy") ?? "-")
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full @GetStatusBadgeClass(payment.Status)">
+                                            @payment.Status
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <div class="flex gap-2">
+                                            @if (payment.Status != "Paid")
+                                            {
+                                                <button @onclick="() => MarkAsPaid(payment)" 
+                                                        class="text-green-600 hover:text-green-900 transition-colors duration-200">
+                                                    Mark Paid
+                                                </button>
+                                            }
+                                            <button @onclick="() => ViewPolicy(payment.PolicyId)" 
+                                                    class="text-blue-600 hover:text-blue-900 transition-colors duration-200">
+                                                View Policy
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Record Payment Modal -->
+@if (showRecordPaymentModal)
+{
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold text-gray-900">Record Payment</h3>
+                <button @onclick="CloseRecordPaymentModal" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Policy</label>
+                    <select @bind="selectedPaymentPolicyId" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">Select a policy</option>
+                        @foreach (var policy in allPolicies)
+                        {
+                            <option value="@policy.Id">@policy.PolicyName - @policy.InsuranceCompany</option>
+                        }
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Amount</label>
+                    <input @bind="recordPaymentAmount" type="number" step="0.01" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Payment Date</label>
+                    <input @bind="recordPaymentDate" type="date" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                </div>
+            </div>
+            
+            <div class="flex gap-3 mt-6">
+                <button @onclick="SavePaymentRecord" 
+                        class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200">
+                    Save Payment
+                </button>
+                <button @onclick="CloseRecordPaymentModal" 
+                        class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors duration-200">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool isLoading = true;
+    private bool showRecordPaymentModal = false;
+
+    // Filter properties
+    private string searchTerm = string.Empty;
+    private string selectedPolicyType = string.Empty;
+    private string selectedStatus = string.Empty;
+    private TimeFilter currentTimeFilter = TimeFilter.ThisMonth;
+
+    // Summary data
+    private decimal totalAnnualPremiums = 0;
+    private decimal monthlyPremiums = 0;
+    private decimal paidThisMonth = 0;
+    private int paymentsThisMonth = 0;
+    private decimal dueThisMonth = 0;
+    private int paymentsDueThisMonth = 0;
+    private decimal overdueAmount = 0;
+    private int overdueCount = 0;
+    private int onTimePayments = 0;
+    private int dueSoonPayments = 0;
+    private int overduePayments = 0;
+
+    // Data collections
+    private List<PremiumPaymentInfo> allPayments = new();
+    private List<PremiumPaymentInfo> filteredPayments = new();
+    private List<PremiumPaymentInfo> upcomingPayments = new();
+    private List<Models.Insurance> allPolicies = new();
+
+    // Record payment modal
+    private string selectedPaymentPolicyId = string.Empty;
+    private decimal recordPaymentAmount = 0;
+    private DateTime recordPaymentDate = DateTime.Today;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPremiumData();
+    }
+
+    private async Task LoadPremiumData()
+    {
+        isLoading = true;
+        try
+        {
+            // Load policies
+            var policies = await InsuranceService.GetAllInsurancePoliciesAsync();
+            allPolicies = policies.ToList();
+
+            // Load premium payments
+            var premiumPayments = (await InsuranceService.GetAllPremiumPaymentsAsync()).ToList();
+
+            // Generate payment info
+            allPayments = GeneratePaymentInfo(allPolicies, premiumPayments);
+
+            // Calculate summary metrics
+            CalculateSummaryMetrics();
+
+            // Apply filters
+            ApplyFilters();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading premium data: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private List<PremiumPaymentInfo> GeneratePaymentInfo(List<Models.Insurance> policies, List<InsurancePremiumPayment> payments)
+    {
+        var paymentInfos = new List<PremiumPaymentInfo>();
+        var currentDate = DateTime.Today;
+
+        foreach (var policy in policies.Where(p => p.Status == InsuranceStatus.Active))
+        {
+            // Generate upcoming payments for the next 12 months
+            var nextDue = policy.NextPremiumDueDate ?? currentDate.AddMonths(1);
+            
+            for (int i = 0; i < 12; i++)
+            {
+                var dueDate = nextDue.AddMonths(i);
+                var existingPayment = payments.FirstOrDefault(p => p.InsuranceId == policy.Id && 
+                    p.PaymentDate?.Date == dueDate.Date);
+
+                paymentInfos.Add(new PremiumPaymentInfo
+                {
+                    PolicyId = policy.Id,
+                    PolicyName = policy.PolicyName,
+                    InsuranceCompany = policy.InsuranceCompany,
+                    PolicyType = policy.PolicyType,
+                    Amount = policy.PremiumAmount,
+                    DueDate = dueDate,
+                    PaidDate = existingPayment?.PaymentDate,
+                    Status = GetPaymentStatus(dueDate, existingPayment?.PaymentDate),
+                    PremiumFrequency = policy.PremiumFrequency.ToString()
+                });
+            }
+        }
+
+        return paymentInfos.OrderBy(p => p.DueDate).ToList();
+    }
+
+    private string GetPaymentStatus(DateTime dueDate, DateTime? paidDate)
+    {
+        if (paidDate.HasValue) return "Paid";
+        if (dueDate < DateTime.Today) return "Overdue";
+        if (dueDate <= DateTime.Today.AddDays(7)) return "Due Soon";
+        return "Due";
+    }
+
+    private void CalculateSummaryMetrics()
+    {
+        var currentMonth = DateTime.Today.Month;
+        var currentYear = DateTime.Today.Year;
+
+        totalAnnualPremiums = allPolicies.Where(p => p.Status == InsuranceStatus.Active).Sum(p => p.PremiumAmount * 12);
+        monthlyPremiums = totalAnnualPremiums / 12;
+
+        var thisMonthPayments = allPayments.Where(p => p.DueDate.Month == currentMonth && p.DueDate.Year == currentYear);
+        paidThisMonth = thisMonthPayments.Where(p => p.Status == "Paid").Sum(p => p.Amount);
+        paymentsThisMonth = thisMonthPayments.Count(p => p.Status == "Paid");
+
+        dueThisMonth = thisMonthPayments.Where(p => p.Status != "Paid").Sum(p => p.Amount);
+        paymentsDueThisMonth = thisMonthPayments.Count(p => p.Status != "Paid");
+
+        var overduePaymentsList = allPayments.Where(p => p.Status == "Overdue").ToList();
+        overdueAmount = overduePaymentsList.Sum(p => p.Amount);
+        overdueCount = overduePaymentsList.Count;
+
+        onTimePayments = allPayments.Count(p => p.Status == "Paid");
+        dueSoonPayments = allPayments.Count(p => p.Status == "Due Soon");
+        overduePayments = allPayments.Count(p => p.Status == "Overdue");
+
+        upcomingPayments = allPayments.Where(p => p.Status != "Paid" && p.DueDate >= DateTime.Today)
+            .OrderBy(p => p.DueDate).ToList();
+    }
+
+    private void ApplyFilters()
+    {
+        filteredPayments = allPayments.ToList();
+
+        if (!string.IsNullOrEmpty(searchTerm))
+        {
+            filteredPayments = filteredPayments.Where(p => 
+                p.PolicyName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                p.InsuranceCompany.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)).ToList();
+        }
+
+        if (!string.IsNullOrEmpty(selectedPolicyType))
+        {
+            filteredPayments = filteredPayments.Where(p => p.PolicyType == selectedPolicyType).ToList();
+        }
+
+        if (!string.IsNullOrEmpty(selectedStatus))
+        {
+            filteredPayments = filteredPayments.Where(p => p.Status == selectedStatus).ToList();
+        }
+
+        switch (currentTimeFilter)
+        {
+            case TimeFilter.ThisMonth:
+                var thisMonth = DateTime.Today.Month;
+                var thisYear = DateTime.Today.Year;
+                filteredPayments = filteredPayments.Where(p => p.DueDate.Month == thisMonth && p.DueDate.Year == thisYear).ToList();
+                break;
+            case TimeFilter.NextMonth:
+                var nextMonth = DateTime.Today.AddMonths(1);
+                filteredPayments = filteredPayments.Where(p => p.DueDate.Month == nextMonth.Month && p.DueDate.Year == nextMonth.Year).ToList();
+                break;
+        }
+
+        filteredPayments = filteredPayments.OrderBy(p => p.DueDate).ToList();
+    }
+
+    private async Task OnSearchChanged(ChangeEventArgs e)
+    {
+        searchTerm = e.Value?.ToString() ?? string.Empty;
+        ApplyFilters();
+    }
+
+    private async Task OnFilterChanged(ChangeEventArgs e)
+    {
+        ApplyFilters();
+    }
+
+    private void OnFilterChanged()
+    {
+        ApplyFilters();
+    }
+
+    private void SetTimeFilter(TimeFilter filter)
+    {
+        currentTimeFilter = filter;
+        ApplyFilters();
+    }
+
+    private async Task RefreshData()
+    {
+        await LoadPremiumData();
+    }
+
+    private void RecordPayment()
+    {
+        showRecordPaymentModal = true;
+        recordPaymentAmount = 0;
+        recordPaymentDate = DateTime.Today;
+        selectedPaymentPolicyId = string.Empty;
+    }
+
+    private void CloseRecordPaymentModal()
+    {
+        showRecordPaymentModal = false;
+    }
+
+    private async Task SavePaymentRecord()
+    {
+        if (string.IsNullOrEmpty(selectedPaymentPolicyId) || recordPaymentAmount <= 0)
+            return;
+
+        try
+        {
+            var payment = new InsurancePremiumPayment
+            {
+                Id = Guid.NewGuid().ToString(),
+                InsuranceId = selectedPaymentPolicyId,
+                Amount = recordPaymentAmount,
+                PaymentDate = recordPaymentDate,
+                PaymentMethod = "Manual Entry",
+                TransactionReference = $"MANUAL-{DateTime.Now:yyyyMMddHHmmss}",
+                CreatedAt = DateTime.Now
+            };
+
+            await InsuranceService.CreatePremiumPaymentAsync(payment);
+            CloseRecordPaymentModal();
+            await LoadPremiumData();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error recording payment: {ex.Message}");
+        }
+    }
+
+    private async Task MarkAsPaid(PremiumPaymentInfo payment)
+    {
+        selectedPaymentPolicyId = payment.PolicyId;
+        recordPaymentAmount = payment.Amount;
+        recordPaymentDate = DateTime.Today;
+        await SavePaymentRecord();
+    }
+
+    private void ViewPolicy(string policyId) => Navigation.NavigateTo($"/insurance/view/{policyId}");
+
+    private async Task SetupAutoPayReminders()
+    {
+        // Implementation for setting up automatic payment reminders
+        await JSRuntime.InvokeVoidAsync("alert", "Auto-pay reminders setup feature coming soon!");
+    }
+
+    private async Task ExportPaymentHistory()
+    {
+        // Implementation for exporting payment history
+        await JSRuntime.InvokeVoidAsync("alert", "Export functionality coming soon!");
+    }
+
+    // Helper methods for styling
+    private string GetPolicyTypeGradient(string policyType) => policyType.ToLower() switch
+    {
+        "life" => "from-purple-500 to-indigo-600",
+        "health" => "from-green-500 to-emerald-600",
+        "auto" => "from-blue-500 to-cyan-600",
+        "property" => "from-orange-500 to-red-600",
+        "disability" => "from-pink-500 to-rose-600",
+        _ => "from-gray-500 to-slate-600"
+    };
+
+    private string GetPolicyTypeIcon(string policyType) => policyType.ToLower() switch
+    {
+        "life" => "♥",
+        "health" => "⚕",
+        "auto" => "🚗",
+        "property" => "🏠",
+        "disability" => "🛡",
+        _ => "📋"
+    };
+
+    private string GetPaymentUrgencyClass(int daysUntilDue) => daysUntilDue switch
+    {
+        <= 0 => "bg-red-50 border border-red-200",
+        <= 7 => "bg-orange-50 border border-orange-200",
+        <= 14 => "bg-yellow-50 border border-yellow-200",
+        _ => "bg-gray-50 border border-gray-200"
+    };
+
+    private string GetPaymentUrgencyTextClass(int daysUntilDue) => daysUntilDue switch
+    {
+        <= 0 => "text-red-600",
+        <= 7 => "text-orange-600",
+        <= 14 => "text-yellow-600",
+        _ => "text-gray-500"
+    };
+
+    private string GetPaymentUrgencyText(int daysUntilDue) => daysUntilDue switch
+    {
+        <= 0 => "Overdue",
+        1 => "Due tomorrow",
+        <= 7 => $"Due in {daysUntilDue} days",
+        _ => $"{daysUntilDue} days"
+    };
+
+    private string GetStatusBadgeClass(string status) => status.ToLower() switch
+    {
+        "paid" => "bg-green-100 text-green-800",
+        "due soon" => "bg-yellow-100 text-yellow-800",
+        "overdue" => "bg-red-100 text-red-800",
+        _ => "bg-gray-100 text-gray-800"
+    };
+
+    // Helper classes and enums
+    public enum TimeFilter
+    {
+        ThisMonth,
+        NextMonth,
+        All
+    }
+
+    public class PremiumPaymentInfo
+    {
+        public string PolicyId { get; set; } = string.Empty;
+        public string PolicyName { get; set; } = string.Empty;
+        public string InsuranceCompany { get; set; } = string.Empty;
+        public string PolicyType { get; set; } = string.Empty;
+        public decimal Amount { get; set; }
+        public DateTime DueDate { get; set; }
+        public DateTime? PaidDate { get; set; }
+        public string Status { get; set; } = string.Empty;
+        public string PremiumFrequency { get; set; } = string.Empty;
+    }
+}

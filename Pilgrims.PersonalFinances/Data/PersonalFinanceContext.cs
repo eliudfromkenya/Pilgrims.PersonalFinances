@@ -79,7 +79,10 @@ public class PersonalFinanceContext : DbContext
 
     // Insurance & Obligations
     public DbSet<Insurance> Insurances { get; set; }
+    public DbSet<InsurancePremiumPayment> InsurancePremiumPayments { get; set; }
     public DbSet<InsuranceClaim> InsuranceClaims { get; set; }
+    public DbSet<InsuranceBeneficiary> InsuranceBeneficiaries { get; set; }
+    public DbSet<InsuranceDocument> InsuranceDocuments { get; set; }
     public DbSet<InsuranceNotification> InsuranceNotifications { get; set; }
     public DbSet<Obligation> Obligations { get; set; }
     public DbSet<ObligationPayment> ObligationPayments { get; set; }
@@ -856,6 +859,52 @@ public class PersonalFinanceContext : DbContext
             entity.HasIndex(e => e.ClaimNumber).IsUnique();
             entity.HasIndex(e => e.ClaimDate);
             entity.HasIndex(e => e.Status);
+        });
+
+        // Configure InsuranceBeneficiary entity
+        modelBuilder.Entity<InsuranceBeneficiary>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.FullName).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Relationship).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Phone).HasMaxLength(15);
+            entity.Property(e => e.Email).HasMaxLength(200);
+            entity.Property(e => e.Address).HasMaxLength(500);
+            entity.Property(e => e.Percentage).HasPrecision(5, 2);
+            entity.Property(e => e.IdentificationNumber).HasMaxLength(50);
+            entity.Property(e => e.Notes).HasMaxLength(500);
+
+            entity.HasOne(e => e.Insurance)
+                  .WithMany(i => i.Beneficiaries)
+                  .HasForeignKey(e => e.InsuranceId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(e => e.FullName);
+            entity.HasIndex(e => e.IsActive);
+        });
+
+        // Configure InsuranceDocument entity
+        modelBuilder.Entity<InsuranceDocument>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.DocumentName).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.DocumentType).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.FilePath).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.FileType).HasMaxLength(50);
+            entity.Property(e => e.Description).HasMaxLength(500);
+
+            entity.HasOne(e => e.Insurance)
+                  .WithMany(i => i.Documents)
+                  .HasForeignKey(e => e.InsuranceId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Claim)
+                  .WithMany(c => c.Documents)
+                  .HasForeignKey(e => e.ClaimId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasIndex(e => e.DocumentType);
+            entity.HasIndex(e => e.UploadDate);
         });
 
         // Configure InsuranceNotification entity

@@ -82,7 +82,7 @@
             @foreach (var policy in Asset.InsurancePolicies.OrderByDescending(p => p.PolicyStartDate))
             {
                 var isActive = policy.IsActive;
-                var isExpiringSoon = policy.RenewalDate.HasValue && policy.RenewalDate.Value <= DateTime.Now.AddDays(30);
+                var isExpiringSoon = policy.PolicyEndDate <= DateTime.Now.AddDays(30);
                 
                 <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 @(isActive ? "bg-white dark:bg-gray-800" : "bg-gray-50 dark:bg-gray-700/50")">
                     <div class="flex items-start justify-between">
@@ -270,7 +270,7 @@
     {
         return Asset.InsurancePolicies?
             .Where(p => p.IsActive)
-            .Sum(p => p.AnnualPremium * GetPremiumMultiplier(p.PaymentFrequency)) ?? 0;
+            .Sum(p => p.AnnualPremium) ?? 0;
     }
 
     private decimal GetPremiumMultiplier(string? frequency)
