@@ -41,6 +41,29 @@ public interface INotificationService
     // Notification Settings
     Task<bool> IsNotificationEnabledAsync(Pilgrims.PersonalFinances.Models.Enums.AppNotificationType type);
     Task SetNotificationEnabledAsync(Pilgrims.PersonalFinances.Models.Enums.AppNotificationType type, bool enabled);
+    Task<NotificationSettings> GetNotificationSettingsAsync(Pilgrims.PersonalFinances.Models.Enums.AppNotificationType type);
+    Task SaveNotificationSettingsAsync(NotificationSettings settings);
+    Task<List<NotificationSettings>> GetAllNotificationSettingsAsync();
+    Task SaveAllNotificationSettingsAsync(List<NotificationSettings> settings);
+    
+    // Snooze Management
+    Task SnoozeNotificationAsync(string notificationId, TimeSpan duration);
+    Task UnsnoozeNotificationAsync(string notificationId);
+    Task<List<TransactionNotification>> GetSnoozedNotificationsAsync();
+    
+    // Bulk Operations
+    Task ClearAllNotificationsAsync();
+    Task EnableAllNotificationsAsync();
+    Task DisableAllNotificationsAsync();
+    
+    // Goal-related Notifications
+    Task CreateGoalReminderAsync(string goalId);
+    Task CreateGoalDeadlineNotificationAsync(string goalId);
+    Task CreateGoalAchievedNotificationAsync(string goalId);
+    Task CreateGoalProgressNotificationAsync(string goalId, decimal progressPercentage);
+    
+    // Account Reconciliation Notifications
+    Task CreateReconciliationReminderAsync(string accountId);
     
     // Real-time Notifications (for future implementation)
     event EventHandler<TransactionNotification>? NotificationCreated;

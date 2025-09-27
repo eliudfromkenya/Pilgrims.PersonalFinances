@@ -148,6 +148,8 @@ namespace Pilgrims.PersonalFinances.Models
             }
         }
 
+        public DateTime? SnoozedUntil { get; set; }
+
         // Methods
         /// <summary>
         /// Validates the notification

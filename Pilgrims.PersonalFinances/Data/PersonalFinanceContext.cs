@@ -95,6 +95,9 @@ public class PersonalFinanceContext : DbContext
     public DbSet<ReportTemplate> ReportTemplates { get; set; }
     public DbSet<ReportParameter> ReportParameters { get; set; }
 
+    // Goal Management
+    public DbSet<Goal> Goals { get; set; }
+
     // User Management
     public DbSet<User> Users { get; set; }
     public DbSet<UserSession> UserSessions { get; set; }
@@ -1025,6 +1028,24 @@ public class PersonalFinanceContext : DbContext
 
             entity.HasIndex(e => e.ScheduledDate);
             entity.HasIndex(e => e.IsSent);
+        });
+
+        // Configure Goal entity
+        modelBuilder.Entity<Goal>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.TargetAmount).HasPrecision(18, 2).IsRequired();
+            entity.Property(e => e.CurrentAmount).HasPrecision(18, 2);
+            entity.Property(e => e.Category).HasMaxLength(50);
+            entity.Property(e => e.Icon).HasMaxLength(20);
+            entity.Property(e => e.Color).HasMaxLength(50);
+            entity.Property(e => e.Notes).HasMaxLength(1000);
+
+            entity.HasIndex(e => e.GoalType);
+            entity.HasIndex(e => e.IsActive);
+            entity.HasIndex(e => e.TargetDate);
         });
 
         // Seed data for categories if needed

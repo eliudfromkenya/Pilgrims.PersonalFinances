@@ -397,4 +397,324 @@ public class NotificationService : INotificationService
     }
 
     #endregion
+
+    #region Goal and Debt Notifications
+
+    public async Task CreateGoalReminderNotificationAsync(Goal goal)
+    {
+        if (!goal.IsReminderDue()) return;
+
+        var notification = new TransactionNotification
+        {
+            Id = Guid.NewGuid().ToString(),
+            Title = $"Goal Progress: {goal.Name}",
+            Message = $"You're {goal.ProgressPercentage:F1}% towards your {goal.Name} goal. {goal.FormattedRemainingAmount} remaining to reach {goal.FormattedTargetAmount}",
+            NotificationType = AppNotificationType.SystemAlert,
+            Priority = NotificationPriority.Medium,
+            ScheduledDate = DateTime.UtcNow,
+            IsRead = false,
+            IsDismissed = false
+        };
+
+        _context.TransactionNotifications.Add(notification);
+        await _context.SaveChangesAsync();
+        
+        goal.MarkReminderSent();
+        _context.Goals.Update(goal);
+        await _context.SaveChangesAsync();
+        
+        NotificationCreated?.Invoke(this, notification);
+    }
+
+    public async Task CreateDebtPaymentReminderAsync(Debt debt, int advanceDays = 3)
+    {
+        var nextPaymentDate = DateTime.Now.AddDays((debt.PaymentDueDay ?? 1) - DateTime.Now.Day);
+        if (nextPaymentDate <= DateTime.Now)
+            nextPaymentDate = nextPaymentDate.AddMonths(1);
+
+        // Check if notification already exists for this debt and payment date
+        var existingNotification = await _context.TransactionNotifications
+            .FirstOrDefaultAsync(n => 
+                n.Message.Contains(debt.Name) &&
+                n.NotificationType == AppNotificationType.DebtPayment &&
+                n.ScheduledDate.Date == nextPaymentDate.AddDays(-advanceDays).Date);
+
+        if (existingNotification != null) return;
+
+        var notification = new TransactionNotification
+        {
+            Id = Guid.NewGuid().ToString(),
+            Title = $"Debt Payment Due: {debt.Name}",
+            Message = $"Your {debt.Name} payment of {debt.MinimumPayment:C} is due on {nextPaymentDate:MMM dd, yyyy}. Current balance: {debt.CurrentBalance:C}",
+            NotificationType = AppNotificationType.DebtPayment,
+            Priority = NotificationPriority.High,
+            ScheduledDate = nextPaymentDate.AddDays(-advanceDays),
+            IsRead = false,
+            IsDismissed = false
+        };
+
+        _context.TransactionNotifications.Add(notification);
+        await _context.SaveChangesAsync();
+        NotificationCreated?.Invoke(this, notification);
+    }
+
+    public async Task CreateReconciliationReminderAsync(string accountId)
+    {
+        var account = await _context.Accounts.FindAsync(accountId);
+        if (account == null) return;
+
+        // Check if reconciliation reminder already exists for this month
+        var existingNotification = await _context.TransactionNotifications
+            .FirstOrDefaultAsync(n => 
+                n.Message.Contains(account.Name) &&
+                n.NotificationType == AppNotificationType.ReconciliationReminder &&
+                n.ScheduledDate.Month == DateTime.Now.Month &&
+                n.ScheduledDate.Year == DateTime.Now.Year);
+
+        if (existingNotification != null) return;
+
+        var notification = new TransactionNotification
+        {
+            Id = Guid.NewGuid().ToString(),
+            Title = $"Reconciliation Due: {account.Name}",
+            Message = $"It's time to reconcile your {account.Name} account. Last reconciliation was over 30 days ago.",
+            NotificationType = AppNotificationType.ReconciliationReminder,
+            Priority = NotificationPriority.Medium,
+            ScheduledDate = DateTime.UtcNow,
+            IsRead = false,
+            IsDismissed = false
+        };
+
+        _context.TransactionNotifications.Add(notification);
+        await _context.SaveChangesAsync();
+        NotificationCreated?.Invoke(this, notification);
+    }
+
+    public async Task ProcessGoalRemindersAsync()
+    {
+        var activeGoals = await _context.Goals
+            .Where(g => g.IsActive && !g.IsCompleted && g.EnableReminders)
+            .ToListAsync();
+
+        foreach (var goal in activeGoals)
+        {
+            if (goal.IsReminderDue())
+            {
+                await CreateGoalReminderNotificationAsync(goal);
+            }
+        }
+    }
+
+    public async Task ProcessDebtPaymentRemindersAsync()
+    {
+        var activeDebts = await _context.Debts
+            .Where(d => d.IsActive && d.CurrentBalance > 0)
+            .ToListAsync();
+
+        foreach (var debt in activeDebts)
+        {
+            await CreateDebtPaymentReminderAsync(debt);
+        }
+    }
+
+    public async Task ProcessReconciliationRemindersAsync()
+    {
+        var accounts = await _context.Accounts
+            .Where(a => a.IsActive)
+            .ToListAsync();
+
+        foreach (var account in accounts)
+        {
+            // Check if account needs reconciliation (simplified logic)
+            var lastReconciliation = await _context.ReconciliationSessions
+                .Where(r => r.AccountId == account.Id && r.Status == ReconciliationStatus.Completed)
+                .OrderByDescending(r => r.CreatedAt)
+                .FirstOrDefaultAsync();
+
+            if (lastReconciliation == null || 
+                (DateTime.Now - lastReconciliation.CreatedAt).TotalDays > 30)
+            {
+                await CreateReconciliationReminderAsync(account.Id);
+            }
+        }
+    }
+
+    #endregion
+
+    #region Enhanced Notification Management
+
+    public async Task SnoozeNotificationAsync(string notificationId, int minutes)
+    {
+        var notification = await _context.TransactionNotifications.FindAsync(notificationId);
+        if (notification != null)
+        {
+            // For TransactionNotification, we'll update the scheduled date
+            notification.ScheduledDate = DateTime.UtcNow.AddMinutes(minutes);
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    public async Task SnoozeNotificationAsync(string notificationId, TimeSpan duration)
+    {
+        var notification = await _context.TransactionNotifications.FindAsync(notificationId);
+        if (notification != null)
+        {
+            notification.SnoozedUntil = DateTime.UtcNow.Add(duration);
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    public async Task UnsnoozeNotificationAsync(string notificationId)
+    {
+        var notification = await _context.TransactionNotifications.FindAsync(notificationId);
+        if (notification != null)
+        {
+            notification.SnoozedUntil = null;
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    public async Task<List<TransactionNotification>> GetSnoozedNotificationsAsync()
+    {
+        return await _context.TransactionNotifications
+            .Where(n => n.SnoozedUntil.HasValue && n.SnoozedUntil > DateTime.UtcNow)
+            .OrderBy(n => n.SnoozedUntil)
+            .ToListAsync();
+    }
+
+    public async Task ClearAllNotificationsAsync()
+    {
+        var notifications = await _context.TransactionNotifications.ToListAsync();
+        _context.TransactionNotifications.RemoveRange(notifications);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task EnableAllNotificationsAsync()
+    {
+        // This would typically update user preferences in a settings table
+        // For now, we'll implement a placeholder
+        await Task.CompletedTask;
+    }
+
+    public async Task DisableAllNotificationsAsync()
+    {
+        // This would typically update user preferences in a settings table
+        // For now, we'll implement a placeholder
+        await Task.CompletedTask;
+    }
+
+    public async Task<NotificationSettings> GetNotificationSettingsAsync(AppNotificationType type)
+    {
+        // This would typically retrieve from a settings table
+        // For now, return default settings
+        return new NotificationSettings
+        {
+            NotificationType = type,
+            IsEnabled = true,
+            DaysInAdvance = 3,
+            PreferredChannels = NotificationChannel.InApp
+        };
+    }
+
+    public async Task SaveNotificationSettingsAsync(NotificationSettings settings)
+    {
+        // This would typically save to a settings table
+        // For now, we'll implement a placeholder
+        await Task.CompletedTask;
+    }
+
+    public async Task<List<NotificationSettings>> GetAllNotificationSettingsAsync()
+    {
+        // This would typically retrieve all settings from a settings table
+        // For now, return default settings for all types
+        var allTypes = Enum.GetValues<AppNotificationType>();
+        var settings = new List<NotificationSettings>();
+        
+        foreach (var type in allTypes)
+        {
+            settings.Add(new NotificationSettings
+            {
+                NotificationType = type,
+                IsEnabled = true,
+                DaysInAdvance = 3,
+                PreferredChannels = NotificationChannel.InApp
+            });
+        }
+        
+        return settings;
+    }
+
+    public async Task SaveAllNotificationSettingsAsync(List<NotificationSettings> settings)
+    {
+        // This would typically save all settings to a settings table
+        // For now, we'll implement a placeholder
+        await Task.CompletedTask;
+    }
+
+    public async Task CreateGoalReminderAsync(string goalId)
+    {
+        var goal = await _context.Goals.FindAsync(goalId);
+        if (goal != null)
+        {
+            await CreateNotificationAsync(
+                $"Goal Reminder: {goal.Name}",
+                $"Don't forget about your goal '{goal.Name}'. Target amount: {goal.TargetAmount:C}",
+                AppNotificationType.SystemAlert,
+                NotificationPriority.Medium
+            );
+        }
+    }
+
+    public async Task CreateGoalDeadlineNotificationAsync(string goalId)
+    {
+        var goal = await _context.Goals.FindAsync(goalId);
+        if (goal != null)
+        {
+            await CreateNotificationAsync(
+                $"Goal Deadline Approaching: {goal.Name}",
+                $"Your goal '{goal.Name}' deadline is approaching on {goal.TargetDate:MMM dd, yyyy}",
+                AppNotificationType.SystemAlert,
+                NotificationPriority.High
+            );
+        }
+    }
+
+    public async Task CreateGoalAchievedNotificationAsync(string goalId)
+    {
+        var goal = await _context.Goals.FindAsync(goalId);
+        if (goal != null)
+        {
+            await CreateNotificationAsync(
+                $"🎉 Goal Achieved: {goal.Name}",
+                $"Congratulations! You've achieved your goal '{goal.Name}' with a target of {goal.TargetAmount:C}",
+                AppNotificationType.SystemAlert,
+                NotificationPriority.High
+            );
+        }
+    }
+
+    public async Task CreateGoalProgressNotificationAsync(string goalId, decimal progressPercentage)
+    {
+        var goal = await _context.Goals.FindAsync(goalId);
+        if (goal != null)
+        {
+            await CreateNotificationAsync(
+                $"Goal Progress: {goal.Name}",
+                $"You're {progressPercentage:F1}% towards your goal '{goal.Name}'. Keep it up!",
+                AppNotificationType.SystemAlert,
+                NotificationPriority.Low
+            );
+        }
+    }
+
+    public async Task ProcessAllPendingNotificationsAsync()
+    {
+        await CreateUpcomingTransactionNotificationsAsync();
+        await CreateOverdueTransactionNotificationsAsync();
+        await ProcessGoalRemindersAsync();
+        await ProcessDebtPaymentRemindersAsync();
+        await ProcessReconciliationRemindersAsync();
+    }
+
+    #endregion
 }

@@ -97,6 +97,11 @@ namespace Pilgrims.PersonalFinances.Models
         public string? Tag { get; set; }
 
         /// <summary>
+        /// Goal ID for linking budgets to goals
+        /// </summary>
+        public int? GoalId { get; set; }
+
+        /// <summary>
         /// Alert levels enabled for this budget (comma-separated)
         /// </summary>
         [MaxLength(20)]
@@ -127,6 +132,11 @@ namespace Pilgrims.PersonalFinances.Models
         /// Account for account-based budgets
         /// </summary>
         public virtual Account? Account { get; set; }
+
+        /// <summary>
+        /// Goal for budget-goal linking
+        /// </summary>
+        public virtual Goal? Goal { get; set; }
 
         /// <summary>
         /// Budget alerts for this budget

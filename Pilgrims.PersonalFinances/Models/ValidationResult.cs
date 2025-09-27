@@ -13,7 +13,7 @@ namespace Pilgrims.PersonalFinances.Models
         /// <summary>
         /// Gets or sets the list of validation errors
         /// </summary>
-        public List<string> Errors { get; set; } = new List<string>();
+        public List<string> Errors { get; set; } = [];
 
         /// <summary>
         /// Creates a successful validation result
@@ -42,6 +42,10 @@ namespace Pilgrims.PersonalFinances.Models
         public static ValidationResult Failure(string error)
         {
             return new ValidationResult { IsValid = false, Errors = new List<string> { error } };
+        }
+        public void AddError(string str)
+        {
+            Errors?.Add(str);    
         }
     }
 }

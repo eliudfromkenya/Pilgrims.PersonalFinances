@@ -265,6 +265,47 @@ public class Transaction : BaseEntity
     [StringLength(100)]
     public string? CreatedBy { get; set; }
 
+    // Data Linking Properties
+    /// <summary>
+    /// ID of the budget this transaction is linked to
+    /// </summary>
+    public string? BudgetId { get; set; }
+
+    /// <summary>
+    /// Navigation property to the linked budget
+    /// </summary>
+    public Budget? Budget { get; set; }
+
+    /// <summary>
+    /// ID of the debt this transaction is linked to (for debt payments)
+    /// </summary>
+    public string? DebtId { get; set; }
+
+    /// <summary>
+    /// Navigation property to the linked debt
+    /// </summary>
+    public Debt? Debt { get; set; }
+
+    /// <summary>
+    /// ID of the asset this transaction is linked to (for asset purchases/maintenance)
+    /// </summary>
+    public string? AssetId { get; set; }
+
+    /// <summary>
+    /// Navigation property to the linked asset
+    /// </summary>
+    public Asset? Asset { get; set; }
+
+    /// <summary>
+    /// ID of the goal this transaction is linked to (for goal contributions)
+    /// </summary>
+    public int? GoalId { get; set; }
+
+    /// <summary>
+    /// Navigation property to the linked goal
+    /// </summary>
+    public virtual Goal? Goal { get; set; }
+
     /// <summary>
     /// Gets the effective amount based on transaction type
     /// (negative for expenses, positive for income)

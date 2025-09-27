@@ -205,6 +205,17 @@ namespace Pilgrims.PersonalFinances.Models
         /// </summary>
         public virtual ICollection<Transaction> GeneratedTransactions { get; set; } = new List<Transaction>();
 
+        // Data Linking Properties
+        /// <summary>
+        /// ID of the debt this scheduled transaction is linked to (for automated debt payments)
+        /// </summary>
+        public string? DebtId { get; set; }
+
+        /// <summary>
+        /// Navigation property to the linked debt
+        /// </summary>
+        public virtual Debt? Debt { get; set; }
+
         // Computed Properties
         /// <summary>
         /// Gets whether this scheduled transaction is overdue
