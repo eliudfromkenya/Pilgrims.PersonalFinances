@@ -1,0 +1,180 @@
+@using Pilgrims.PersonalFinances.Models.DTOs
+@using Pilgrims.PersonalFinances.Components.Shared
+@inject IJSRuntime JSRuntime
+
+<div id="income-statement-report" class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
+    <div class="flex justify-between items-center mb-6">
+        <h3 class="text-xl font-semibold text-gray-800 dark:text-white flex items-center">
+            <span class="mr-2">💰</span> Income Statement
+            <span class="ml-4 text-sm text-gray-500">@Report.StartDate.ToString("MMM dd") - @Report.EndDate.ToString("MMM dd, yyyy")</span>
+        </h3>
+        <ExportButton ReportType="IncomeStatement" 
+                     ReportData="Report" 
+                     ElementId="income-statement-report" 
+                     FileName="@($"IncomeStatement_{DateTime.Now:yyyyMMdd}")" />
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="bg-gradient-to-r from-green-400 to-green-600 p-4 rounded-xl text-white">
+            <div class="text-sm opacity-90">Total Income</div>
+            <div class="text-2xl font-bold">@Report.TotalIncome.ToString("C")</div>
+        </div>
+        <div class="bg-gradient-to-r from-red-400 to-red-600 p-4 rounded-xl text-white">
+            <div class="text-sm opacity-90">Total Expenses</div>
+            <div class="text-2xl font-bold">@Report.TotalExpenses.ToString("C")</div>
+        </div>
+        <div class="bg-gradient-to-r from-blue-400 to-blue-600 p-4 rounded-xl text-white">
+            <div class="text-sm opacity-90">Net Income</div>
+            <div class="text-2xl font-bold">@Report.NetIncome.ToString("C")</div>
+        </div>
+    </div>
+
+    <!-- Income vs Expenses Chart -->
+    <div class="mb-8">
+        @if (Report.IncomeByCategory?.Any() == true || Report.ExpensesByCategory?.Any() == true)
+        {
+            var chartData = new List<BarChart.ChartDataItem>();
+            
+            if (Report.IncomeByCategory != null)
+            {
+                chartData.AddRange(Report.IncomeByCategory.Select(c => new BarChart.ChartDataItem 
+                { 
+                    Label = c.CategoryName, 
+                    Value = c.Amount, 
+                    Category = "Income"
+                }));
+            }
+            
+            if (Report.ExpensesByCategory != null)
+            {
+                chartData.AddRange(Report.ExpensesByCategory.Select(c => new BarChart.ChartDataItem 
+                { 
+                    Label = c.CategoryName, 
+                    Value = c.Amount, 
+                    Category = "Expenses"
+                }));
+            }
+            
+            <BarChart Title="Income vs Expenses by Category"
+                     Subtitle="Comparison of income and expenses across categories"
+                     Data="chartData"
+                     ShowValueLabels="true"
+                     EnableDrillDown="true"
+                   @*   OnItemClick="EventCallback.Factory.Create(this, OnCategoryClick)" *@
+                     Colors="@(new[] { "#10b981", "#ef4444" })"
+                     ValueFormat="C" />
+        }
+        else
+        {
+            <div class="text-center text-gray-500 py-8">No data available for chart</div>
+        }
+    </div>
+
+    <!-- Detailed Breakdown -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Income Breakdown -->
+        <div>
+            <h4 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Income by Category</h4>
+            <div class="space-y-3">
+                @if (Report.IncomeByCategory?.Any() == true)
+                {
+                    @foreach (var income in Report.IncomeByCategory.OrderByDescending(i => i.Amount))
+                    {
+                        var percentage = Report.TotalIncome > 0 ? (income.Amount / Report.TotalIncome) * 100 : 0;
+                        <div class="flex items-center justify-between p-3 bg-white/50 dark:bg-gray-700/50 rounded-lg cursor-pointer hover:bg-white/70 dark:hover:bg-gray-700/70 transition-colors"
+                             @onclick="() => OnCategoryClick?.Invoke(income.CategoryName)">
+                            <div class="flex items-center flex-1">
+                                <span class="text-green-600 mr-3">💰</span>
+                                <span class="text-gray-700 dark:text-gray-300 flex-1">@income.CategoryName</span>
+                                <div class="w-20 bg-gray-200 dark:bg-gray-600 rounded-full h-2 mx-3">
+                                    <div class="bg-gradient-to-r from-green-400 to-green-600 h-2 rounded-full transition-all duration-1000" 
+                                         style="width: @(percentage)%"></div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-semibold text-green-600">@income.Amount.ToString("C")</div>
+                                <div class="text-xs text-gray-500">@percentage.ToString("F1")%</div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-center text-gray-500 py-4">No income data available</div>
+                }
+            </div>
+        </div>
+
+        <!-- Expense Breakdown -->
+        <div>
+            <h4 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Expenses by Category</h4>
+            <div class="space-y-3">
+                @if (Report.ExpensesByCategory?.Any() == true)
+                {
+                    @foreach (var expense in Report.ExpensesByCategory.OrderByDescending(e => e.Amount))
+                    {
+                        var percentage = Report.TotalExpenses > 0 ? (expense.Amount / Report.TotalExpenses) * 100 : 0;
+                        <div class="flex items-center justify-between p-3 bg-white/50 dark:bg-gray-700/50 rounded-lg cursor-pointer hover:bg-white/70 dark:hover:bg-gray-700/70 transition-colors"
+                             @onclick="() => OnCategoryClick?.Invoke(expense.CategoryName)">
+                            <div class="flex items-center flex-1">
+                                <span class="text-red-600 mr-3">💸</span>
+                                <span class="text-gray-700 dark:text-gray-300 flex-1">@expense.CategoryName</span>
+                                <div class="w-20 bg-gray-200 dark:bg-gray-600 rounded-full h-2 mx-3">
+                                    <div class="bg-gradient-to-r from-red-400 to-red-600 h-2 rounded-full transition-all duration-1000" 
+                                         style="width: @(percentage)%"></div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-semibold text-red-600">@expense.Amount.ToString("C")</div>
+                                <div class="text-xs text-gray-500">@percentage.ToString("F1")%</div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-center text-gray-500 py-4">No expense data available</div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly Trend -->
+    @if (Report.MonthlyTrends?.Any() == true)
+    {
+        <div class="mt-8">
+            @{
+                var trendSeries = new List<LineChart.ChartSeries>
+                {
+                    new LineChart.ChartSeries
+                    {
+                        Name = "Monthly Trend",
+                        Data = Report.MonthlyTrends.OrderBy(m => m.Month).Select(m => new LineChart.ChartDataPoint
+                        {
+                            Label = m.MonthName,
+                            Value = m.Amount
+                        }).ToList(),
+                        Color = "#10b981"
+                    }
+                };
+                
+                var xAxisLabels = Report.MonthlyTrends.OrderBy(m => m.Month).Select(m => m.MonthName).ToList();
+            }
+            
+            <LineChart Title="Monthly Trend"
+                      Subtitle="Income and expenses over time"
+                      Series="trendSeries"
+                      XAxisLabels="xAxisLabels"
+                      ShowLegend="true"
+                      ShowArea="true"
+                      EnableDrillDown="false"
+                      ValueFormat="C" />
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public IncomeExpenseReportDto Report { get; set; } = new();
+    [Parameter] public Action<string>? OnCategoryClick { get; set; }
+}

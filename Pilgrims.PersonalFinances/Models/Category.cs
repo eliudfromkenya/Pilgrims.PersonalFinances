@@ -105,6 +105,11 @@ public class Category : BaseEntity
     }
 
     /// <summary>
+    /// ID of the user who owns this category
+    /// </summary>
+    public string? UserId { get; set; }
+
+    /// <summary>
     /// Gets the full hierarchical path of the category (e.g., "Food > Restaurants")
     /// </summary>
     public string FullPath

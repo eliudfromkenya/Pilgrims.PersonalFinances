@@ -1,0 +1,347 @@
+@using Pilgrims.PersonalFinances.Models.DTOs
+@inject IJSRuntime JSRuntime
+
+<div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10" id="category-analysis-report">
+    <div class="flex items-center justify-between mb-6">
+        <h3 class="text-xl font-semibold text-gray-800 dark:text-white flex items-center">
+            <span class="mr-2">🏷️</span> Category Analysis
+            <span class="ml-4 text-sm text-gray-500">@Report.StartDate.ToString("MMM dd") - @Report.EndDate.ToString("MMM dd, yyyy")</span>
+        </h3>
+        <ExportButton ReportType="CategoryAnalysis" 
+                      ReportData="Report" 
+                      ElementId="category-analysis-report" 
+                      FileName="@($"CategoryAnalysis_{Report.StartDate:yyyy-MM-dd}_to_{Report.EndDate:yyyy-MM-dd}")" />
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div class="bg-gradient-to-r from-blue-400 to-blue-600 p-4 rounded-xl text-white">
+            <div class="text-sm opacity-90">Total Spending</div>
+            <div class="text-2xl font-bold">@Report.TotalSpending.ToString("C")</div>
+        </div>
+        <div class="bg-gradient-to-r from-purple-400 to-purple-600 p-4 rounded-xl text-white">
+            <div class="text-sm opacity-90">Categories</div>
+            <div class="text-2xl font-bold">@(Report.Categories?.Count ?? 0)</div>
+        </div>
+        <div class="bg-gradient-to-r from-green-400 to-green-600 p-4 rounded-xl text-white">
+            <div class="text-sm opacity-90">Top Category</div>
+            <div class="text-lg font-bold">@(Report.Categories?.OrderByDescending(c => c.Amount).FirstOrDefault()?.Name ?? "N/A")</div>
+        </div>
+        <div class="bg-gradient-to-r from-indigo-400 to-indigo-600 p-4 rounded-xl text-white">
+            <div class="text-sm opacity-90">Avg per Category</div>
+            <div class="text-2xl font-bold">@((Report.Categories?.Count > 0 ? Report.TotalSpending / Report.Categories.Count : 0).ToString("C"))</div>
+        </div>
+    </div>
+
+    <!-- Category Pie Chart and Top Categories -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <!-- Category Spending Distribution -->
+        <div>
+            <h4 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Category Spending Distribution</h4>
+            @if (Report.Categories?.Any() == true)
+            {
+                <PieChart Data="@GetCategoryChartData()" 
+                          OnSegmentClick="@OnCategoryClick" 
+                          ShowLegend="true" />
+            }
+            else
+            {
+                <div class="text-center text-gray-500 py-8">
+                    <div class="text-4xl mb-2">📊</div>
+                    <div>No category data available</div>
+                </div>
+            }
+        </div>
+
+        <!-- Top Categories Bar Chart -->
+        <div>
+            <h4 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Top Spending Categories</h4>
+            <div class="space-y-4">
+                @if (Report.Categories?.Any() == true)
+                {
+                    var topCategories = Report.Categories.OrderByDescending(c => c.Amount).Take(8).ToList();
+                    var maxAmount = topCategories.FirstOrDefault()?.Amount ?? 1;
+                    
+                    @foreach (var category in topCategories)
+                    {
+                        var percentage = maxAmount > 0 ? (category.Amount / maxAmount) * 100 : 0;
+                        var totalPercentage = Report.TotalSpending > 0 ? (category.Amount / Report.TotalSpending) * 100 : 0;
+                        
+                        <div class="bg-white/50 dark:bg-gray-700/50 p-4 rounded-lg cursor-pointer hover:bg-white/70 dark:hover:bg-gray-600/50 transition-all"
+                             @onclick="() => OnCategoryClick(category.Name)">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center">
+                                    <span class="text-2xl mr-3">@GetCategoryIcon(category.Name)</span>
+                                    <div>
+                                        <div class="font-semibold text-gray-800 dark:text-white">@category.Name</div>
+                                        <div class="text-sm text-gray-600 dark:text-gray-300">@category.TransactionCount transactions</div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="font-bold text-lg">@category.Amount.ToString("C")</div>
+                                    <div class="text-sm text-gray-500">@totalPercentage.ToString("F1")% of total</div>
+                                </div>
+                            </div>
+                            <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-3">
+                                <div class="bg-gradient-to-r from-blue-400 to-blue-600 h-3 rounded-full transition-all duration-1000" 
+                                     style="width: @(percentage)%"></div>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly Category Trends -->
+    <div class="mb-8">
+        <h4 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Monthly Category Trends</h4>
+        <div class="bg-white/50 dark:bg-gray-700/50 p-6 rounded-xl">
+            <div class="h-64 flex items-end justify-between space-x-1">
+                @if (Report.MonthlyBreakdown?.Any() == true)
+                {
+                    var maxMonthlyValue = Report.MonthlyBreakdown.Max(m => m.Categories?.Max(c => c.Amount) ?? 0);
+                    if (maxMonthlyValue == 0) maxMonthlyValue = 1000;
+                    var topCategoriesForChart = Report.Categories?.OrderByDescending(c => c.Amount).Take(5).ToList() ?? new List<CategorySummaryDto>();
+                    var colors = new[] { "#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ef4444" };
+                    
+                    @foreach (var month in Report.MonthlyBreakdown.OrderBy(m => m.Month))
+                    {
+                        <div class="flex flex-col items-center flex-1">
+                            <div class="flex flex-col-reverse items-center w-full space-y-reverse space-y-1">
+                                @for (int i = 0; i < topCategoriesForChart.Count; i++)
+                                {
+                                    var category = topCategoriesForChart[i];
+                                    var monthlyAmount = month.Categories?.FirstOrDefault(c => c.Name == category.Name)?.Amount ?? 0;
+                                    var height = maxMonthlyValue > 0 ? (monthlyAmount / maxMonthlyValue) * 200 : 0;
+                                    
+                                    <div class="w-full transition-all duration-1000 cursor-pointer hover:opacity-80" 
+                                         style="height: @(height)px; min-height: @(monthlyAmount > 0 ? "4" : "0")px; background-color: @colors[i];"
+                                         title="@category.Name: @monthlyAmount.ToString("C")"
+                                         @onclick="() => OnCategoryClick(category.Name)"></div>
+                                }
+                            </div>
+                            <div class="text-xs text-center mt-2 text-gray-600 dark:text-gray-300">
+                                <div>@month.Month.ToString("MMM")</div>
+                                <div class="font-semibold">@(month.Categories?.Sum(c => c.Amount).ToString("C0") ?? "$0")</div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="w-full text-center text-gray-500 py-8">No monthly trend data available</div>
+                }
+            </div>
+            
+            <!-- Chart Legend -->
+            <div class="flex flex-wrap justify-center gap-4 mt-4">
+                @if (Report.Categories?.Any() == true)
+                {
+                    var topCategoriesForLegend = Report.Categories.OrderByDescending(c => c.Amount).Take(5).ToList();
+                    var colors = new[] { "#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ef4444" };
+                    @for (int i = 0; i < topCategoriesForLegend.Count; i++)
+                    {
+                        <div class="flex items-center cursor-pointer hover:opacity-80" @onclick="() => OnCategoryClick(topCategoriesForLegend[i].Name)">
+                            <div class="w-3 h-3 rounded mr-2" style="background-color: @colors[i]"></div>
+                            <span class="text-sm text-gray-600 dark:text-gray-300">@topCategoriesForLegend[i].Name</span>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Insights and Recommendations -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Spending Insights -->
+        <div class="bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-900/20 p-6 rounded-xl">
+            <h5 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Spending Insights</h5>
+            <div class="space-y-4">
+                @{
+                    var insights = GetSpendingInsights();
+                }
+                @foreach (var insight in insights)
+                {
+                    <div class="flex items-start text-sm text-gray-600 dark:text-gray-300">
+                        <span class="w-2 h-2 bg-blue-500 rounded-full mr-3 mt-2 flex-shrink-0"></span>
+                        <span>@insight</span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Optimization Recommendations -->
+        <div class="bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/20 dark:to-emerald-900/20 p-6 rounded-xl">
+            <h5 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Optimization Tips</h5>
+            <div class="space-y-4">
+                @{
+                    var recommendations = GetOptimizationRecommendations();
+                }
+                @foreach (var recommendation in recommendations)
+                {
+                    <div class="flex items-start text-sm text-gray-600 dark:text-gray-300">
+                        <span class="w-2 h-2 bg-green-500 rounded-full mr-3 mt-2 flex-shrink-0"></span>
+                        <span>@recommendation</span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Comparison -->
+    @if (Report.Categories?.Count > 1)
+    {
+        <div class="mt-8">
+            <h4 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Category Comparison</h4>
+            <div class="bg-white/50 dark:bg-gray-700/50 p-6 rounded-xl">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    @foreach (var category in Report.Categories.OrderByDescending(c => c.Amount))
+                    {
+                        var percentage = Report.TotalSpending > 0 ? (category.Amount / Report.TotalSpending) * 100 : 0;
+                        var avgTransactionAmount = category.TransactionCount > 0 ? category.Amount / category.TransactionCount : 0;
+                        
+                        <div class="bg-white/30 dark:bg-gray-600/30 p-4 rounded-lg cursor-pointer hover:bg-white/50 dark:hover:bg-gray-500/30 transition-all"
+                             @onclick="() => OnCategoryClick(category.Name)">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center">
+                                    <span class="text-xl mr-2">@GetCategoryIcon(category.Name)</span>
+                                    <span class="font-medium text-gray-800 dark:text-white">@category.Name</span>
+                                </div>
+                                <span class="text-sm font-semibold text-gray-600 dark:text-gray-300">@percentage.ToString("F1")%</span>
+                            </div>
+                            
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600 dark:text-gray-400">Total</span>
+                                    <span class="font-semibold">@category.Amount.ToString("C")</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600 dark:text-gray-400">Transactions</span>
+                                    <span class="font-semibold">@category.TransactionCount</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600 dark:text-gray-400">Avg per Transaction</span>
+                                    <span class="font-semibold">@avgTransactionAmount.ToString("C")</span>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public CategoryAnalysisDto Report { get; set; } = new();
+    [Parameter] public EventCallback<string> OnCategoryDrillDown { get; set; }
+
+    private string GetCategoryIcon(string category)
+    {
+        return category.ToLower() switch
+        {
+            var c when c.Contains("food") || c.Contains("grocery") || c.Contains("restaurant") => "🍽️",
+            var c when c.Contains("transport") || c.Contains("gas") || c.Contains("car") || c.Contains("fuel") => "🚗",
+            var c when c.Contains("housing") || c.Contains("rent") || c.Contains("mortgage") || c.Contains("home") => "🏠",
+            var c when c.Contains("entertainment") || c.Contains("fun") || c.Contains("movie") || c.Contains("game") => "🎬",
+            var c when c.Contains("health") || c.Contains("medical") || c.Contains("doctor") || c.Contains("pharmacy") => "🏥",
+            var c when c.Contains("shopping") || c.Contains("clothes") || c.Contains("retail") => "🛍️",
+            var c when c.Contains("utility") || c.Contains("electric") || c.Contains("water") || c.Contains("internet") => "⚡",
+            var c when c.Contains("education") || c.Contains("learning") || c.Contains("school") => "📚",
+            var c when c.Contains("investment") || c.Contains("saving") || c.Contains("retirement") => "💰",
+            var c when c.Contains("travel") || c.Contains("vacation") || c.Contains("hotel") => "✈️",
+            var c when c.Contains("insurance") => "🛡️",
+            var c when c.Contains("gift") || c.Contains("donation") => "🎁",
+            var c when c.Contains("subscription") || c.Contains("membership") => "📱",
+            var c when c.Contains("tax") => "📋",
+            _ => "📊"
+        };
+    }
+
+    private async Task OnCategoryClick(string categoryName)
+    {
+        if (OnCategoryDrillDown.HasDelegate)
+        {
+            await OnCategoryDrillDown.InvokeAsync(categoryName);
+        }
+    }
+
+    private List<string> GetSpendingInsights()
+    {
+        var insights = new List<string>();
+        
+        if (Report.Categories?.Any() == true)
+        {
+            var topCategory = Report.Categories.OrderByDescending(c => c.Amount).First();
+            var topPercentage = Report.TotalSpending > 0 ? (topCategory.Amount / Report.TotalSpending) * 100 : 0;
+            
+            insights.Add($"{topCategory.Name} is your largest expense category at {topPercentage:F1}% of total spending");
+            
+            var categoriesOver20Percent = Report.Categories.Where(c => Report.TotalSpending > 0 && (c.Amount / Report.TotalSpending) * 100 > 20).Count();
+            if (categoriesOver20Percent > 0)
+            {
+                insights.Add($"{categoriesOver20Percent} categories account for more than 20% of your spending each");
+            }
+            
+            var avgTransactionAmount = Report.Categories.Where(c => c.TransactionCount > 0).Average(c => c.Amount / c.TransactionCount);
+            insights.Add($"Average transaction amount across all categories is {avgTransactionAmount:C}");
+            
+            var mostFrequentCategory = Report.Categories.OrderByDescending(c => c.TransactionCount).First();
+            insights.Add($"{mostFrequentCategory.Name} has the most transactions with {mostFrequentCategory.TransactionCount} purchases");
+        }
+        
+        return insights.Take(4).ToList();
+    }
+
+    private List<string> GetOptimizationRecommendations()
+    {
+        var recommendations = new List<string>();
+        
+        if (Report.Categories?.Any() == true)
+        {
+            var topCategory = Report.Categories.OrderByDescending(c => c.Amount).First();
+            var topPercentage = Report.TotalSpending > 0 ? (topCategory.Amount / Report.TotalSpending) * 100 : 0;
+            
+            if (topPercentage > 40)
+            {
+                recommendations.Add($"Consider reducing {topCategory.Name} expenses as they represent {topPercentage:F1}% of your spending");
+            }
+            
+            var highFrequencyCategories = Report.Categories.Where(c => c.TransactionCount > 20).ToList();
+            if (highFrequencyCategories.Any())
+            {
+                recommendations.Add("Look for subscription services or bulk purchasing opportunities in frequently used categories");
+            }
+            
+            var expensiveTransactionCategories = Report.Categories.Where(c => c.TransactionCount > 0 && (c.Amount / c.TransactionCount) > 100).ToList();
+            if (expensiveTransactionCategories.Any())
+            {
+                recommendations.Add("Review high-value transactions in categories with expensive average purchases");
+            }
+            
+            recommendations.Add("Set monthly budgets for your top 3 spending categories to better control expenses");
+        }
+        
+        return recommendations.Take(4).ToList();
+    }
+
+    private List<PieChart.ChartDataItem> GetCategoryChartData()
+    {
+        if (Report.Categories?.Any() != true)
+            return new List<PieChart.ChartDataItem>();
+
+        return Report.Categories.OrderByDescending(c => c.Amount).Take(10).Select(category => new PieChart.ChartDataItem
+        {
+            Label = category.Name,
+            Value = category.Amount
+        }).ToList();
+    }
+
+    private string GetCategoryColor(string categoryName)
+    {
+        var colors = new[] { "#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ef4444", "#06b6d4", "#84cc16", "#f97316", "#ec4899", "#6366f1" };
+        var index = Math.Abs(categoryName.GetHashCode()) % colors.Length;
+        return colors[index];
+    }
+}

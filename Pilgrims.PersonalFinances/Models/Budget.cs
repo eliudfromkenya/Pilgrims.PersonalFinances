@@ -143,6 +143,11 @@ namespace Pilgrims.PersonalFinances.Models
         /// </summary>
         public virtual ICollection<BudgetAlert> BudgetAlerts { get; set; } = new List<BudgetAlert>();
 
+        /// <summary>
+        /// Budget categories for this budget
+        /// </summary>
+        public virtual ICollection<BudgetCategory> Categories { get; set; } = new List<BudgetCategory>();
+
         // Navigation properties for data linking
         public virtual ICollection<Transaction> RelatedTransactions { get; set; } = new List<Transaction>();
         public virtual ICollection<Debt> RelatedDebts { get; set; } = new List<Debt>();

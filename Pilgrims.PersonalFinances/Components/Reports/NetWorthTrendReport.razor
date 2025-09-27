@@ -1,0 +1,424 @@
+@using Pilgrims.PersonalFinances.Models.DTOs
+@inject IJSRuntime JSRuntime
+
+<div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10" id="networth-trend-report">
+    <div class="flex items-center justify-between mb-6">
+        <h3 class="text-xl font-semibold text-gray-800 dark:text-white flex items-center">
+            <span class="mr-2">📈</span> Net Worth Trend Analysis
+            <span class="ml-4 text-sm text-gray-500">@Report.StartDate.ToString("MMM dd") - @Report.EndDate.ToString("MMM dd, yyyy")</span>
+        </h3>
+        <ExportButton ReportType="NetWorthTrend" 
+                      ReportData="Report" 
+                      ElementId="networth-trend-report"
+                      FileName="@($"NetWorthTrend_{Report.StartDate:yyyy-MM-dd}_to_{Report.EndDate:yyyy-MM-dd}")" />
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div class="bg-gradient-to-r from-blue-400 to-blue-600 p-4 rounded-xl text-white">
+            <div class="text-sm opacity-90">Current Net Worth</div>
+            <div class="text-2xl font-bold">@Report.EndingNetWorth.ToString("C")</div>
+        </div>
+        <div class="bg-gradient-to-r from-purple-400 to-purple-600 p-4 rounded-xl text-white">
+            <div class="text-sm opacity-90">Starting Net Worth</div>
+            <div class="text-2xl font-bold">@Report.StartingNetWorth.ToString("C")</div>
+        </div>
+        <div class="bg-gradient-to-r from-@(Report.Change >= 0 ? "green" : "red")-400 to-@(Report.Change >= 0 ? "green" : "red")-600 p-4 rounded-xl text-white">
+            <div class="text-sm opacity-90">Net Change</div>
+            <div class="text-2xl font-bold">@(Report.Change >= 0 ? "+" : "")@Report.Change.ToString("C")</div>
+        </div>
+        <div class="bg-gradient-to-r from-indigo-400 to-indigo-600 p-4 rounded-xl text-white">
+            <div class="text-sm opacity-90">Growth Rate</div>
+            <div class="text-2xl font-bold">@Report.ChangePercentage.ToString("P1")</div>
+        </div>
+    </div>
+
+    <!-- Net Worth Trend Chart -->
+    <div class="mb-8">
+        <h4 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Historical Net Worth Progression</h4>
+        <div class="bg-white/50 dark:bg-gray-700/50 p-6 rounded-xl">
+            <div class="h-80 relative">
+                @{
+                    decimal maxValue = 0;
+                    decimal minValue = 0;
+                    decimal range = 1000;
+                    var points = new List<string>();
+                    var assetPoints = new List<string>();
+                    var liabilityPoints = new List<string>();
+                    
+                    if (Report.DataPoints?.Any() == true)
+                    {
+                        maxValue = Report.DataPoints.Max(m => Math.Max(m.NetWorth, Math.Max(m.Assets, m.Liabilities)));
+                        minValue = Report.DataPoints.Min(m => Math.Min(m.NetWorth, 0));
+                        range = maxValue - minValue;
+                        if (range == 0) range = 1000;
+                        
+                        for (int i = 0; i < Report.DataPoints.Count; i++)
+                        {
+                            var month = Report.DataPoints[i];
+                            var x = (double)i / (double)(Report.DataPoints.Count - 1) * 100;
+                            var y = (1 - (decimal)(month.NetWorth - minValue) / (decimal)range) * 100;
+                            var assetY = (1 - (double)(month.Assets - minValue) / (double)range) * 100;
+                            var liabilityY = (1 - (double)(month.Liabilities - minValue) / (double)range) * 100;
+                            
+                            points.Add($"{x},{y}");
+                            assetPoints.Add($"{x},{assetY}");
+                            liabilityPoints.Add($"{x},{liabilityY}");
+                        }
+                    }
+                }
+                    
+                    <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                        <!-- Grid Lines -->
+                        <defs>
+                            <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
+                                <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#e5e7eb" stroke-width="0.5" opacity="0.3"/>
+                            </pattern>
+                        </defs>
+                        <rect width="100" height="100" fill="url(#grid)" />
+                        
+                        <!-- Zero Line -->
+                        @if (minValue < 0)
+                        {
+                            var zeroY = (1 - (0 - (double)minValue) / (double)range) * 100;
+                            <line x1="0" y1="@zeroY" x2="100" y2="@zeroY" stroke="#ef4444" stroke-width="0.5" stroke-dasharray="2,2" opacity="0.7"/>
+                        }
+                        
+                        <!-- Asset Line -->
+                        <polyline points="@string.Join(" ", assetPoints)" 
+                                  fill="none" 
+                                  stroke="#10b981" 
+                                  stroke-width="1" 
+                                  opacity="0.7"/>
+                        
+                        <!-- Liability Line -->
+                        <polyline points="@string.Join(" ", liabilityPoints)" 
+                                  fill="none" 
+                                  stroke="#ef4444" 
+                                  stroke-width="1" 
+                                  opacity="0.7"/>
+                        
+                        <!-- Net Worth Line -->
+                        <polyline points="@string.Join(" ", points)" 
+                                  fill="none" 
+                                  stroke="#3b82f6" 
+                                  stroke-width="2"/>
+                        
+                        <!-- Data Points -->
+                        @for (int i = 0; i < Report.DataPoints.Count; i++)
+                    {
+                        var month = Report.DataPoints[i];
+                        var x = (double)i / (double)(Report.DataPoints.Count - 1) * 100;
+                            var y = (1 - (double)(month.NetWorth - minValue) / (double)range) * 100;
+                            
+                            <circle cx="@x" cy="@y" r="1.5" fill="#3b82f6" class="hover:r-3 transition-all cursor-pointer">
+                                <title>@month.Date.ToString("MMM yyyy"): @month.NetWorth.ToString("C")</title>
+                            </circle>
+                        }
+                    </svg>
+                    
+                    <!-- Chart Labels -->
+                    <div class="absolute bottom-0 left-0 right-0 flex justify-between text-xs text-gray-500 px-2">
+                        <span>@Report.DataPoints.First().Date.ToString("MMM yyyy")</span>
+                        <span>@Report.DataPoints.Last().Date.ToString("MMM yyyy")</span>
+                    </div>
+                    
+                    <div class="absolute top-0 left-0 bottom-0 flex flex-col justify-between text-xs text-gray-500 py-2">
+                        <span>@maxValue.ToString("C0")</span>
+                        @if (minValue < 0)
+                        {
+                            <span>$0</span>
+                        }
+                        <span>@minValue.ToString("C0")</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="flex items-center justify-center h-full text-gray-500">
+                        <div class="text-center">
+                            <div class="text-4xl mb-2">📊</div>
+                            <div>No trend data available</div>
+                        </div>
+                    </div>
+                }
+            </div>
+            
+            <!-- Legend -->
+            <div class="flex justify-center space-x-6 mt-4">
+                <div class="flex items-center">
+                    <div class="w-4 h-1 bg-blue-500 rounded mr-2"></div>
+                    <span class="text-sm text-gray-600 dark:text-gray-300">Net Worth</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-4 h-1 bg-green-500 rounded mr-2"></div>
+                    <span class="text-sm text-gray-600 dark:text-gray-300">Assets</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-4 h-1 bg-red-500 rounded mr-2"></div>
+                    <span class="text-sm text-gray-600 dark:text-gray-300">Liabilities</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly Breakdown -->
+    <div class="mb-8">
+        <h4 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Monthly Net Worth Breakdown</h4>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Recent Months Table -->
+            <div class="bg-white/50 dark:bg-gray-700/50 p-6 rounded-xl">
+                <h5 class="text-md font-semibold text-gray-800 dark:text-white mb-4">Recent Performance</h5>
+                <div class="space-y-3 max-h-64 overflow-y-auto">
+                    @if (Report.DataPoints?.Any() == true)
+                {
+                    @foreach (var month in Report.DataPoints.OrderByDescending(m => m.Date).Take(6))
+                    {
+                        var previousMonth = Report.DataPoints.Where(m => m.Date < month.Date).OrderByDescending(m => m.Date).FirstOrDefault();
+                            var monthlyChange = previousMonth != null ? month.NetWorth - previousMonth.NetWorth : 0;
+                            
+                            <div class="flex items-center justify-between p-3 bg-white/30 dark:bg-gray-600/30 rounded-lg">
+                                <div>
+                                    <div class="font-medium text-gray-800 dark:text-white">@month.Date.ToString("MMM yyyy")</div>
+                                    <div class="text-sm text-gray-600 dark:text-gray-300">
+                                        Assets: @month.Assets.ToString("C") | Liabilities: @month.Liabilities.ToString("C")
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="font-bold text-gray-800 dark:text-white">@month.NetWorth.ToString("C")</div>
+                                    @if (monthlyChange != 0)
+                                    {
+                                        <div class="text-sm @(monthlyChange >= 0 ? "text-green-600" : "text-red-600")">
+                                            @(monthlyChange >= 0 ? "+" : "")@monthlyChange.ToString("C")
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+
+            <!-- Growth Analysis -->
+            <div class="bg-white/50 dark:bg-gray-700/50 p-6 rounded-xl">
+                <h5 class="text-md font-semibold text-gray-800 dark:text-white mb-4">Growth Analysis</h5>
+                <div class="space-y-4">
+                    @{
+                        var avgMonthlyGrowth = GetAverageMonthlyGrowth();
+                        var bestMonth = GetBestPerformingMonth();
+                        var worstMonth = GetWorstPerformingMonth();
+                        var volatility = GetVolatility();
+                    }
+                    
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600 dark:text-gray-300">Avg Monthly Growth</span>
+                        <span class="font-semibold @(avgMonthlyGrowth >= 0 ? "text-green-600" : "text-red-600")">
+                            @(avgMonthlyGrowth >= 0 ? "+" : "")@avgMonthlyGrowth.ToString("C")
+                        </span>
+                    </div>
+                    
+                    @if (bestMonth != null)
+                    {
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600 dark:text-gray-300">Best Month</span>
+                            <div class="text-right">
+                                <div class="font-semibold text-green-600">@bestMonth.Date.ToString("MMM yyyy")</div>
+                                <div class="text-sm text-gray-500">@bestMonth.NetWorth.ToString("C")</div>
+                            </div>
+                        </div>
+                    }
+                    
+                    @if (worstMonth != null)
+                    {
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600 dark:text-gray-300">Challenging Month</span>
+                            <div class="text-right">
+                                <div class="font-semibold text-red-600">@worstMonth.Date.ToString("MMM yyyy")</div>
+                                <div class="text-sm text-gray-500">@worstMonth.NetWorth.ToString("C")</div>
+                            </div>
+                        </div>
+                    }
+                    
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600 dark:text-gray-300">Volatility</span>
+                        <span class="font-semibold @(volatility <= 10 ? "text-green-600" : volatility <= 25 ? "text-yellow-600" : "text-red-600")">
+                            @volatility.ToString("F1")%
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Projections and Insights -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Future Projections -->
+        <div class="bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-900/20 p-6 rounded-xl">
+            <h5 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Future Projections</h5>
+            <div class="space-y-4">
+                @{
+                    var projectedNetWorth = GetProjectedNetWorth();
+                    var timeToGoal = GetTimeToFinancialGoal();
+                }
+                
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-600 dark:text-gray-300">6 Months Projection</span>
+                    <span class="font-semibold text-blue-600">@projectedNetWorth.SixMonths.ToString("C")</span>
+                </div>
+                
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-600 dark:text-gray-300">1 Year Projection</span>
+                    <span class="font-semibold text-blue-600">@projectedNetWorth.OneYear.ToString("C")</span>
+                </div>
+                
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-600 dark:text-gray-300">5 Year Projection</span>
+                    <span class="font-semibold text-blue-600">@projectedNetWorth.FiveYears.ToString("C")</span>
+                </div>
+                
+                @if (timeToGoal.HasValue)
+                {
+                    <div class="border-t pt-3 mt-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600 dark:text-gray-300">Time to $1M</span>
+                            <span class="font-semibold text-purple-600">@timeToGoal.Value years</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Key Insights -->
+        <div class="bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/20 dark:to-emerald-900/20 p-6 rounded-xl">
+            <h5 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Key Insights</h5>
+            <div class="space-y-3">
+                @{
+                    var insights = GetKeyInsights();
+                }
+                @foreach (var insight in insights)
+                {
+                    <div class="flex items-start text-sm text-gray-600 dark:text-gray-300">
+                        <span class="w-2 h-2 bg-green-500 rounded-full mr-3 mt-2 flex-shrink-0"></span>
+                        <span>@insight</span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@using Pilgrims.PersonalFinances.Models.DTOs
+
+@code {
+    [Parameter] public Models.DTOs.NetWorthTrendDto Report { get; set; } = new();
+
+    private decimal GetAverageMonthlyGrowth()
+    {
+        if (Report.DataPoints?.Count < 2) return 0;
+        
+        var changes = new List<decimal>();
+        for (int i = 1; i < Report.DataPoints.Count; i++)
+        {
+            changes.Add(Report.DataPoints[i].NetWorth - Report.DataPoints[i - 1].NetWorth);
+        }
+        
+        return changes.Average();
+    }
+
+    private NetWorthDataPoint? GetBestPerformingMonth()
+    {
+        return Report.DataPoints?.OrderByDescending(m => m.NetWorth).FirstOrDefault();
+    }
+
+    private NetWorthDataPoint? GetWorstPerformingMonth()
+    {
+        return Report.DataPoints?.OrderBy(m => m.NetWorth).FirstOrDefault();
+    }
+
+    private double GetVolatility()
+    {
+        if (Report.DataPoints?.Count < 2) return 0;
+        
+        var changes = new List<double>();
+        for (int i = 1; i < Report.DataPoints.Count; i++)
+        {
+            var change = (double)(Report.DataPoints[i].NetWorth - Report.DataPoints[i - 1].NetWorth);
+            changes.Add(change);
+        }
+        
+        if (!changes.Any()) return 0;
+        
+        var mean = changes.Average();
+        var variance = changes.Select(x => Math.Pow(x - mean, 2)).Average();
+        var stdDev = Math.Sqrt(variance);
+        
+        var avgNetWorth = (double)Report.DataPoints.Average(m => m.NetWorth);
+        return avgNetWorth > 0 ? (stdDev / avgNetWorth) * 100 : 0;
+    }
+
+    private (decimal SixMonths, decimal OneYear, decimal FiveYears) GetProjectedNetWorth()
+    {
+        var avgGrowth = GetAverageMonthlyGrowth();
+        var current = Report.EndingNetWorth;
+        
+        return (
+            SixMonths: current + (avgGrowth * 6),
+            OneYear: current + (avgGrowth * 12),
+            FiveYears: current + (avgGrowth * 60)
+        );
+    }
+
+    private int? GetTimeToFinancialGoal()
+    {
+        var avgGrowth = GetAverageMonthlyGrowth();
+        if (avgGrowth <= 0) return null;
+        
+        var goal = 1_000_000m;
+        var remaining = goal - Report.EndingNetWorth;
+        if (remaining <= 0) return 0;
+        
+        var monthsToGoal = remaining / avgGrowth;
+        return monthsToGoal > 0 ? (int)Math.Ceiling(monthsToGoal / 12) : null;
+    }
+
+    private List<string> GetKeyInsights()
+    {
+        var insights = new List<string>();
+        
+        if (Report.ChangePercentage > 0)
+        {
+            insights.Add($"Your net worth has grown by {Report.ChangePercentage:F1}% over the selected period");
+        }
+        else
+        {
+            insights.Add("Focus on increasing assets or reducing liabilities to improve net worth");
+        }
+
+        var avgGrowth = GetAverageMonthlyGrowth();
+        if (avgGrowth > 0)
+        {
+            insights.Add($"Average monthly growth of {avgGrowth:C} indicates positive financial momentum");
+        }
+
+        var volatility = GetVolatility();
+        if (volatility <= 10)
+        {
+            insights.Add("Low volatility suggests stable financial management");
+        }
+        else if (volatility > 25)
+        {
+            insights.Add("High volatility indicates significant monthly fluctuations");
+        }
+
+        if (Report.DataPoints?.Any() == true)
+        {
+            var recentTrend = Report.DataPoints.TakeLast(3).ToList();
+            if (recentTrend.Count >= 2)
+            {
+                var isImproving = recentTrend.Last().NetWorth > recentTrend.First().NetWorth;
+                insights.Add(isImproving ? "Recent trend shows positive momentum" : "Recent months show declining net worth");
+            }
+        }
+
+        return insights.Take(4).ToList();
+    }
+}

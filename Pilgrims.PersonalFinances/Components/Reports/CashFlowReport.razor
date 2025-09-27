@@ -1,0 +1,323 @@
+@using Pilgrims.PersonalFinances.Models.DTOs
+@inject IJSRuntime JSRuntime
+
+<div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10" id="cash-flow-report">
+    <div class="flex items-center justify-between mb-6">
+        <h3 class="text-xl font-semibold text-gray-800 dark:text-white flex items-center">
+            <span class="mr-2">💰</span> Cash Flow Statement
+            <span class="ml-4 text-sm text-gray-500">@Report.StartDate.ToString("MMM dd") - @Report.EndDate.ToString("MMM dd, yyyy")</span>
+        </h3>
+        <ExportButton ReportType="CashFlow" 
+                      ReportData="Report" 
+                      ElementId="cash-flow-report" 
+                      FileName="@($"CashFlow_{Report.StartDate:yyyy-MM-dd}_to_{Report.EndDate:yyyy-MM-dd}")" />
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div class="bg-gradient-to-r from-blue-400 to-blue-600 p-4 rounded-xl text-white">
+            <div class="text-sm opacity-90">Operating Cash Flow</div>
+            <div class="text-2xl font-bold">@Report.OperatingCashFlow.ToString("C")</div>
+        </div>
+        <div class="bg-gradient-to-r from-purple-400 to-purple-600 p-4 rounded-xl text-white">
+            <div class="text-sm opacity-90">Investing Cash Flow</div>
+            <div class="text-2xl font-bold">@Report.InvestingCashFlow.ToString("C")</div>
+        </div>
+        <div class="bg-gradient-to-r from-indigo-400 to-indigo-600 p-4 rounded-xl text-white">
+            <div class="text-sm opacity-90">Financing Cash Flow</div>
+            <div class="text-2xl font-bold">@Report.FinancingCashFlow.ToString("C")</div>
+        </div>
+        <div class="bg-gradient-to-r from-green-400 to-green-600 p-4 rounded-xl text-white">
+            <div class="text-sm opacity-90">Net Cash Flow</div>
+            <div class="text-2xl font-bold">@Report.NetCashFlow.ToString("C")</div>
+        </div>
+    </div>
+
+    <!-- Cash Flow Waterfall Chart -->
+    <div class="mb-8">
+        <h4 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Cash Flow Waterfall</h4>
+        <div class="bg-white/50 dark:bg-gray-700/50 p-6 rounded-xl">
+            <div class="flex items-end justify-between h-64 space-x-4">
+                @{
+                    var maxValue = Math.Max(Math.Abs(Report.OperatingCashFlow), Math.Max(Math.Abs(Report.InvestingCashFlow), Math.Max(Math.Abs(Report.FinancingCashFlow), Math.Abs(Report.NetCashFlow))));
+                    if (maxValue == 0) maxValue = 1000; // Prevent division by zero
+                }
+                
+                <!-- Starting Cash -->
+                <div class="flex flex-col items-center flex-1">
+                    <div class="bg-gray-400 rounded-t" style="height: @(Math.Abs(Report.StartingCash) / maxValue * 200)px; min-height: 20px; width: 100%;"></div>
+                    <div class="text-xs text-center mt-2 text-gray-600 dark:text-gray-300">
+                        <div>Starting</div>
+                        <div class="font-semibold">@Report.StartingCash.ToString("C")</div>
+                    </div>
+                </div>
+                
+                <!-- Operating -->
+                <div class="flex flex-col items-center flex-1">
+                    <div class="@(Report.OperatingCashFlow >= 0 ? "bg-blue-500" : "bg-red-500") rounded-t" 
+                         style="height: @(Math.Abs(Report.OperatingCashFlow) / maxValue * 200)px; min-height: 20px; width: 100%;"></div>
+                    <div class="text-xs text-center mt-2 text-gray-600 dark:text-gray-300">
+                        <div>Operating</div>
+                        <div class="font-semibold">@Report.OperatingCashFlow.ToString("C")</div>
+                    </div>
+                </div>
+                
+                <!-- Investing -->
+                <div class="flex flex-col items-center flex-1">
+                    <div class="@(Report.InvestingCashFlow >= 0 ? "bg-purple-500" : "bg-red-500") rounded-t" 
+                         style="height: @(Math.Abs(Report.InvestingCashFlow) / maxValue * 200)px; min-height: 20px; width: 100%;"></div>
+                    <div class="text-xs text-center mt-2 text-gray-600 dark:text-gray-300">
+                        <div>Investing</div>
+                        <div class="font-semibold">@Report.InvestingCashFlow.ToString("C")</div>
+                    </div>
+                </div>
+                
+                <!-- Financing -->
+                <div class="flex flex-col items-center flex-1">
+                    <div class="@(Report.FinancingCashFlow >= 0 ? "bg-indigo-500" : "bg-red-500") rounded-t" 
+                         style="height: @(Math.Abs(Report.FinancingCashFlow) / maxValue * 200)px; min-height: 20px; width: 100%;"></div>
+                    <div class="text-xs text-center mt-2 text-gray-600 dark:text-gray-300">
+                        <div>Financing</div>
+                        <div class="font-semibold">@Report.FinancingCashFlow.ToString("C")</div>
+                    </div>
+                </div>
+                
+                <!-- Ending Cash -->
+                <div class="flex flex-col items-center flex-1">
+                    <div class="bg-green-500 rounded-t" style="height: @(Math.Abs(Report.EndingCash) / maxValue * 200)px; min-height: 20px; width: 100%;"></div>
+                    <div class="text-xs text-center mt-2 text-gray-600 dark:text-gray-300">
+                        <div>Ending</div>
+                        <div class="font-semibold">@Report.EndingCash.ToString("C")</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Cash Flow Activities -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <!-- Operating Activities -->
+        <div class="bg-white/50 dark:bg-gray-700/50 p-6 rounded-xl">
+            <h5 class="text-lg font-semibold text-blue-600 mb-4 flex items-center">
+                <span class="mr-2">🔄</span> Operating Activities
+            </h5>
+            <div class="space-y-3">
+                @if (Report.OperatingActivities?.Any() == true)
+                {
+                    @foreach (var activity in Report.OperatingActivities.OrderByDescending(a => Math.Abs(a.Amount)))
+                    {
+                        <div class="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                            <div class="flex items-center">
+                                <span class="@(activity.Amount >= 0 ? "text-green-600" : "text-red-600") mr-2">
+                                    @(activity.Amount >= 0 ? "+" : "-")
+                                </span>
+                                <span class="text-gray-700 dark:text-gray-300">@activity.CategoryName</span>
+                            </div>
+                            <span class="font-semibold @(activity.Amount >= 0 ? "text-green-600" : "text-red-600")">
+                                @activity.Amount.ToString("C")
+                            </span>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-center text-gray-500 py-4">No operating activities</div>
+                }
+                <div class="border-t pt-3 mt-3">
+                    <div class="flex justify-between font-semibold text-blue-600">
+                        <span>Total Operating</span>
+                        <span>@Report.OperatingCashFlow.ToString("C")</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Investing Activities -->
+        <div class="bg-white/50 dark:bg-gray-700/50 p-6 rounded-xl">
+            <h5 class="text-lg font-semibold text-purple-600 mb-4 flex items-center">
+                <span class="mr-2">📈</span> Investing Activities
+            </h5>
+            <div class="space-y-3">
+                @if (Report.InvestingActivities?.Any() == true)
+                {
+                    @foreach (var activity in Report.InvestingActivities.OrderByDescending(a => Math.Abs(a.Amount)))
+                    {
+                        <div class="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                            <div class="flex items-center">
+                                <span class="@(activity.Amount >= 0 ? "text-green-600" : "text-red-600") mr-2">
+                                    @(activity.Amount >= 0 ? "+" : "-")
+                                </span>
+                                <span class="text-gray-700 dark:text-gray-300">@activity.CategoryName</span>
+                            </div>
+                            <span class="font-semibold @(activity.Amount >= 0 ? "text-green-600" : "text-red-600")">
+                                @activity.Amount.ToString("C")
+                            </span>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-center text-gray-500 py-4">No investing activities</div>
+                }
+                <div class="border-t pt-3 mt-3">
+                    <div class="flex justify-between font-semibold text-purple-600">
+                        <span>Total Investing</span>
+                        <span>@Report.InvestingCashFlow.ToString("C")</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Financing Activities -->
+        <div class="bg-white/50 dark:bg-gray-700/50 p-6 rounded-xl">
+            <h5 class="text-lg font-semibold text-indigo-600 mb-4 flex items-center">
+                <span class="mr-2">🏦</span> Financing Activities
+            </h5>
+            <div class="space-y-3">
+                @if (Report.FinancingActivities?.Any() == true)
+                {
+                    @foreach (var activity in Report.FinancingActivities.OrderByDescending(a => Math.Abs(a.Amount)))
+                    {
+                        <div class="flex items-center justify-between p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg">
+                            <div class="flex items-center">
+                                <span class="@(activity.Amount >= 0 ? "text-green-600" : "text-red-600") mr-2">
+                                    @(activity.Amount >= 0 ? "+" : "-")
+                                </span>
+                                <span class="text-gray-700 dark:text-gray-300">@activity.CategoryName</span>
+                            </div>
+                            <span class="font-semibold @(activity.Amount >= 0 ? "text-green-600" : "text-red-600")">
+                                @activity.Amount.ToString("C")
+                            </span>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-center text-gray-500 py-4">No financing activities</div>
+                }
+                <div class="border-t pt-3 mt-3">
+                    <div class="flex justify-between font-semibold text-indigo-600">
+                        <span>Total Financing</span>
+                        <span>@Report.FinancingCashFlow.ToString("C")</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly Cash Flow Trend -->
+    <div class="mb-8">
+        <h4 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Monthly Cash Flow Trend</h4>
+        <div class="bg-white/50 dark:bg-gray-700/50 p-6 rounded-xl">
+            <div class="h-64 flex items-end justify-between space-x-2">
+                @if (Report.MonthlyTrends?.Any() == true)
+                {
+                    var maxMonthlyValue = Report.MonthlyTrends.Max(m => Math.Abs(m.Amount));
+                    if (maxMonthlyValue == 0) maxMonthlyValue = 1000;
+                    
+                    @foreach (var month in Report.MonthlyTrends.OrderBy(m => m.Date))
+                    {
+                        var height = Math.Abs(month.Amount) / maxMonthlyValue * 200;
+                        <div class="flex flex-col items-center flex-1">
+                            <div class="@(month.Amount >= 0 ? "bg-green-500" : "bg-red-500") rounded-t transition-all duration-1000" 
+                                 style="height: @(height)px; min-height: 10px; width: 100%;"></div>
+                            <div class="text-xs text-center mt-2 text-gray-600 dark:text-gray-300">
+                                <div>@month.Date.ToString("MMM")</div>
+                                <div class="font-semibold text-xs">@month.Amount.ToString("C0")</div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="w-full text-center text-gray-500 py-8">No monthly data available</div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Cash Flow Ratios and Insights -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Cash Flow Ratios -->
+        <div class="bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-900/20 p-6 rounded-xl">
+            <h5 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Cash Flow Ratios</h5>
+            <div class="space-y-4">
+                @{
+                    var operatingMargin = Report.OperatingCashFlow != 0 ? (Report.NetCashFlow / Report.OperatingCashFlow) * 100 : 0;
+                    var cashFlowCoverage = Report.FinancingCashFlow != 0 ? Math.Abs(Report.OperatingCashFlow / Report.FinancingCashFlow) : 0;
+                }
+                
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-600 dark:text-gray-300">Operating Margin</span>
+                    <span class="font-semibold @(operatingMargin >= 0 ? "text-green-600" : "text-red-600")">
+                        @operatingMargin.ToString("F1")%
+                    </span>
+                </div>
+                
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-600 dark:text-gray-300">Cash Flow Coverage</span>
+                    <span class="font-semibold @(cashFlowCoverage >= 1 ? "text-green-600" : "text-red-600")">
+                        @cashFlowCoverage.ToString("F2")x
+                    </span>
+                </div>
+                
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-600 dark:text-gray-300">Cash Position Change</span>
+                    <span class="font-semibold @(Report.NetCashFlow >= 0 ? "text-green-600" : "text-red-600")">
+                        @Report.NetCashFlow.ToString("C")
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cash Flow Health -->
+        <div class="bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/20 dark:to-emerald-900/20 p-6 rounded-xl">
+            <h5 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Cash Flow Health</h5>
+            <div class="space-y-4">
+                @{
+                    var healthScore = 0;
+                    var insights = new List<string>();
+                    
+                    if (Report.OperatingCashFlow > 0) { healthScore += 40; insights.Add("Positive operating cash flow"); }
+                    else { insights.Add("Negative operating cash flow - review expenses"); }
+                    
+                    if (Report.NetCashFlow > 0) { healthScore += 30; insights.Add("Growing cash position"); }
+                    else { insights.Add("Declining cash position"); }
+                    
+                    if (Report.OperatingCashFlow > Math.Abs(Report.InvestingCashFlow)) { healthScore += 20; insights.Add("Operations cover investments"); }
+                    else { insights.Add("High investment spending"); }
+                    
+                    if (Math.Abs(Report.FinancingCashFlow) < Report.OperatingCashFlow) { healthScore += 10; insights.Add("Low financing dependency"); }
+                    else { insights.Add("High financing dependency"); }
+                }
+                
+                <div class="flex items-center justify-between mb-4">
+                    <span class="text-gray-600 dark:text-gray-300">Health Score</span>
+                    <div class="flex items-center">
+                        <div class="w-20 bg-gray-200 dark:bg-gray-600 rounded-full h-2 mr-2">
+                            <div class="@(healthScore >= 70 ? "bg-green-500" : healthScore >= 40 ? "bg-yellow-500" : "bg-red-500") h-2 rounded-full transition-all duration-1000" 
+                                 style="width: @(healthScore)%"></div>
+                        </div>
+                        <span class="font-semibold @(healthScore >= 70 ? "text-green-600" : healthScore >= 40 ? "text-yellow-600" : "text-red-600")">
+                            @healthScore/100
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="space-y-2">
+                    @foreach (var insight in insights.Take(3))
+                    {
+                        <div class="flex items-center text-sm text-gray-600 dark:text-gray-300">
+                            <span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                            @insight
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public CashFlowReportDto Report { get; set; } = new();
+}

@@ -90,6 +90,7 @@ namespace Pilgrims.PersonalFinances.Models.DTOs
         public List<BudgetVarianceItem> UnfavorableVariances { get; set; } = new();
         
         public List<BudgetVarianceItem> VarianceItems { get; set; } = new();
+        public List<MonthlyBudgetPerformanceDto> MonthlyVariances { get; set; } = new();
         
         [Column(TypeName = "decimal(18,2)")]
         public decimal TotalFavorableVariance { get; set; }

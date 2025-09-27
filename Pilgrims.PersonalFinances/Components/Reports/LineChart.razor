@@ -1,0 +1,387 @@
+@using System.Globalization
+
+<div class="line-chart-container">
+    <div class="chart-header">
+        <h3 class="chart-title">@Title</h3>
+        @if (!string.IsNullOrEmpty(Subtitle))
+        {
+            <p class="chart-subtitle">@Subtitle</p>
+        }
+    </div>
+    
+    <div class="chart-content">
+        <svg class="line-chart" viewBox="0 0 @ChartWidth @ChartHeight" preserveAspectRatio="xMidYMid meet">
+            <!-- Y-axis -->
+            <line x1="@MarginLeft" y1="@MarginTop" x2="@MarginLeft" y2="@(ChartHeight - MarginBottom)" 
+                  stroke="#e5e7eb" stroke-width="1"/>
+            
+            <!-- X-axis -->
+            <line x1="@MarginLeft" y1="@(ChartHeight - MarginBottom)" x2="@(ChartWidth - MarginRight)" y2="@(ChartHeight - MarginBottom)" 
+                  stroke="#e5e7eb" stroke-width="1"/>
+            
+            <!-- Y-axis labels and grid lines -->
+            @for (int i = 0; i <= YAxisSteps; i++)
+            {
+                var yValue = MaxValue * i / YAxisSteps;
+                var yPosition = ChartHeight - MarginBottom - (i * (ChartHeight - MarginTop - MarginBottom) / YAxisSteps);
+                
+                <!-- Grid line -->
+                <line x1="@MarginLeft" y1="@yPosition" x2="@(ChartWidth - MarginRight)" y2="@yPosition" 
+                      stroke="#f3f4f6" stroke-width="0.5" opacity="0.7"/>
+                
+                <!-- Y-axis label -->
+                @((MarkupString)$"<text x=\"{MarginLeft - 10}\" y=\"{yPosition + 4}\" text-anchor=\"end\" font-size=\"12\" fill=\"#6b7280\">{FormatValue(yValue)}</text>")
+            }
+            
+            <!-- X-axis labels and grid lines -->
+            @if (XAxisLabels.Any())
+            {
+                @for (int i = 0; i < XAxisLabels.Count; i++)
+                {
+                    var xPosition = MarginLeft + (i * XStep);
+                    
+                    <!-- Grid line -->
+                    <line x1="@xPosition" y1="@MarginTop" x2="@xPosition" y2="@(ChartHeight - MarginBottom)" 
+                          stroke="#f3f4f6" stroke-width="0.5" opacity="0.5"/>
+                    
+                    <!-- X-axis label -->
+                    @((MarkupString)$"<text x=\"{xPosition}\" y=\"{ChartHeight - MarginBottom + 20}\" text-anchor=\"middle\" font-size=\"11\" fill=\"#6b7280\">{XAxisLabels[i]}</text>")
+                }
+            }
+            
+            <!-- Data lines -->
+            @for (int seriesIndex = 0; seriesIndex < Series.Count; seriesIndex++)
+            {
+                var series = Series[seriesIndex];
+                var color = GetSeriesColor(seriesIndex);
+                
+                <!-- Line path -->
+                <path d="@GetLinePath(series)" 
+                      stroke="@color" 
+                      stroke-width="3" 
+                      fill="none" 
+                      stroke-linecap="round" 
+                      stroke-linejoin="round"
+                      class="line-path"/>
+                
+                <!-- Area fill (optional) -->
+                @if (ShowArea)
+                {
+                    <path d="@GetAreaPath(series)" 
+                          fill="@color" 
+                          fill-opacity="0.1"/>
+                }
+                
+                <!-- Data points -->
+                @for (int i = 0; i < series.Data.Count; i++)
+                {
+                    var point = series.Data[i];
+                    var xPosition = MarginLeft + (i * XStep);
+                    var yPosition = ChartHeight - MarginBottom - ((point.Value - MinValue) / (MaxValue - MinValue)) * (ChartHeight - MarginTop - MarginBottom);
+                    
+                    <circle cx="@xPosition" cy="@yPosition" r="4" 
+                            fill="@color" stroke="white" stroke-width="2"
+                            class="data-point @(EnableDrillDown ? "clickable" : "")"
+                            @onclick="() => HandlePointClick(point, series)"
+                            @onmouseover="() => ShowTooltip(point, series, xPosition, (double)yPosition)"
+                            @onmouseout="HideTooltip">
+                        <title>@series.Name: @FormatValue(point.Value)</title>
+                    </circle>
+                }
+            }
+        </svg>
+        
+        <!-- Legend -->
+        @if (ShowLegend && Series.Count > 1)
+        {
+            <div class="chart-legend">
+                @for (int i = 0; i < Series.Count; i++)
+                {
+                    var series = Series[i];
+                    var color = GetSeriesColor(i);
+                    
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: @color;"></div>
+                        <span class="legend-label">@series.Name</span>
+                    </div>
+                }
+            </div>
+        }
+        
+        <!-- Tooltip -->
+        @if (showTooltip && tooltipData != null)
+        {
+            <div class="chart-tooltip" style="left: @(tooltipX)px; top: @(tooltipY)px;">
+                <div class="tooltip-content">
+                    <div class="tooltip-series">@tooltipSeries?.Name</div>
+                    <div class="tooltip-label">@tooltipData.Label</div>
+                    <div class="tooltip-value">@FormatValue(tooltipData.Value)</div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string Subtitle { get; set; } = "";
+    [Parameter] public List<ChartSeries> Series { get; set; } = new();
+    [Parameter] public List<string> XAxisLabels { get; set; } = new();
+    [Parameter] public bool ShowLegend { get; set; } = true;
+    [Parameter] public bool ShowArea { get; set; } = false;
+    [Parameter] public bool EnableDrillDown { get; set; } = false;
+    [Parameter] public EventCallback<(ChartDataPoint Point, ChartSeries Series)> OnPointClick { get; set; }
+    [Parameter] public string[] Colors { get; set; } = new[] { "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4", "#84cc16", "#f97316" };
+    [Parameter] public string ValueFormat { get; set; } = "C0"; // Currency format by default
+    [Parameter] public decimal? MinValueOverride { get; set; }
+    [Parameter] public decimal? MaxValueOverride { get; set; }
+    
+    private const int ChartWidth = 800;
+    private const int ChartHeight = 400;
+    private const int MarginTop = 40;
+    private const int MarginBottom = 60;
+    private const int MarginLeft = 80;
+    private const int MarginRight = 40;
+    private const int YAxisSteps = 5;
+    
+    private bool showTooltip = false;
+    private ChartDataPoint? tooltipData;
+    private ChartSeries? tooltipSeries;
+    private double tooltipX = 0;
+    private double tooltipY = 0;
+    
+    private decimal MinValue => MinValueOverride ?? (Series.Any() && Series.SelectMany(s => s.Data).Any() ? 
+        Math.Min(0, Series.SelectMany(s => s.Data).Min(d => d.Value)) : 0);
+    private decimal MaxValue => MaxValueOverride ?? (Series.Any() && Series.SelectMany(s => s.Data).Any() ? 
+        Series.SelectMany(s => s.Data).Max(d => d.Value) * 1.1m : 100m);
+    private double XStep => XAxisLabels.Any() ? (double)(ChartWidth - MarginLeft - MarginRight) / (XAxisLabels.Count - 1) : 0;
+    
+    private string GetSeriesColor(int index)
+    {
+        return Colors[index % Colors.Length];
+    }
+    
+    private string GetLinePath(ChartSeries series)
+    {
+        if (!series.Data.Any()) return "";
+        
+        var pathParts = new List<string>();
+        
+        for (int i = 0; i < series.Data.Count; i++)
+        {
+            var point = series.Data[i];
+            var xPosition = MarginLeft + (i * XStep);
+            var yPosition = ChartHeight - MarginBottom - ((point.Value - MinValue) / (MaxValue - MinValue)) * (ChartHeight - MarginTop - MarginBottom);
+            
+            if (i == 0)
+            {
+                pathParts.Add($"M {xPosition:F2} {yPosition:F2}");
+            }
+            else
+            {
+                pathParts.Add($"L {xPosition:F2} {yPosition:F2}");
+            }
+        }
+        
+        return string.Join(" ", pathParts);
+    }
+    
+    private string GetAreaPath(ChartSeries series)
+    {
+        if (!series.Data.Any()) return "";
+        
+        var pathParts = new List<string>();
+        var baseY = ChartHeight - MarginBottom;
+        
+        // Start from bottom left
+        var firstX = MarginLeft;
+        pathParts.Add($"M {firstX:F2} {baseY}");
+        
+        // Draw line to first point
+        var firstY = ChartHeight - MarginBottom - ((series.Data[0].Value - MinValue) / (MaxValue - MinValue)) * (ChartHeight - MarginTop - MarginBottom);
+        pathParts.Add($"L {firstX:F2} {firstY:F2}");
+        
+        // Draw the line
+        for (int i = 1; i < series.Data.Count; i++)
+        {
+            var point = series.Data[i];
+            var xPosition = MarginLeft + (i * XStep);
+            var yPosition = ChartHeight - MarginBottom - ((point.Value - MinValue) / (MaxValue - MinValue)) * (ChartHeight - MarginTop - MarginBottom);
+            pathParts.Add($"L {xPosition:F2} {yPosition:F2}");
+        }
+        
+        // Close the area
+        var lastX = MarginLeft + ((series.Data.Count - 1) * XStep);
+        pathParts.Add($"L {lastX:F2} {baseY}");
+        pathParts.Add("Z");
+        
+        return string.Join(" ", pathParts);
+    }
+    
+    private string FormatValue(decimal value)
+    {
+        return ValueFormat switch
+        {
+            "C0" => value.ToString("C0", CultureInfo.CurrentCulture),
+            "C2" => value.ToString("C2", CultureInfo.CurrentCulture),
+            "N0" => value.ToString("N0", CultureInfo.CurrentCulture),
+            "N2" => value.ToString("N2", CultureInfo.CurrentCulture),
+            "P0" => (value / 100).ToString("P0", CultureInfo.CurrentCulture),
+            "P1" => (value / 100).ToString("P1", CultureInfo.CurrentCulture),
+            _ => value.ToString("C0", CultureInfo.CurrentCulture)
+        };
+    }
+    
+    private async Task HandlePointClick(ChartDataPoint point, ChartSeries series)
+    {
+        if (EnableDrillDown && OnPointClick.HasDelegate)
+        {
+            await OnPointClick.InvokeAsync((point, series));
+        }
+    }
+    
+    private void ShowTooltip(ChartDataPoint point, ChartSeries series, double x, double y)
+    {
+        tooltipData = point;
+        tooltipSeries = series;
+        showTooltip = true;
+        tooltipX = x;
+        tooltipY = y - 10;
+        StateHasChanged();
+    }
+    
+    private void HideTooltip()
+    {
+        showTooltip = false;
+        StateHasChanged();
+    }
+    
+    public class ChartSeries
+    {
+        public string Name { get; set; } = "";
+        public List<ChartDataPoint> Data { get; set; } = new();
+        public string? Color { get; set; }
+    }
+    
+    public class ChartDataPoint
+    {
+        public string Label { get; set; } = "";
+        public decimal Value { get; set; }
+        public DateTime? Date { get; set; }
+        public object? Data { get; set; } // For drill-down data
+    }
+}
+
+<style>
+    .line-chart-container {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        position: relative;
+    }
+    
+    .chart-header {
+        margin-bottom: 20px;
+    }
+    
+    .chart-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #111827;
+        margin: 0 0 4px 0;
+    }
+    
+    .chart-subtitle {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin: 0;
+    }
+    
+    .chart-content {
+        position: relative;
+        width: 100%;
+        height: 400px;
+    }
+    
+    .line-chart {
+        width: 100%;
+        height: 100%;
+    }
+    
+    .line-path {
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+    }
+    
+    .data-point.clickable {
+        cursor: pointer;
+        transition: r 0.2s ease;
+    }
+    
+    .data-point.clickable:hover {
+        r: 6;
+    }
+    
+    .chart-label {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    
+    .chart-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        margin-top: 20px;
+        justify-content: center;
+    }
+    
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .legend-color {
+        width: 12px;
+        height: 12px;
+        border-radius: 2px;
+    }
+    
+    .legend-label {
+        font-size: 0.875rem;
+        color: #374151;
+        font-weight: 500;
+    }
+    
+    .chart-tooltip {
+        position: absolute;
+        background: rgba(0, 0, 0, 0.9);
+        color: white;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        pointer-events: none;
+        z-index: 1000;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transform: translate(-50%, -100%);
+    }
+    
+    .tooltip-content {
+        text-align: center;
+    }
+    
+    .tooltip-series {
+        font-weight: 600;
+        color: #60a5fa;
+        margin-bottom: 2px;
+    }
+    
+    .tooltip-label {
+        font-weight: 500;
+        margin-bottom: 2px;
+    }
+    
+    .tooltip-value {
+        font-weight: 600;
+        color: #fbbf24;
+    }
+</style>

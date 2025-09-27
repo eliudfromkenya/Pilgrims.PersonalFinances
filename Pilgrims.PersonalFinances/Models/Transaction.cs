@@ -265,6 +265,11 @@ public class Transaction : BaseEntity
     [StringLength(100)]
     public string? CreatedBy { get; set; }
 
+    /// <summary>
+    /// ID of the user who owns this transaction
+    /// </summary>
+    public string? UserId { get; set; }
+
     // Data Linking Properties
     /// <summary>
     /// ID of the budget this transaction is linked to
