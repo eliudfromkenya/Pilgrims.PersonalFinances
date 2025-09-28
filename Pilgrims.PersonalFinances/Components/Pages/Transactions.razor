@@ -602,6 +602,7 @@
             TransactionType.Expense => "💸",
             TransactionType.Transfer => "🔄",
             TransactionType.Adjustment => "⚖️",
+            TransactionType.InitialBalance => "🏦",
             _ => "💳"
         };
     }
@@ -614,6 +615,7 @@
             TransactionType.Expense => "from-red-100 to-red-200 dark:from-red-600 dark:to-red-700",
             TransactionType.Transfer => "from-blue-100 to-blue-200 dark:from-blue-600 dark:to-blue-700",
             TransactionType.Adjustment => "from-yellow-100 to-yellow-200 dark:from-yellow-600 dark:to-yellow-700",
+            TransactionType.InitialBalance => "from-gray-100 to-gray-200 dark:from-gray-600 dark:to-gray-700",
             _ => "from-gray-100 to-gray-200 dark:from-gray-600 dark:to-gray-700"
         };
     }
@@ -625,6 +627,8 @@
             TransactionType.Income => "text-green-600",
             TransactionType.Expense => "text-red-600",
             TransactionType.Transfer => "text-blue-600",
+            TransactionType.Adjustment => "text-purple-600",
+            TransactionType.InitialBalance => "text-gray-600",
             _ => amount >= 0 ? "text-green-600" : "text-red-600"
         };
     }
@@ -635,6 +639,8 @@
         {
             TransactionType.Income => $"+{amount:C}",
             TransactionType.Expense => $"-{Math.Abs(amount):C}",
+            TransactionType.InitialBalance => amount.ToString("C"),
+            TransactionType.Adjustment => amount.ToString("C"),
             _ => amount.ToString("C")
         };
     }

@@ -323,7 +323,8 @@ public class Transaction : BaseEntity
             {
                 TransactionType.Income => Amount,
                 TransactionType.Expense => -Amount,
-                TransactionType.Transfer => Type == TransactionType.Transfer ? -Amount : Amount,
+                TransactionType.Transfer => -Amount, // Transfer is always negative from source account
+                TransactionType.InitialBalance => Amount,
                 TransactionType.Adjustment => Amount,
                 _ => Amount
             };
@@ -365,6 +366,7 @@ public class Transaction : BaseEntity
             {
                 TransactionType.Transfer => $"Transfer to {TransferToAccount?.Name ?? "Unknown Account"}",
                 TransactionType.Adjustment => "Balance Adjustment",
+                TransactionType.InitialBalance => "Initial Balance",
                 _ => Category?.Name ?? "Uncategorized"
             };
         }
