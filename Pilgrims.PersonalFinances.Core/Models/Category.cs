@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 namespace Pilgrims.PersonalFinances.Models;
 
 /// <summary>
-/// Represents a hierarchical category for organizing transactions
+/// Represents a transaction category with hierarchical support
 /// </summary>
 public class Category : BaseEntity
 {

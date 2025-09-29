@@ -860,26 +860,8 @@ public class PersonalFinanceContext : DbContext
             entity.HasIndex(e => e.EmailVerificationToken);
             entity.HasIndex(e => e.PasswordResetToken);
 
-            // Configure relationships
-            entity.HasMany(e => e.Accounts)
-                  .WithOne()
-                  .HasForeignKey("UserId")
-                  .OnDelete(DeleteBehavior.Cascade);
-
-            entity.HasMany(e => e.Budgets)
-                  .WithOne()
-                  .HasForeignKey("UserId")
-                  .OnDelete(DeleteBehavior.Cascade);
-
-            entity.HasMany(e => e.Categories)
-                  .WithOne()
-                  .HasForeignKey("UserId")
-                  .OnDelete(DeleteBehavior.Cascade);
-
-            entity.HasMany(e => e.Transactions)
-                  .WithOne()
-                  .HasForeignKey("UserId")
-                  .OnDelete(DeleteBehavior.Cascade);
+            // Note: User relationships are configured from the child entities (Account, Budget, Category, Transaction)
+            // to avoid shadow key validation issues. Each child entity should have an explicit UserId property.
         });
 
         // Configure UserSession entity

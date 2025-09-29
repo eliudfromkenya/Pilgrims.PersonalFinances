@@ -41,11 +41,11 @@ public class Notification : BaseEntity
     public DateTime? RecurrenceEndDate { get; set; }
 
     // Related Entity IDs (nullable - depends on notification type)
-    public int? TransactionId { get; set; }
-    public int? BudgetId { get; set; }
-    public int? DebtId { get; set; }
-    public int? GoalId { get; set; }
-    public int? ScheduledTransactionId { get; set; }
+    public string? TransactionId { get; set; }
+    public string? BudgetId { get; set; }
+    public string? DebtId { get; set; }
+    public string? GoalId { get; set; }
+    public string? ScheduledTransactionId { get; set; }
 
     [StringLength(500)]
     public string? ActionData { get; set; } // JSON data for quick actions

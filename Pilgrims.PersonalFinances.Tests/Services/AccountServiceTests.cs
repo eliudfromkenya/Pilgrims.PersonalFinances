@@ -60,7 +60,7 @@ public class AccountServiceTests : IDisposable
         // Arrange
         var account = new Account
         {
-            Name = "Test Account",
+            Name = "Test Savings Account",
             AccountType = AccountType.Checking,
             InitialBalance = 5000.00m,
             CurrentBalance = 5000.00m,

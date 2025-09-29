@@ -10,6 +10,11 @@ namespace Pilgrims.PersonalFinances.Models
     public class Budget : BaseEntity
     {
         /// <summary>
+        /// User ID for the budget owner
+        /// </summary>
+        [Required]
+        public string UserId { get; set; } = string.Empty;
+        /// <summary>
         /// Name of the budget
         /// </summary>
         [Required]

@@ -6,6 +6,12 @@ namespace Pilgrims.PersonalFinances.Models
 {
     public class Account : BaseEntity
     {
+        /// <summary>
+        /// User ID for the account owner
+        /// </summary>
+        [Required]
+        public string UserId { get; set; } = string.Empty;
+
         [Required]
         [StringLength(100)]
         public string Name { get; set; } = string.Empty;
