@@ -42,6 +42,7 @@ public class PersonalFinanceContext : DbContext
     // Scheduled Transactions
     public DbSet<ScheduledTransaction> ScheduledTransactions { get; set; }
     public DbSet<TransactionNotification> TransactionNotifications { get; set; }
+    public DbSet<TransactionTemplate> TransactionTemplates { get; set; }
 
     // Budget Management
     public DbSet<Budget> Budgets { get; set; }
@@ -74,6 +75,7 @@ public class PersonalFinanceContext : DbContext
     public DbSet<ReconciliationItem> ReconciliationItems { get; set; }
 
     // Notification System
+    public DbSet<Notification> Notifications { get; set; }
     public DbSet<NotificationRule> NotificationRules { get; set; }
     public DbSet<NotificationHistory> NotificationHistory { get; set; }
     public DbSet<NotificationSettings> NotificationSettings { get; set; }

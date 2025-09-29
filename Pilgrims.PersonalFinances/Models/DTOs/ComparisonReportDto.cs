@@ -57,34 +57,6 @@ namespace Pilgrims.PersonalFinances.Models.DTOs
     }
 
     /// <summary>
-    /// Category comparison between two periods
-    /// </summary>
-    public class CategoryComparisonDto
-    {
-        public string CategoryId { get; set; } = string.Empty;
-        public string CategoryName { get; set; } = string.Empty;
-        public string TransactionType { get; set; } = string.Empty;
-        
-        [Column(TypeName = "decimal(18,2)")]
-        public decimal Period1Amount { get; set; }
-        
-        [Column(TypeName = "decimal(18,2)")]
-        public decimal Period2Amount { get; set; }
-        
-        [Column(TypeName = "decimal(18,2)")]
-        public decimal Change { get; set; }
-        
-        public decimal ChangePercentage { get; set; }
-        
-        public int Period1TransactionCount { get; set; }
-        public int Period2TransactionCount { get; set; }
-        public int TransactionCountChange { get; set; }
-        
-        public string TrendDirection { get; set; } = string.Empty; // Increasing, Decreasing, Stable
-        public string ChangeSignificance { get; set; } = string.Empty; // Significant, Moderate, Minor
-    }
-
-    /// <summary>
     /// Account comparison between two periods
     /// </summary>
     public class AccountComparisonDto
