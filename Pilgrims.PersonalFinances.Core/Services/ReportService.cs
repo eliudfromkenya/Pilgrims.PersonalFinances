@@ -350,7 +350,7 @@ namespace Pilgrims.PersonalFinances.Services
 
         #region Category Analysis
 
-        public async Task<CategoryAnalysisDto> GenerateCategoryAnalysisAsync(DateTime startDate, DateTime endDate)
+        public async Task<Models.DTOs.CategoryAnalysisDto> GenerateCategoryAnalysisAsync(DateTime startDate, DateTime endDate)
         {
             var transactions = await _context.Transactions
                 .Include(t => t.Category)
@@ -409,7 +409,7 @@ namespace Pilgrims.PersonalFinances.Services
                 currentDate = currentDate.AddMonths(1);
             }
 
-            return new CategoryAnalysisDto
+            return new Models.DTOs.CategoryAnalysisDto
             {
                 StartDate = startDate,
                 EndDate = endDate,
@@ -423,7 +423,7 @@ namespace Pilgrims.PersonalFinances.Services
 
         #region Account Summary
 
-        public async Task<AccountSummaryReportDto> GenerateAccountSummaryReportAsync(DateTime startDate, DateTime endDate)
+        public async Task<Models.DTOs.AccountSummaryReportDto> GenerateAccountSummaryReportAsync(DateTime startDate, DateTime endDate)
         {
             var accounts = await _context.Accounts
                 .Where(a => a.Status == AccountStatus.Active || a.Status == AccountStatus.Inactive)
@@ -628,4 +628,41 @@ namespace Pilgrims.PersonalFinances.Services
         #endregion
     }
 
+    // Additional DTOs for new report types
+
+    //public class CategoryAnalysisDto
+    //{
+    //    public DateTime StartDate { get; set; }
+    //    public DateTime EndDate { get; set; }
+    //    public decimal TotalSpending { get; set; }
+    //    public List<CategorySummaryDto> Categories { get; set; } = new();
+    //    public List<MonthlyBreakdownDto> MonthlyBreakdown { get; set; } = new();
+    //}
+
+    //public class AccountSummaryReportDto
+    //{
+    //    public DateTime StartDate { get; set; }
+    //    public DateTime EndDate { get; set; }
+    //    public decimal TotalBalance { get; set; }
+    //    public List<AccountSummaryDto> Accounts { get; set; } = new();
+    //    public List<MonthlyBreakdownDto> MonthlyBreakdown { get; set; } = new();
+    //}
+
+    //public class MonthlyBreakdownDto
+    //{
+    //    public DateTime Month { get; set; }
+    //    public List<CategorySummaryDto> Categories { get; set; } = new();
+    //    public List<AccountSummaryDto> Accounts { get; set; } = new();
+    //}
+
+    //public class CategoryVarianceDto
+    //{
+    //    public string CategoryId { get; set; } = string.Empty;
+    //    public string CategoryName { get; set; } = string.Empty;
+    //    public decimal BudgetedAmount { get; set; }
+    //    public decimal ActualAmount { get; set; }
+    //    public decimal Variance { get; set; }
+    //    public decimal VariancePercentage { get; set; }
+    //    public string Status { get; set; } = string.Empty;
+    //}
 }

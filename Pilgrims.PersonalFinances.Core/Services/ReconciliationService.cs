@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Pilgrims.PersonalFinances.Data;
 using Pilgrims.PersonalFinances.Models;
+using Pilgrims.PersonalFinances.Models.DTOs;
 using Pilgrims.PersonalFinances.Models.Enums;
 using Pilgrims.PersonalFinances.Services.Interfaces;
 using System.Linq;
@@ -467,7 +468,7 @@ namespace Pilgrims.PersonalFinances.Services
                 Session = session,
                 ClearedItems = clearedItems,
                 UnmatchedItems = unmatchedItems,
-                DisputedItems = disputedItems,
+                DisputedItems = disputedItems.AsEnumerable(),
                 TotalClearedAmount = clearedItems.Sum(i => i.Amount),
                 TotalUnmatchedAmount = unmatchedItems.Sum(i => i.Amount),
                 TotalDisputedAmount = disputedItems.Sum(i => i.Amount),

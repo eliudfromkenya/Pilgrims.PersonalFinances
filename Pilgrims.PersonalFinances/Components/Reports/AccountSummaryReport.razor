@@ -358,7 +358,7 @@
 </div>
 
 @code {
-    [Parameter] public AccountSummaryReportDto Report { get; set; } = new();
+    [Parameter] public Pilgrims.PersonalFinances.Models.DTOs.AccountSummaryReportDto Report { get; set; } = new();
     [Parameter] public EventCallback<string> OnAccountDrillDown { get; set; }
 
     private string GetAccountIcon(string accountType)

@@ -13,8 +13,8 @@ namespace Pilgrims.PersonalFinances.Services.Interfaces
         Task<CashFlowReportDto> GenerateCashFlowStatementAsync(DateTime startDate, DateTime endDate);
         Task<BudgetVarianceReportDto> GenerateBudgetVarianceReportAsync(DateTime startDate, DateTime endDate);
         Task<List<Models.DTOs.NetWorthTrendDto>> GenerateNetWorthTrendAsync(DateTime startDate, DateTime endDate);
-        Task<CategoryAnalysisDto> GenerateCategoryAnalysisAsync(DateTime startDate, DateTime endDate);
-        Task<AccountSummaryReportDto> GenerateAccountSummaryReportAsync(DateTime startDate, DateTime endDate);
+        Task<Models.DTOs.CategoryAnalysisDto> GenerateCategoryAnalysisAsync(DateTime startDate, DateTime endDate);
+        Task<Models.DTOs.AccountSummaryReportDto> GenerateAccountSummaryReportAsync(DateTime startDate, DateTime endDate);
 
         // Comparison Features
         Task<ComparisonReportDto> GenerateYearOverYearComparisonAsync(int currentYear, int previousYear);

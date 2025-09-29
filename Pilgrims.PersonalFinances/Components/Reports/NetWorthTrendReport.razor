@@ -309,7 +309,7 @@
 @using Pilgrims.PersonalFinances.Models.DTOs
 
 @code {
-    [Parameter] public Models.DTOs.NetWorthTrendDto Report { get; set; } = new();
+    [Parameter] public Pilgrims.PersonalFinances.Models.DTOs.NetWorthTrendDto Report { get; set; } = new();
 
     private decimal GetAverageMonthlyGrowth()
     {

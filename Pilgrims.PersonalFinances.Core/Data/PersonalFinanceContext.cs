@@ -23,6 +23,9 @@ public class PersonalFinanceContext : DbContext
         {
             // Use a default path for testing - in production this will be overridden
             var dbPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "PersonalFinance.db");
+
+            // For now, use standard SQLite connection
+            // TODO: Integrate with DatabaseEncryptionService for SQLCipher support
             var connectionString = $"Data Source={dbPath};";
             optionsBuilder.UseSqlite(connectionString);
         }
@@ -42,7 +45,6 @@ public class PersonalFinanceContext : DbContext
     // Scheduled Transactions
     public DbSet<ScheduledTransaction> ScheduledTransactions { get; set; }
     public DbSet<TransactionNotification> TransactionNotifications { get; set; }
-    public DbSet<TransactionTemplate> TransactionTemplates { get; set; }
 
     // Budget Management
     public DbSet<Budget> Budgets { get; set; }
@@ -75,7 +77,6 @@ public class PersonalFinanceContext : DbContext
     public DbSet<ReconciliationItem> ReconciliationItems { get; set; }
 
     // Notification System
-    public DbSet<Notification> Notifications { get; set; }
     public DbSet<NotificationRule> NotificationRules { get; set; }
     public DbSet<NotificationHistory> NotificationHistory { get; set; }
     public DbSet<NotificationSettings> NotificationSettings { get; set; }
@@ -392,6 +393,11 @@ public class PersonalFinanceContext : DbContext
                   .HasForeignKey(e => e.AssetCategoryId)
                   .OnDelete(DeleteBehavior.SetNull);
 
+            entity.HasOne(e => e.PurchaseTransaction)
+                  .WithMany()
+                  .HasForeignKey(e => e.PurchaseTransactionId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
             entity.HasIndex(e => e.SerialNumber).IsUnique().HasFilter("[SerialNumber] IS NOT NULL");
             entity.HasIndex(e => e.PurchaseDate);
         });
@@ -543,6 +549,51 @@ public class PersonalFinanceContext : DbContext
             entity.HasIndex(e => e.NotificationType);
         });
 
+        // Configure Notification entity
+        modelBuilder.Entity<Notification>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Type).IsRequired();
+            entity.Property(e => e.Title).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Message).IsRequired().HasMaxLength(1000);
+            entity.Property(e => e.ScheduledDate).IsRequired();
+            entity.Property(e => e.Status).IsRequired();
+            entity.Property(e => e.Priority).IsRequired();
+            entity.Property(e => e.ActionData).HasMaxLength(500);
+            entity.Property(e => e.ActionUrl).HasMaxLength(100);
+            entity.Property(e => e.Icon).HasMaxLength(50);
+            entity.Property(e => e.Color).HasMaxLength(50);
+
+            entity.HasOne(e => e.Transaction)
+                  .WithMany()
+                  .HasForeignKey(e => e.TransactionId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.Budget)
+                  .WithMany()
+                  .HasForeignKey(e => e.BudgetId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.Debt)
+                  .WithMany()
+                  .HasForeignKey(e => e.DebtId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.Goal)
+                  .WithMany()
+                  .HasForeignKey(e => e.GoalId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.ScheduledTransaction)
+                  .WithMany()
+                  .HasForeignKey(e => e.ScheduledTransactionId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasIndex(e => e.ScheduledDate);
+            entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => e.Type);
+        });
+
         // Configure NotificationHistory entity
         modelBuilder.Entity<NotificationHistory>(entity =>
         {
@@ -558,6 +609,31 @@ public class PersonalFinanceContext : DbContext
             entity.HasOne(e => e.NotificationRule)
                   .WithMany()
                   .HasForeignKey(e => e.NotificationRuleId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.Transaction)
+                  .WithMany()
+                  .HasForeignKey(e => e.TransactionId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.ScheduledTransaction)
+                  .WithMany()
+                  .HasForeignKey(e => e.ScheduledTransactionId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.Budget)
+                  .WithMany()
+                  .HasForeignKey(e => e.BudgetId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.Debt)
+                  .WithMany()
+                  .HasForeignKey(e => e.DebtId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.Account)
+                  .WithMany()
+                  .HasForeignKey(e => e.AccountId)
                   .OnDelete(DeleteBehavior.SetNull);
 
             entity.HasIndex(e => e.ScheduledAt);

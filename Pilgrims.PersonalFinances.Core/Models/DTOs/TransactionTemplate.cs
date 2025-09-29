@@ -1,4 +1,4 @@
-using Pilgrims.PersonalFinances.Core.Models.Enums;
+using Pilgrims.PersonalFinances.Models.Enums;
 
 namespace Pilgrims.PersonalFinances.Core.Models.DTOs;
 

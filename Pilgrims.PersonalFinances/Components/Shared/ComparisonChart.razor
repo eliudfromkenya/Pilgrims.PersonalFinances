@@ -249,7 +249,7 @@
 @code {
     [Parameter] public string Title { get; set; } = "Period Comparison";
     [Parameter] public string Subtitle { get; set; } = "";
-    [Parameter] public Services.ComparisonResultDto? ComparisonData { get; set; }
+    [Parameter] public ComparisonResultDto? ComparisonData { get; set; }
     [Parameter] public EventCallback<string> OnMetricChange { get; set; }
     [Parameter] public EventCallback<string> OnPeriodChange { get; set; }
 
