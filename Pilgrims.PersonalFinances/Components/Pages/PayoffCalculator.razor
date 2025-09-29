@@ -2,9 +2,10 @@
 @using Pilgrims.PersonalFinances.Models
 @using Pilgrims.PersonalFinances.Models.Enums
 @using Pilgrims.PersonalFinances.Services.Interfaces
+@using Pilgrims.PersonalFinances.Core.Messaging.Interfaces
 @inject IObligationService ObligationService
 @inject NavigationManager Navigation
-@inject IJSRuntime JSRuntime
+@inject IMessagingService MessagingService
 
 <PageTitle>Payoff Calculator - Personal Finance</PageTitle>
 
@@ -581,11 +582,18 @@
         try
         {
             var chartData = GeneratePayoffChartData();
-            await JSRuntime.InvokeVoidAsync("initializePayoffChart", "payoffTimelineChart", chartData);
+            MessagingService.Send(new Pilgrims.PersonalFinances.Core.Messaging.Messages.InitializeJavaScriptMessage(
+                "payoffchart",
+                "payoffTimelineChart",
+                chartData
+            ));
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error initializing charts: {ex.Message}");
+            MessagingService.Send(new Pilgrims.PersonalFinances.Core.Messaging.Messages.ConsoleLogMessage(
+                Pilgrims.PersonalFinances.Core.Messaging.Messages.ConsoleLogMessage.LogLevel.Error,
+                $"Error initializing charts: {ex.Message}"
+            ));
         }
     }
 
@@ -652,28 +660,36 @@
     private void AddNewDebt() => Navigation.NavigateTo("/obligations/add");
 
     // Action methods
-    private async Task SavePayoffPlan()
+    private void SavePayoffPlan()
     {
         // TODO: Implement save payoff plan functionality
-        await JSRuntime.InvokeVoidAsync("alert", "Payoff plan saved successfully!");
+        MessagingService.Send(new Pilgrims.PersonalFinances.Core.Messaging.Messages.ShowAlertMessage(
+            "Payoff plan saved successfully!"
+        ));
     }
 
-    private async Task SetupAutomation()
+    private void SetupAutomation()
     {
         // TODO: Implement automation setup
-        await JSRuntime.InvokeVoidAsync("alert", "Automation setup coming soon!");
+        MessagingService.Send(new Pilgrims.PersonalFinances.Core.Messaging.Messages.ShowAlertMessage(
+            "Automation setup coming soon!"
+        ));
     }
 
-    private async Task ShareResults()
+    private void ShareResults()
     {
         // TODO: Implement share functionality
-        await JSRuntime.InvokeVoidAsync("alert", "Share functionality coming soon!");
+        MessagingService.Send(new Pilgrims.PersonalFinances.Core.Messaging.Messages.ShowAlertMessage(
+            "Share functionality coming soon!"
+        ));
     }
 
-    private async Task ExportSchedule()
+    private void ExportSchedule()
     {
         // TODO: Implement export functionality
-        await JSRuntime.InvokeVoidAsync("alert", "Export functionality coming soon!");
+        MessagingService.Send(new Pilgrims.PersonalFinances.Core.Messaging.Messages.ShowAlertMessage(
+            "Export functionality coming soon!"
+        ));
     }
 
     private void ShowAmortizationDetails(string debtId)

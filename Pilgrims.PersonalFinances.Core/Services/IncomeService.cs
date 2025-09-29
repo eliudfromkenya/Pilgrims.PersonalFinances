@@ -95,13 +95,35 @@ namespace Pilgrims.PersonalFinances.Services
 
         public async Task<bool> DeleteIncomeAsync(string id)
         {
-            var income = await _context.Incomes.FindAsync(id);
-            if (income == null)
-                return false;
+            try
+            {
+                var income = await _context.Incomes.FindAsync(id);
+                if (income == null)
+                    return false;
 
-            _context.Incomes.Remove(income);
-            await _context.SaveChangesAsync();
-            return true;
+                _context.Incomes.Remove(income);
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                // Log the full exception details including inner exceptions
+                var innerException = ex.InnerException;
+                var errorMessage = $"Error deleting income with ID {id}: {ex.Message}";
+                
+                while (innerException != null)
+                {
+                    errorMessage += $"\nInner Exception: {innerException.Message}";
+                    innerException = innerException.InnerException;
+                }
+                
+                // Log to console for debugging (you can replace this with proper logging)
+                Console.WriteLine(errorMessage);
+                System.Diagnostics.Debug.WriteLine(errorMessage);
+                
+                // Re-throw the exception to maintain the original behavior
+                throw;
+            }
         }
 
         #endregion

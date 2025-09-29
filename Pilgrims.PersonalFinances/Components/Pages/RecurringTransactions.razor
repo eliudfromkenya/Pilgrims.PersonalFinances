@@ -3,10 +3,13 @@
 @using Pilgrims.PersonalFinances.Models.Enums
 @using Pilgrims.PersonalFinances.Services.Interfaces
 @using Pilgrims.PersonalFinances.Services
+@using Pilgrims.PersonalFinances.Core.Messaging.Interfaces
+@using Pilgrims.PersonalFinances.Core.Messaging.Extensions
 @inject IScheduledTransactionService ScheduledTransactionService
 @inject ITransactionService TransactionService
 @inject IAccountService AccountService
 @inject NavigationManager Navigation
+@inject IMessagingService MessagingService
 @inject IJSRuntime JSRuntime
 
 <PageTitle>Recurring Transactions - Pilgrims Personal Finance</PageTitle>
@@ -393,11 +396,11 @@
         {
             await ScheduledTransactionService.ProcessDueTransactionAsync(transaction.Id);
             await LoadData(); // Refresh data
-            await JSRuntime.InvokeVoidAsync("showToast", "Transaction processed successfully", "success");
+            await MessagingService.ShowSuccessToastAsync("Transaction processed successfully");
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("showToast", $"Error processing transaction: {ex.Message}", "error");
+            await MessagingService.ShowErrorToastAsync($"Error processing transaction: {ex.Message}");
         }
     }
 
@@ -408,12 +411,12 @@
             if (transaction.IsActive)
             {
                 await ScheduledTransactionService.PauseAsync(transaction.Id);
-                await JSRuntime.InvokeVoidAsync("showToast", "Transaction paused", "info");
+                await MessagingService.ShowInfoToastAsync("Transaction paused");
             }
             else
             {
                 await ScheduledTransactionService.ResumeAsync(transaction.Id);
-                await JSRuntime.InvokeVoidAsync("showToast", "Transaction resumed", "success");
+                await MessagingService.ShowSuccessToastAsync("Transaction resumed");
             }
             await LoadData(); // Refresh data
         }
@@ -425,18 +428,18 @@
 
     private async Task DeleteTransaction(ScheduledTransaction transaction)
     {
-        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete '{transaction.Name}'?");
+        var confirmed = await MessagingService.ShowConfirmationAsync($"Are you sure you want to delete '{transaction.Name}'?");
         if (confirmed)
         {
             try
             {
                 await ScheduledTransactionService.DeleteAsync(transaction.Id);
                 await LoadData(); // Refresh data
-                await JSRuntime.InvokeVoidAsync("showToast", "Transaction deleted successfully", "success");
+                await MessagingService.ShowSuccessToastAsync("Transaction deleted successfully");
             }
             catch (Exception ex)
             {
-                await JSRuntime.InvokeVoidAsync("showToast", $"Error deleting transaction: {ex.Message}", "error");
+                await MessagingService.ShowErrorToastAsync($"Error deleting transaction: {ex.Message}");
             }
         }
     }

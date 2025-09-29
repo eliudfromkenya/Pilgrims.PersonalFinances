@@ -3,11 +3,13 @@
 @using Pilgrims.PersonalFinances.Models.Enums
 @using Pilgrims.PersonalFinances.Services.Interfaces
 @using Pilgrims.PersonalFinances.Services
+@using Pilgrims.PersonalFinances.Core.Messaging.Interfaces
+@using Pilgrims.PersonalFinances.Core.Messaging.Extensions
 @inject IScheduledTransactionService ScheduledTransactionService
 @inject ITransactionService TransactionService
 @inject IAccountService AccountService
 @inject NavigationManager Navigation
-@inject IJSRuntime JSRuntime
+@inject IMessagingService MessagingService
 
 <PageTitle>Create Recurring Transaction - Pilgrims Personal Finance</PageTitle>
 
@@ -415,7 +417,7 @@
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("console.error", "Error loading data:", ex.Message);
+            await MessagingService.ShowErrorToastAsync($"Error loading data: {ex.Message}");
         }
     }
 
@@ -452,12 +454,12 @@
             }
 
             await ScheduledTransactionService.CreateScheduledTransactionAsync(transaction);
-            await JSRuntime.InvokeVoidAsync("showToast", "Recurring transaction created successfully!", "success");
+            await MessagingService.ShowSuccessToastAsync("Recurring transaction created successfully!");
             Navigation.NavigateTo("/recurring-transactions");
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("showToast", $"Error creating transaction: {ex.Message}", "error");
+            await MessagingService.ShowErrorToastAsync($"Error creating transaction: {ex.Message}");
         }
         finally
         {

@@ -2,10 +2,12 @@
 @using Pilgrims.PersonalFinances.Models
 @using Pilgrims.PersonalFinances.Models.Enums
 @using Pilgrims.PersonalFinances.Services.Interfaces
+@using Pilgrims.PersonalFinances.Core.Messaging.Interfaces
+@using Pilgrims.PersonalFinances.Core.Messaging.Extensions
 
 @inject INotificationService NotificationService
 @inject NavigationManager Navigation
-@inject IJSRuntime JSRuntime
+@inject IMessagingService MessagingService
 
 <PageTitle>Notifications - Pilgrims Personal Finance</PageTitle>
 
@@ -288,7 +290,7 @@
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("showToast", $"Error loading notifications: {ex.Message}", "error");
+            await MessagingService.ShowErrorToastAsync($"Error loading notifications: {ex.Message}");
         }
         finally
         {
@@ -341,7 +343,7 @@
     private async Task RefreshNotifications()
     {
         await LoadNotifications();
-        await JSRuntime.InvokeVoidAsync("showToast", "Notifications refreshed", "success");
+        await MessagingService.ShowSuccessToastAsync("Notifications refreshed");
     }
 
     private async Task MarkAsRead(string? notificationId)
@@ -359,7 +361,7 @@
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("showToast", $"Error marking notification as read: {ex.Message}", "error");
+            await MessagingService.ShowErrorToastAsync($"Error marking notification as read: {ex.Message}");
         }
     }
 
@@ -374,11 +376,11 @@
             }
             CalculateStatistics();
             ApplyFiltersAndSort();
-            await JSRuntime.InvokeVoidAsync("showToast", "All notifications marked as read", "success");
+            await MessagingService.ShowSuccessToastAsync("All notifications marked as read");
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("showToast", $"Error marking all notifications as read: {ex.Message}", "error");
+            await MessagingService.ShowErrorToastAsync($"Error marking all notifications as read: {ex.Message}");
         }
     }
 
@@ -397,7 +399,7 @@
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("showToast", $"Error dismissing notification: {ex.Message}", "error");
+            await MessagingService.ShowErrorToastAsync($"Error dismissing notification: {ex.Message}");
         }
     }
 
@@ -409,11 +411,11 @@
             notifications.RemoveAll(n => n.Id == notificationId);
             CalculateStatistics();
             ApplyFiltersAndSort();
-            await JSRuntime.InvokeVoidAsync("showToast", "Notification deleted", "success");
+            await MessagingService.ShowSuccessToastAsync("Notification deleted");
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("showToast", $"Error deleting notification: {ex.Message}", "error");
+            await MessagingService.ShowErrorToastAsync($"Error deleting notification: {ex.Message}");
         }
     }
 

@@ -2,13 +2,9 @@
 @using Pilgrims.PersonalFinances.Models
 @using Pilgrims.PersonalFinances.Models.Enums
 @using Pilgrims.PersonalFinances.Models.DTOs
-@using Pilgrims.PersonalFinances.Services.Interfaces
-@using Pilgrims.PersonalFinances.Services
-@inject IReportService ReportService
-@inject IComparisonService ComparisonService
-@inject IExportService ExportService
-@inject IAuthenticationService AuthService
-@inject IJSRuntime JSRuntime
+@using Pilgrims.PersonalFinances.Core.ViewModels
+@inject ReportsViewModel ViewModel
+@inject NavigationManager Navigation
 
 <PageTitle>Reports - Pilgrims Personal Finance</PageTitle>
 
@@ -38,15 +34,15 @@
                 <div class="flex items-center space-x-3">
                     <!-- Date Range Selector -->
                     <div class="flex items-center space-x-2">
-                        <input type="date" @bind="startDate" @bind:event="onchange"
+                        <input type="date" @bind="ViewModel.StartDate" @bind:event="onchange"
                                class="px-3 py-2 bg-white/50 dark:bg-gray-700/50 rounded-lg border border-white/20 text-sm" />
                         <span class="text-gray-500">to</span>
-                        <input type="date" @bind="endDate" @bind:event="onchange"
+                        <input type="date" @bind="ViewModel.EndDate" @bind:event="onchange"
                                class="px-3 py-2 bg-white/50 dark:bg-gray-700/50 rounded-lg border border-white/20 text-sm" />
                     </div>
                     
                     <!-- Quick Date Range Selector -->
-                    <select @bind="selectedPeriod" @bind:event="onchange"
+                    <select @bind="ViewModel.SelectedPeriod" @bind:event="onchange"
                             class="px-4 py-2 bg-white/50 dark:bg-gray-700/50 rounded-lg border border-white/20">
                         <option value="custom">Custom Range</option>
                         <option value="last30">Last 30 Days</option>
@@ -59,20 +55,20 @@
                     
                     <!-- Export Options -->
                     <div class="relative">
-                        <button @onclick="ToggleExportMenu" 
+                        <button @onclick="ViewModel.ToggleExportMenuCommand.Execute" 
                                 class="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-300">
                             <span class="mr-2">📥</span> Export
                         </button>
-                        @if (showExportMenu)
+                        @if (ViewModel.ShowExportMenu)
                         {
                             <div class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50">
-                                <button @onclick="() => ExportReport(ExportFormat.PDF)" class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-t-lg">
+                                <button @onclick="() => ViewModel.ExportReportCommand.Execute(ExportFormat.PDF)" class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-t-lg">
                                     📄 Export as PDF
                                 </button>
-                                <button @onclick="() => ExportReport(ExportFormat.CSV)" class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <button @onclick="() => ViewModel.ExportReportCommand.Execute(ExportFormat.CSV)" class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700">
                                     📊 Export as CSV
                                 </button>
-                                <button @onclick="() => ExportReport(ExportFormat.JPEG)" class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-b-lg">
+                                <button @onclick="() => ViewModel.ExportReportCommand.Execute(ExportFormat.JPEG)" class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-b-lg">
                                     🖼️ Export as Image
                                 </button>
                             </div>
@@ -82,16 +78,16 @@
             </div>
             
             <!-- Key Metrics Cards -->
-            @if (balanceSheet != null)
+            @if (ViewModel.BalanceSheet != null)
             {
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
                     <div class="bg-gradient-to-r from-indigo-400 to-indigo-600 p-4 rounded-xl text-white">
                         <div class="text-sm opacity-90">Net Worth</div>
-                        <div class="text-2xl font-bold">@balanceSheet.NetWorth.ToString("C")</div>
-                        @if (previousBalanceSheet != null)
+                        <div class="text-2xl font-bold">@ViewModel.BalanceSheet.NetWorth.ToString("C")</div>
+                        @if (ViewModel.PreviousBalanceSheet != null)
                         {
-                            var change = balanceSheet.NetWorth - previousBalanceSheet.NetWorth;
-                            var changePercent = previousBalanceSheet.NetWorth != 0 ? (change / previousBalanceSheet.NetWorth) * 100 : 0;
+                            var change = ViewModel.BalanceSheet.NetWorth - ViewModel.PreviousBalanceSheet.NetWorth;
+                            var changePercent = ViewModel.PreviousBalanceSheet.NetWorth != 0 ? (change / ViewModel.PreviousBalanceSheet.NetWorth) * 100 : 0;
                             <div class="text-xs opacity-75 mt-1">
                                 @(change >= 0 ? "📈" : "📉") @changePercent.ToString("F1")% vs Previous
                             </div>
@@ -99,18 +95,18 @@
                     </div>
                     <div class="bg-gradient-to-r from-purple-400 to-purple-600 p-4 rounded-xl text-white">
                         <div class="text-sm opacity-90">Total Income</div>
-                        <div class="text-2xl font-bold">@(incomeStatement?.TotalIncome.ToString("C") ?? "$0.00")</div>
+                        <div class="text-2xl font-bold">@(ViewModel.IncomeStatement?.TotalIncome.ToString("C") ?? "$0.00")</div>
                         <div class="text-xs opacity-75 mt-1">Selected period</div>
                     </div>
                     <div class="bg-gradient-to-r from-pink-400 to-pink-600 p-4 rounded-xl text-white">
                         <div class="text-sm opacity-90">Total Expenses</div>
-                        <div class="text-2xl font-bold">@(incomeStatement?.TotalExpenses.ToString("C") ?? "$0.00")</div>
-                        <div class="text-xs opacity-75 mt-1">@(incomeStatement != null && incomeStatement.TotalIncome > 0 ? ((incomeStatement.TotalExpenses / incomeStatement.TotalIncome) * 100).ToString("F0") + "% of income" : "N/A")</div>
+                        <div class="text-2xl font-bold">@(ViewModel.IncomeStatement?.TotalExpenses.ToString("C") ?? "$0.00")</div>
+                        <div class="text-xs opacity-75 mt-1">@(ViewModel.IncomeStatement != null && ViewModel.IncomeStatement.TotalIncome > 0 ? ((ViewModel.IncomeStatement.TotalExpenses / ViewModel.IncomeStatement.TotalIncome) * 100).ToString("F0") + "% of income" : "N/A")</div>
                     </div>
                     <div class="bg-gradient-to-r from-rose-400 to-rose-600 p-4 rounded-xl text-white">
                         <div class="text-sm opacity-90">Net Income</div>
-                        <div class="text-2xl font-bold">@(incomeStatement?.NetIncome.ToString("C") ?? "$0.00")</div>
-                        <div class="text-xs opacity-75 mt-1">@(incomeStatement != null && incomeStatement.TotalIncome > 0 ? ((incomeStatement.NetIncome / incomeStatement.TotalIncome) * 100).ToString("F0") + "% savings rate" : "N/A")</div>
+                        <div class="text-2xl font-bold">@(ViewModel.IncomeStatement?.NetIncome.ToString("C") ?? "$0.00")</div>
+                        <div class="text-xs opacity-75 mt-1">@(ViewModel.IncomeStatement != null && ViewModel.IncomeStatement.TotalIncome > 0 ? ((ViewModel.IncomeStatement.NetIncome / ViewModel.IncomeStatement.TotalIncome) * 100).ToString("F0") + "% savings rate" : "N/A")</div>
                     </div>
                 </div>
             }
@@ -120,39 +116,39 @@
     <!-- Report Type Selector -->
     <div class="mb-6">
         <div class="flex flex-wrap gap-2">
-            <button @onclick="() => SetActiveReport(ReportType.IncomeStatement)" 
-                    class="px-4 py-2 rounded-lg transition-all @(activeReportType == ReportType.IncomeStatement ? "bg-indigo-600 text-white" : "bg-white/50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300")">
+            <button @onclick="() => ViewModel.SetActiveReportCommand.Execute(ReportType.IncomeStatement)" 
+                    class="px-4 py-2 rounded-lg transition-all @(ViewModel.ActiveReportType == ReportType.IncomeStatement ? "bg-indigo-600 text-white" : "bg-white/50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300")">
                 Income Statement
             </button>
-            <button @onclick="() => SetActiveReport(ReportType.BalanceSheet)" 
-                    class="px-4 py-2 rounded-lg transition-all @(activeReportType == ReportType.BalanceSheet ? "bg-indigo-600 text-white" : "bg-white/50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300")">
+            <button @onclick="() => ViewModel.SetActiveReportCommand.Execute(ReportType.BalanceSheet)" 
+                    class="px-4 py-2 rounded-lg transition-all @(ViewModel.ActiveReportType == ReportType.BalanceSheet ? "bg-indigo-600 text-white" : "bg-white/50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300")">
                 Balance Sheet
             </button>
-            <button @onclick="() => SetActiveReport(ReportType.CashFlowStatement)"
-                    class="px-4 py-2 rounded-lg transition-all @(activeReportType == ReportType.CashFlowStatement ? "bg-indigo-600 text-white" : "bg-white/50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300")">
+            <button @onclick="() => ViewModel.SetActiveReportCommand.Execute(ReportType.CashFlowStatement)"
+                    class="px-4 py-2 rounded-lg transition-all @(ViewModel.ActiveReportType == ReportType.CashFlowStatement ? "bg-indigo-600 text-white" : "bg-white/50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300")">
                 Cash Flow
             </button>
-            <button @onclick="() => SetActiveReport(ReportType.BudgetVarianceReport)"
-                    class="px-4 py-2 rounded-lg transition-all @(activeReportType == ReportType.BudgetVarianceReport ? "bg-indigo-600 text-white" : "bg-white/50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300")">
+            <button @onclick="() => ViewModel.SetActiveReportCommand.Execute(ReportType.BudgetVarianceReport)"
+                    class="px-4 py-2 rounded-lg transition-all @(ViewModel.ActiveReportType == ReportType.BudgetVarianceReport ? "bg-indigo-600 text-white" : "bg-white/50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300")">
                 Budget Variance
             </button>
-            <button @onclick="() => SetActiveReport(ReportType.NetWorthTrend)" 
-                    class="px-4 py-2 rounded-lg transition-all @(activeReportType == ReportType.NetWorthTrend ? "bg-indigo-600 text-white" : "bg-white/50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300")">
+            <button @onclick="() => ViewModel.SetActiveReportCommand.Execute(ReportType.NetWorthTrend)" 
+                    class="px-4 py-2 rounded-lg transition-all @(ViewModel.ActiveReportType == ReportType.NetWorthTrend ? "bg-indigo-600 text-white" : "bg-white/50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300")">
                 Net Worth Trend
             </button>
-            <button @onclick="() => SetActiveReport(ReportType.CategoryAnalysis)" 
-                    class="px-4 py-2 rounded-lg transition-all @(activeReportType == ReportType.CategoryAnalysis ? "bg-indigo-600 text-white" : "bg-white/50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300")">
+            <button @onclick="() => ViewModel.SetActiveReportCommand.Execute(ReportType.CategoryAnalysis)" 
+                    class="px-4 py-2 rounded-lg transition-all @(ViewModel.ActiveReportType == ReportType.CategoryAnalysis ? "bg-indigo-600 text-white" : "bg-white/50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300")">
                 Category Analysis
             </button>
-            <button @onclick="() => SetActiveReport(ReportType.AccountSummary)" 
-                    class="px-4 py-2 rounded-lg transition-all @(activeReportType == ReportType.AccountSummary ? "bg-indigo-600 text-white" : "bg-white/50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300")">
+            <button @onclick="() => ViewModel.SetActiveReportCommand.Execute(ReportType.AccountSummary)" 
+                    class="px-4 py-2 rounded-lg transition-all @(ViewModel.ActiveReportType == ReportType.AccountSummary ? "bg-indigo-600 text-white" : "bg-white/50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300")">
                 Account Summary
             </button>
         </div>
     </div>
 
     <!-- Loading Indicator -->
-    @if (isLoading)
+    @if (ViewModel.IsBusy)
     {
         <div class="flex justify-center items-center py-12">
             <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
@@ -161,68 +157,68 @@
     }
 
     <!-- Report Content -->
-    @if (!isLoading)
+    @if (!ViewModel.IsBusy)
     {
-        @switch (activeReportType)
+        @switch (ViewModel.ActiveReportType)
         {
             case ReportType.IncomeStatement:
-                @if (incomeStatement != null)
+                @if (ViewModel.IncomeStatement != null)
                 {
-                    <IncomeStatementReport Report="incomeStatement" OnCategoryClick="OnCategoryClick" />
+                    <IncomeStatementReport Report="ViewModel.IncomeStatement" OnCategoryClick="OnCategoryClick" />
                 }
                 break;
             
             case ReportType.BalanceSheet:
-                @if (balanceSheet != null)
+                @if (ViewModel.BalanceSheet != null)
                 {
-                    <BalanceSheetReport Report="balanceSheet" />
+                    <BalanceSheetReport Report="ViewModel.BalanceSheet" />
                 }
                 break;
             
             case ReportType.CashFlowStatement:
-                @if (cashFlowStatement != null)
+                @if (ViewModel.CashFlowStatement != null)
                 {
-                    <CashFlowReport Report="cashFlowStatement" />
+                    <CashFlowReport Report="ViewModel.CashFlowStatement" />
                 }
                 break;
             
             case ReportType.BudgetVarianceReport:
-                @if (budgetVariance != null)
+                @if (ViewModel.BudgetVariance != null)
                 {
-                    <BudgetVarianceReport Report="budgetVariance" />
+                    <BudgetVarianceReport Report="ViewModel.BudgetVariance" />
                 }
                 break;
             
             case ReportType.NetWorthTrend:
-                @if (netWorthTrend != null)
+                @if (ViewModel.NetWorthTrend != null)
                 {
-                    <NetWorthTrendReport Trends="netWorthTrend" />
+                    <NetWorthTrendReport Trends="ViewModel.NetWorthTrend" />
                 }
                 break;
             
             case ReportType.CategoryAnalysis:
-                @if (categoryAnalysis != null)
+                @if (ViewModel.CategoryAnalysis != null)
                 {
-                    <CategoryAnalysisReport Report="categoryAnalysis" OnCategoryClick="OnCategoryClick" />
+                    <CategoryAnalysisReport Report="ViewModel.CategoryAnalysis" OnCategoryClick="OnCategoryClick" />
                 }
                 break;
             
             case ReportType.AccountSummary:
-                @if (accountSummary != null)
+                @if (ViewModel.AccountSummary != null)
                 {
-                    <AccountSummaryReport Accounts="accountSummary" OnAccountClick="OnAccountClick" />
+                    <AccountSummaryReport Accounts="ViewModel.AccountSummary" OnAccountClick="OnAccountClick" />
                 }
                 break;
         }
     }
 
     <!-- Comparison Section -->
-    @if (comparisonData != null && showComparison)
+    @if (ViewModel.ComparisonData != null && ViewModel.ShowComparison)
     {
         <div class="mt-8">
             <ComparisonChart Title="Period Comparison" 
-                           Subtitle="@comparisonData.ComparisonType Analysis"
-                           ComparisonData="comparisonData"
+                           Subtitle="@ViewModel.ComparisonData.ComparisonType Analysis"
+                           ComparisonData="ViewModel.ComparisonData"
                            OnMetricChange="OnComparisonMetricChanged"
                            OnPeriodChange="OnComparisonPeriodChanged" />
         </div>
@@ -230,11 +226,11 @@
 
     <!-- Comparison Controls -->
     <div class="mt-6 flex justify-center space-x-4">
-        <button @onclick="() => GenerateYearOverYearComparison()" 
+        <button @onclick="ViewModel.GenerateYearOverYearComparisonCommand.Execute" 
                 class="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-300">
             Year-over-Year Comparison
         </button>
-        <button @onclick="() => GenerateMonthOverMonthComparison()" 
+        <button @onclick="ViewModel.GenerateMonthOverMonthComparisonCommand.Execute" 
                 class="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-300">
             Month-over-Month Comparison
         </button>
@@ -284,299 +280,32 @@
 </style>
 
 @code {
-    private DateTime startDate = DateTime.Now.AddMonths(-12);
-    private DateTime endDate = DateTime.Now;
-    private string selectedPeriod = "last12months";
-    private ReportType activeReportType = ReportType.IncomeStatement;
-    private bool isLoading = false;
-    private bool showExportMenu = false;
-    private bool showComparison = false;
-    private string? currentUserId;
-
-    // Report Data
-    private IncomeExpenseReportDto? incomeStatement;
-    private BalanceSheetDto? balanceSheet;
-    private BalanceSheetDto? previousBalanceSheet;
-    private CashFlowReportDto? cashFlowStatement;
-    private BudgetVarianceReportDto? budgetVariance;
-    private List<Pilgrims.PersonalFinances.Models.DTOs.NetWorthTrendDto>? netWorthTrend;
-    private Pilgrims.PersonalFinances.Models.DTOs.CategoryAnalysisDto? categoryAnalysis;
-    private Pilgrims.PersonalFinances.Models.DTOs.AccountSummaryReportDto? accountSummary;
-    private ComparisonResultDto? comparisonData;
-
     protected override async Task OnInitializedAsync()
     {
-        await GetCurrentUserId();
-        await LoadReportData();
+        await ViewModel.InitializeCommand.ExecuteAsync(null);
     }
 
-    private async Task GetCurrentUserId()
+    private void OnCategoryClick(string categoryName)
     {
-        try
-        {
-            var sessionToken = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "authToken");
-            if (!string.IsNullOrEmpty(sessionToken))
-            {
-                var user = await AuthService.GetUserBySessionTokenAsync(sessionToken);
-                currentUserId = user?.Id;
-            }
-        }
-        catch (Exception ex)
-        {
-            await JSRuntime.InvokeVoidAsync("showToast", $"Failed to get user information: {ex.Message}", "error");
-        }
+        // Navigate to category details or show category-specific report
+        Navigation.NavigateTo($"/transactions?category={categoryName}");
     }
 
-    private async Task LoadReportData()
+    private void OnAccountClick(string accountId)
     {
-        isLoading = true;
-        StateHasChanged();
-
-        try
-        {
-            // Load all reports concurrently
-            var tasks = new List<Task>
-            {
-                LoadIncomeStatement(),
-                LoadBalanceSheet(),
-                LoadCashFlowStatement(),
-                LoadBudgetVariance(),
-                LoadNetWorthTrend(),
-                LoadCategoryAnalysis(),
-                LoadAccountSummary()
-            };
-
-            await Task.WhenAll(tasks);
-        }
-        catch (Exception ex)
-        {
-            // Handle error - could show a toast notification
-            Console.WriteLine($"Error loading report data: {ex.Message}");
-        }
-        finally
-        {
-            isLoading = false;
-            StateHasChanged();
-        }
+        // Navigate to account details
+        Navigation.NavigateTo($"/accounts/{accountId}");
     }
 
-    private async Task LoadIncomeStatement()
+    private void OnComparisonMetricChanged(string metric)
     {
-        incomeStatement = await ReportService.GenerateIncomeStatementAsync(startDate, endDate);
+        // Handle comparison metric change
+        ViewModel.UpdateComparisonMetricCommand.Execute(metric);
     }
 
-    private async Task LoadBalanceSheet()
+    private void OnComparisonPeriodChanged(string period)
     {
-        balanceSheet = await ReportService.GenerateBalanceSheetAsync(endDate);
-        // Load previous period for comparison
-        var previousEndDate = startDate.AddDays(-1);
-        previousBalanceSheet = await ReportService.GenerateBalanceSheetAsync(previousEndDate);
-    }
-
-    private async Task LoadCashFlowStatement()
-    {
-        cashFlowStatement = await ReportService.GenerateCashFlowStatementAsync(startDate, endDate);
-    }
-
-    private async Task LoadBudgetVariance()
-    {
-        budgetVariance = await ReportService.GenerateBudgetVarianceReportAsync(startDate, endDate);
-    }
-
-    private async Task LoadNetWorthTrend()
-    {
-        netWorthTrend = await ReportService.GenerateNetWorthTrendAsync(startDate, endDate);
-    }
-
-    private async Task LoadCategoryAnalysis()
-    {
-        categoryAnalysis = await ReportService.GenerateCategoryAnalysisAsync(startDate, endDate);
-    }
-
-    private async Task LoadAccountSummary()
-    {
-        accountSummary = await ReportService.GenerateAccountSummaryReportAsync(startDate, endDate);
-    }
-
-    private async Task OnDateRangeChanged()
-    {
-        selectedPeriod = "custom";
-        await LoadReportData();
-    }
-
-    private async Task OnPeriodChanged()
-    {
-        var now = DateTime.Now;
-        switch (selectedPeriod)
-        {
-            case "last30":
-                startDate = now.AddDays(-30);
-                endDate = now;
-                break;
-            case "last90":
-                startDate = now.AddDays(-90);
-                endDate = now;
-                break;
-            case "last6months":
-                startDate = now.AddMonths(-6);
-                endDate = now;
-                break;
-            case "last12months":
-                startDate = now.AddMonths(-12);
-                endDate = now;
-                break;
-            case "thisyear":
-                startDate = new DateTime(now.Year, 1, 1);
-                endDate = now;
-                break;
-            case "lastyear":
-                startDate = new DateTime(now.Year - 1, 1, 1);
-                endDate = new DateTime(now.Year - 1, 12, 31);
-                break;
-        }
-
-        if (selectedPeriod != "custom")
-        {
-            await LoadReportData();
-        }
-    }
-
-    private async Task SetActiveReport(ReportType reportType)
-    {
-        activeReportType = reportType;
-        showComparison = false;
-        StateHasChanged();
-    }
-
-    private void ToggleExportMenu()
-    {
-        showExportMenu = !showExportMenu;
-    }
-
-    private async Task ExportReport(ExportFormat format)
-    {
-        showExportMenu = false;
-        
-        try
-        {
-            var reportData = GetCurrentReportData();
-            var fileName = $"{activeReportType}_{DateTime.Now:yyyyMMdd}";
-            
-            switch (format)
-            {
-                case ExportFormat.PDF:
-                    await ExportService.ExportToPdfAsync(activeReportType.ToString(), reportData, fileName);
-                    break;
-                case ExportFormat.CSV:
-                    await ExportService.ExportToCsvAsync(activeReportType.ToString(), reportData, fileName);
-                    break;
-                case ExportFormat.JPEG:
-                    await ExportService.ExportToImageAsync($"report-{activeReportType.ToString().ToLower()}", fileName);
-                    break;
-            }
-            
-            await JSRuntime.InvokeVoidAsync("showToast", $"Report exported as {format} successfully!");
-        }
-        catch (Exception ex)
-        {
-            await JSRuntime.InvokeVoidAsync("showToast", $"Export failed: {ex.Message}", "error");
-        }
-    }
-
-    private object? GetCurrentReportData()
-    {
-        return activeReportType switch
-        {
-            ReportType.IncomeStatement => incomeStatement,
-            ReportType.BalanceSheet => balanceSheet,
-            ReportType.CashFlowStatement => cashFlowStatement,
-            ReportType.BudgetVarianceReport => budgetVariance,
-            ReportType.NetWorthTrend => netWorthTrend,
-            ReportType.CategoryAnalysis => categoryAnalysis,
-            ReportType.AccountSummary => accountSummary,
-            _ => null
-        };
-    }
-
-    private async Task GenerateYearOverYearComparison()
-    {
-        try
-        {
-            if (string.IsNullOrEmpty(currentUserId))
-            {
-                await JSRuntime.InvokeVoidAsync("showToast", "User not authenticated", "error");
-                return;
-            }
-
-            var currentYear = endDate.Year;
-            var previousYear = currentYear - 1;
-            
-            comparisonData = await ComparisonService.GetYearOverYearComparisonAsync(currentUserId, currentYear, previousYear);
-            showComparison = true;
-            StateHasChanged();
-        }
-        catch (Exception ex)
-        {
-            await JSRuntime.InvokeVoidAsync("showToast", $"Failed to generate comparison: {ex.Message}", "error");
-        }
-    }
-
-    private async Task GenerateMonthOverMonthComparison()
-    {
-        try
-        {
-            if (string.IsNullOrEmpty(currentUserId))
-            {
-                await JSRuntime.InvokeVoidAsync("showToast", "User not authenticated", "error");
-                return;
-            }
-
-            var currentMonth = endDate;
-            var previousMonth = currentMonth.AddMonths(-1);
-            
-            comparisonData = await ComparisonService.GetMonthOverMonthComparisonAsync(currentUserId, currentMonth, previousMonth);
-            showComparison = true;
-            StateHasChanged();
-        }
-        catch (Exception ex)
-        {
-            await JSRuntime.InvokeVoidAsync("showToast", $"Failed to generate comparison: {ex.Message}", "error");
-        }
-    }
-
-    // Drill-down functionality
-    private async Task OnCategoryClick(string categoryId)
-    {
-        // Navigate to detailed transaction view for the category
-        await JSRuntime.InvokeVoidAsync("showToast", $"Drilling down into category: {categoryId}");
-    }
-
-    private async Task OnAccountClick(string accountId)
-    {
-        // Navigate to detailed account view
-        await JSRuntime.InvokeVoidAsync("showToast", $"Drilling down into account: {accountId}");
-    }
-
-    // Comparison chart event handlers
-    private async Task OnComparisonMetricChanged(string metric)
-    {
-        // Reload comparison data with new metric
-        if (comparisonData != null)
-        {
-            // This would typically trigger a reload of comparison data
-            // For now, just show a notification
-            await JSRuntime.InvokeVoidAsync("showToast", $"Metric changed to: {metric}");
-        }
-    }
-
-    private async Task OnComparisonPeriodChanged(string period)
-    {
-        // Reload comparison data with new period
-        if (comparisonData != null)
-        {
-            // This would typically trigger a reload of comparison data
-            // For now, just show a notification
-            await JSRuntime.InvokeVoidAsync("showToast", $"Period changed to: {period}");
-        }
+        // Handle comparison period change
+        ViewModel.UpdateComparisonPeriodCommand.Execute(period);
     }
 }

@@ -5,10 +5,11 @@
 @using Pilgrims.PersonalFinances.Services.Interfaces
 @using Pilgrims.PersonalFinances.Services
 @using Pilgrims.PersonalFinances.Components.Shared
+@using Pilgrims.PersonalFinances.Core.Messaging.Interfaces
 @inject ITransactionService TransactionService
 @inject IAccountService AccountService
 @inject NavigationManager Navigation
-@inject IJSRuntime JSRuntime
+@inject IMessagingService MessagingService
 
 <PageTitle>Add Transaction - Pilgrims Personal Finance</PageTitle>
 
@@ -588,7 +589,7 @@
             {
                 if (!ValidateSplitTransactions())
                 {
-                    await JSRuntime.InvokeVoidAsync("alert", "Split transaction amounts must equal the total transaction amount.");
+                    await MessagingService.ShowAlertAsync("Split transaction amounts must equal the total transaction amount.");
                     return;
                 }
                 transaction.IsSplit = true;
@@ -635,12 +636,12 @@
                 }
             }
             
-            await JSRuntime.InvokeVoidAsync("alert", "Transaction saved successfully!");
+            await MessagingService.ShowAlertAsync("Transaction saved successfully!");
             Navigation.NavigateTo("/transactions");
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error saving transaction: {ex.Message}");
+            await MessagingService.ShowAlertAsync($"Error saving transaction: {ex.Message}");
         }
         finally
         {
@@ -713,7 +714,7 @@
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", $"File {file.Name} is too large. Maximum size is 10MB.");
+                await MessagingService.ShowAlertAsync($"File {file.Name} is too large. Maximum size is 10MB.");
             }
         }
     }
@@ -755,7 +756,10 @@
     
     private async Task SaveAsTemplate()
     {
-        var templateName = await JSRuntime.InvokeAsync<string>("prompt", "Enter template name:");
+        // TODO: Implement proper input dialog in messaging service
+        // For now, using a placeholder template name
+        var templateName = $"Template_{DateTime.Now:yyyyMMdd_HHmmss}";
+        
         if (!string.IsNullOrWhiteSpace(templateName))
         {
             var template = new Models.TransactionTemplate
@@ -770,7 +774,7 @@
             };
             
             await TransactionService.CreateTransactionTemplateAsync(template);
-            await JSRuntime.InvokeVoidAsync("alert", "Template saved successfully!");
+            await MessagingService.ShowAlertAsync("Template saved successfully!");
         }
     }
     

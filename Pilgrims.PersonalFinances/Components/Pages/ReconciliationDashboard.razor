@@ -1,5 +1,6 @@
 @page "/reconciliation"
 @using Pilgrims.PersonalFinances.Models
+@using Pilgrims.PersonalFinances.Models.DTOs
 @using Pilgrims.PersonalFinances.Models.Enums
 @using Pilgrims.PersonalFinances.Services
 @using Pilgrims.PersonalFinances.Services.Interfaces
@@ -296,7 +297,7 @@
 
 @code {
     private bool isLoading = true;
-    private List<Pilgrims.PersonalFinances.Models.DTOs.ReconciliationSummaryDto> accountSummaries = new();
+    private List<ReconciliationSummaryDto> accountSummaries = new();
     private List<ReconciliationSession> recentSessions = new();
     private List<Account> accounts = new();
     private int totalReconciliations = 0;

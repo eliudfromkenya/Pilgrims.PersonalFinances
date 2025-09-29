@@ -2,9 +2,10 @@
 @using Pilgrims.PersonalFinances.Models
 @using Pilgrims.PersonalFinances.Models.Enums
 @using Pilgrims.PersonalFinances.Services
+@using Pilgrims.PersonalFinances.Core.Messaging.Interfaces
 @inject IAccountService AccountService
 @inject NavigationManager NavigationManager
-@inject IJSRuntime JSRuntime
+@inject IMessagingService MessagingService
 
 <PageTitle>Accounts - Pilgrims Personal Finance</PageTitle>
 
@@ -409,12 +410,12 @@
             
             if (!canDelete)
             {
-                await JSRuntime.InvokeVoidAsync("alert", "Cannot delete account with existing transactions. Archive it instead.");
+                await MessagingService.ShowAlertAsync("Cannot delete account with existing transactions. Archive it instead.");
                 return;
             }
 
             // Confirm deletion
-            var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this account? This action cannot be undone.");
+            var confirmed = await MessagingService.ShowConfirmationAsync("Are you sure you want to delete this account? This action cannot be undone.");
             
             if (confirmed)
             {
@@ -422,18 +423,18 @@
                 
                 if (success)
                 {
-                    await JSRuntime.InvokeVoidAsync("alert", "Account deleted successfully!");
+                    await MessagingService.ShowAlertAsync("Account deleted successfully!");
                     await LoadAccounts(); // Refresh the accounts list
                 }
                 else
                 {
-                    await JSRuntime.InvokeVoidAsync("alert", "Failed to delete account. Please try again.");
+                    await MessagingService.ShowAlertAsync("Failed to delete account. Please try again.");
                 }
             }
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error deleting account: {ex.Message}");
+            await MessagingService.ShowAlertAsync($"Error deleting account: {ex.Message}");
         }
     }
 }

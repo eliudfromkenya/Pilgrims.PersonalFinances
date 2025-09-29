@@ -17,6 +17,11 @@ namespace Pilgrims.PersonalFinances.Models.Enums
         ObligationPaymentDue = 10,
         ObligationArrears = 11,
         ObligationBenefitAvailable = 12,
-        GroupContributionReminder = 13
+        GroupContributionReminder = 13,
+        ScheduledTransactionDue = 14,
+        BudgetExceeded = 15,
+        LowBalance = 16,
+        RecurringTransactionFailed = 17,
+        SystemUpdate = 18
     }
 }

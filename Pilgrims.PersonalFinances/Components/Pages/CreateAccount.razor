@@ -2,9 +2,11 @@
 @using Pilgrims.PersonalFinances.Models
 @using Pilgrims.PersonalFinances.Models.Enums
 @using Pilgrims.PersonalFinances.Services
+@using Pilgrims.PersonalFinances.Core.Messaging.Interfaces
 @using System.ComponentModel.DataAnnotations
 @inject IAccountService AccountService
 @inject NavigationManager NavigationManager
+@inject IMessagingService MessagingService
 @inject IJSRuntime JSRuntime
 
 <PageTitle>Create Account - Personal Finance</PageTitle>
@@ -348,7 +350,7 @@
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error creating account: {ex.Message}");
+            MessagingService.ShowAlertAsync($"Error creating account: {ex.Message}");
         }
         finally
         {
@@ -358,7 +360,7 @@
 
     private async Task HandleInvalidSubmit()
     {
-        await JSRuntime.InvokeVoidAsync("alert", "Please fix the validation errors before submitting.");
+        MessagingService.ShowAlertAsync("Please fix the validation errors before submitting.");
     }
 
     private void Cancel()

@@ -2,10 +2,12 @@
 @using Pilgrims.PersonalFinances.Models
 @using Pilgrims.PersonalFinances.Models.Enums
 @using Pilgrims.PersonalFinances.Services.Interfaces
+@using Pilgrims.PersonalFinances.Core.Messaging.Interfaces
+@using Pilgrims.PersonalFinances.Core.Messaging.Extensions
 
 @inject INotificationService NotificationService
 @inject NavigationManager Navigation
-@inject IJSRuntime JSRuntime
+@inject IMessagingService MessagingService
 
 <PageTitle>Notification Settings - Pilgrims Personal Finance</PageTitle>
 
@@ -361,11 +363,11 @@
             // TODO: Save settings to database via NotificationService
             await Task.Delay(1000); // Simulate save operation
             
-            await JSRuntime.InvokeVoidAsync("showToast", "Notification settings saved successfully!", "success");
+            await MessagingService.ShowSuccessToastAsync("Notification settings saved successfully!");
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("showToast", $"Error saving settings: {ex.Message}", "error");
+            await MessagingService.ShowErrorToastAsync($"Error saving settings: {ex.Message}");
         }
         finally
         {
@@ -392,7 +394,7 @@
     private async Task ResetToDefaults()
     {
         await LoadNotificationSettings();
-        await JSRuntime.InvokeVoidAsync("showToast", "Settings reset to defaults", "info");
+        await MessagingService.ShowInfoToastAsync("Settings reset to defaults");
     }
 
     private void ToggleChannel(NotificationCategorySettings category, NotificationChannel channel, bool isChecked)
@@ -424,11 +426,11 @@
         try
         {
             await NotificationService.MarkAllAsReadAsync();
-            await JSRuntime.InvokeVoidAsync("showToast", "All notifications marked as read", "success");
+            await MessagingService.ShowSuccessToastAsync("All notifications marked as read");
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("showToast", $"Error: {ex.Message}", "error");
+            await MessagingService.ShowErrorToastAsync($"Error: {ex.Message}");
         }
     }
 
@@ -437,26 +439,26 @@
         try
         {
             await NotificationService.DeleteOldNotificationsAsync(autoCleanupDays);
-            await JSRuntime.InvokeVoidAsync("showToast", $"Deleted notifications older than {autoCleanupDays} days", "success");
+            await MessagingService.ShowSuccessToastAsync($"Deleted notifications older than {autoCleanupDays} days");
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("showToast", $"Error: {ex.Message}", "error");
+            await MessagingService.ShowErrorToastAsync($"Error: {ex.Message}");
         }
     }
 
     private async Task ClearAllNotifications()
     {
-        if (await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete all notifications? This action cannot be undone."))
+        if (await MessagingService.ShowConfirmationAsync("Are you sure you want to delete all notifications? This action cannot be undone."))
         {
             try
             {
                 // TODO: Implement clear all notifications in service
-                await JSRuntime.InvokeVoidAsync("showToast", "All notifications cleared", "success");
+                await MessagingService.ShowSuccessToastAsync("All notifications cleared");
             }
             catch (Exception ex)
             {
-                await JSRuntime.InvokeVoidAsync("showToast", $"Error: {ex.Message}", "error");
+                await MessagingService.ShowErrorToastAsync($"Error: {ex.Message}");
             }
         }
     }

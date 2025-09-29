@@ -350,7 +350,7 @@ namespace Pilgrims.PersonalFinances.Services
 
         #region Category Analysis
 
-        public async Task<Models.DTOs.CategoryAnalysisDto> GenerateCategoryAnalysisAsync(DateTime startDate, DateTime endDate)
+        public async Task<CategoryAnalysisDto> GenerateCategoryAnalysisAsync(DateTime startDate, DateTime endDate)
         {
             var transactions = await _context.Transactions
                 .Include(t => t.Category)
@@ -423,7 +423,7 @@ namespace Pilgrims.PersonalFinances.Services
 
         #region Account Summary
 
-        public async Task<Models.DTOs.AccountSummaryReportDto> GenerateAccountSummaryReportAsync(DateTime startDate, DateTime endDate)
+        public async Task<AccountSummaryReportDto> GenerateAccountSummaryReportAsync(DateTime startDate, DateTime endDate)
         {
             var accounts = await _context.Accounts
                 .Where(a => a.Status == AccountStatus.Active || a.Status == AccountStatus.Inactive)

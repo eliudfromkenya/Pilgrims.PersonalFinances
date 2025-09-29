@@ -4,6 +4,10 @@ using Pilgrims.PersonalFinances.Data;
 using Pilgrims.PersonalFinances.Services;
 using Pilgrims.PersonalFinances.Services.Interfaces;
 using Pilgrims.PersonalFinances.Core.Logging;
+using Pilgrims.PersonalFinances.Core.Messaging.Interfaces;
+using Pilgrims.PersonalFinances.Core.Messaging.Services;
+using Pilgrims.PersonalFinances.Core.ViewModels;
+using CommunityToolkit.Mvvm.Messaging;
 using Serilog;
 
 namespace Pilgrims.PersonalFinances
@@ -72,6 +76,16 @@ namespace Pilgrims.PersonalFinances
             builder.Services.AddSingleton<IAutoLockService, AutoLockService>();
             builder.Services.AddScoped<IScreenshotProtectionService, ScreenshotProtectionService>();
             builder.Services.AddSingleton<IAppSwitcherPrivacyService, AppSwitcherPrivacyService>();
+
+            // MVVM Messaging Services
+        builder.Services.AddSingleton<IMessenger>(WeakReferenceMessenger.Default);
+        builder.Services.AddScoped<IMessagingService, MessagingService>();
+        builder.Services.AddScoped<NotificationHandler>();
+        
+        // ViewModels
+        builder.Services.AddScoped<NotificationBellViewModel>();
+        builder.Services.AddScoped<NotificationsViewModel>();
+        builder.Services.AddScoped<ReportsViewModel>();
 
 #if DEBUG
     		builder.Services.AddBlazorWebViewDeveloperTools();

@@ -234,7 +234,7 @@
 </div>
 
 @code {
-    [Parameter] public Pilgrims.PersonalFinances.Models.DTOs.CategoryAnalysisDto Report { get; set; } = new();
+    [Parameter] public CategoryAnalysisDto Report { get; set; } = new();
     [Parameter] public EventCallback<string> OnCategoryDrillDown { get; set; }
 
     private string GetCategoryIcon(string category)

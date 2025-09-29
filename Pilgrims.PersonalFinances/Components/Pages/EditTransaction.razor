@@ -5,10 +5,11 @@
 @using Pilgrims.PersonalFinances.Services.Interfaces
 @using Pilgrims.PersonalFinances.Services
 @using Pilgrims.PersonalFinances.Components.Shared
+@using Pilgrims.PersonalFinances.Core.Messaging.Interfaces
 @inject ITransactionService TransactionService
 @inject IAccountService AccountService
 @inject NavigationManager Navigation
-@inject IJSRuntime JSRuntime
+@inject IMessagingService MessagingService
 
 <PageTitle>Edit Transaction - Pilgrims Personal Finance</PageTitle>
 
@@ -680,7 +681,7 @@
             {
                 if (!ValidateExistingSplitTransactions())
                 {
-                    await JSRuntime.InvokeVoidAsync("alert", "Split transaction amounts must equal the total transaction amount.");
+                    await MessagingService.ShowAlertAsync("Split transaction amounts must equal the total transaction amount.");
                     return;
                 }
             }
@@ -728,12 +729,12 @@
                 }
             }
             
-            await JSRuntime.InvokeVoidAsync("alert", "Transaction updated successfully!");
+            await MessagingService.ShowAlertAsync("Transaction updated successfully!");
             Navigation.NavigateTo("/transactions");
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error updating transaction: {ex.Message}");
+            await MessagingService.ShowAlertAsync($"Error updating transaction: {ex.Message}");
         }
         finally
         {
@@ -753,12 +754,12 @@
         try
         {
             await TransactionService.DeleteTransactionAsync(transaction.Id);
-            await JSRuntime.InvokeVoidAsync("alert", "Transaction deleted successfully!");
+            await MessagingService.ShowAlertAsync("Transaction deleted successfully!");
             Navigation.NavigateTo("/transactions");
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error deleting transaction: {ex.Message}");
+            await MessagingService.ShowAlertAsync($"Error deleting transaction: {ex.Message}");
         }
         finally
         {
@@ -789,12 +790,12 @@
             };
             
             var savedTransaction = await TransactionService.CreateTransactionAsync(duplicateTransaction);
-            await JSRuntime.InvokeVoidAsync("alert", "Transaction duplicated successfully!");
+            await MessagingService.ShowAlertAsync("Transaction duplicated successfully!");
             Navigation.NavigateTo($"/transactions/edit/{savedTransaction.Id}");
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error duplicating transaction: {ex.Message}");
+            await MessagingService.ShowAlertAsync($"Error duplicating transaction: {ex.Message}");
         }
     }
     
@@ -864,7 +865,7 @@
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", $"File {file.Name} is too large. Maximum size is 10MB.");
+                await MessagingService.ShowAlertAsync($"File {file.Name} is too large. Maximum size is 10MB.");
             }
         }
     }
@@ -880,11 +881,11 @@
         {
             await TransactionService.DeleteAttachmentAsync(attachment.Id);
             existingAttachments.Remove(attachment);
-            await JSRuntime.InvokeVoidAsync("alert", "Attachment removed successfully!");
+            await MessagingService.ShowAlertAsync("Attachment removed successfully!");
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error removing attachment: {ex.Message}");
+            await MessagingService.ShowAlertAsync($"Error removing attachment: {ex.Message}");
         }
     }
     
@@ -905,7 +906,10 @@
     {
         if (transaction == null) return;
         
-        var templateName = await JSRuntime.InvokeAsync<string>("prompt", "Enter template name:");
+        // TODO: Implement proper input dialog in messaging service
+        // For now, using a placeholder template name
+        var templateName = $"Template_{DateTime.Now:yyyyMMdd_HHmmss}";
+        
         if (!string.IsNullOrWhiteSpace(templateName))
         {
             var template = new Models.TransactionTemplate
@@ -921,7 +925,7 @@
             };
             
             await TransactionService.CreateTransactionTemplateAsync(template);
-            await JSRuntime.InvokeVoidAsync("alert", "Template saved successfully!");
+            await MessagingService.ShowAlertAsync("Template saved successfully!");
         }
     }
     
