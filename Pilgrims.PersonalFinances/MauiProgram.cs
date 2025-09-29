@@ -24,11 +24,15 @@ namespace Pilgrims.PersonalFinances
             builder.Services.AddDbContext<PersonalFinanceContext>(options =>
             {
                 var dbPath = Path.Combine(FileSystem.AppDataDirectory, "PersonalFinance.db");
+                
+                // For now, use standard SQLite connection
+                // TODO: Integrate with DatabaseEncryptionService for SQLCipher support
                 var connectionString = $"Data Source={dbPath};";
                 options.UseSqlite(connectionString);
             });
 
             // Add Services
+            builder.Services.AddScoped<IDatabaseEncryptionService, DatabaseEncryptionService>();
             builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
             builder.Services.AddScoped<IThemeService, ThemeService>();
             builder.Services.AddScoped<IAccountService, AccountService>();
@@ -50,6 +54,12 @@ namespace Pilgrims.PersonalFinances
             builder.Services.AddSingleton<IScheduledTransactionBackgroundService, ScheduledTransactionBackgroundService>();
             builder.Services.AddHostedService<ScheduledTransactionBackgroundService>();
             builder.Services.AddHostedService<InsuranceNotificationBackgroundService>();
+
+            // Security Services
+            builder.Services.AddScoped<IBiometricAuthenticationService, BiometricAuthenticationService>();
+            builder.Services.AddSingleton<IAutoLockService, AutoLockService>();
+            builder.Services.AddScoped<IScreenshotProtectionService, ScreenshotProtectionService>();
+            builder.Services.AddSingleton<IAppSwitcherPrivacyService, AppSwitcherPrivacyService>();
 
 #if DEBUG
     		builder.Services.AddBlazorWebViewDeveloperTools();

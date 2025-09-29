@@ -1,21 +1,32 @@
 using Microsoft.EntityFrameworkCore;
 using Pilgrims.PersonalFinances.Models.Enums;
 using Pilgrims.PersonalFinances.Services;
+using Pilgrims.PersonalFinances.Tests.Data;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Pilgrims.PersonalFinances.Tests.Services;
 
 public class AccountServiceTests : IDisposable
 {
-    private readonly PersonalFinanceContext _context;
+    private readonly TestPersonalFinanceContext _context;
     private readonly AccountService _accountService;
+    private readonly ServiceProvider _serviceProvider;
 
     public AccountServiceTests()
     {
+        // Create a service collection for Entity Framework services
+        var services = new ServiceCollection();
+        services.AddEntityFrameworkInMemoryDatabase();
+        _serviceProvider = services.BuildServiceProvider();
+        
+        // Create DbContext options with the service provider
         var options = new DbContextOptionsBuilder<PersonalFinanceContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .UseInternalServiceProvider(_serviceProvider)
+            .EnableSensitiveDataLogging()
             .Options;
-
-        _context = new PersonalFinanceContext(options);
+        
+        _context = new TestPersonalFinanceContext(options);
         _accountService = new AccountService(_context);
     }
 
@@ -27,7 +38,8 @@ public class AccountServiceTests : IDisposable
         {
             Name = "Test Checking Account",
             AccountType = AccountType.Checking,
-            Balance = 1000.00m,
+            InitialBalance = 1000.00m,
+            CurrentBalance = 1000.00m,
             Currency = "USD"
         };
 
@@ -39,7 +51,7 @@ public class AccountServiceTests : IDisposable
         result.Id.Should().NotBeEmpty();
         result.Name.Should().Be("Test Checking Account");
         result.AccountType.Should().Be(AccountType.Checking);
-        result.Balance.Should().Be(1000.00m);
+        result.CurrentBalance.Should().Be(1000.00m);
     }
 
     [Fact]
@@ -48,9 +60,10 @@ public class AccountServiceTests : IDisposable
         // Arrange
         var account = new Account
         {
-            Name = "Test Savings Account",
-            AccountType = AccountType.Savings,
-            Balance = 5000.00m,
+            Name = "Test Account",
+            AccountType = AccountType.Checking,
+            InitialBalance = 5000.00m,
+            CurrentBalance = 5000.00m,
             Currency = "USD"
         };
         
@@ -85,9 +98,9 @@ public class AccountServiceTests : IDisposable
         // Arrange
         var accounts = new List<Account>
         {
-            new() { Name = "Account 1", AccountType = AccountType.Checking, Balance = 1000m, Currency = "USD" },
-            new() { Name = "Account 2", AccountType = AccountType.Savings, Balance = 2000m, Currency = "USD" },
-            new() { Name = "Account 3", AccountType = AccountType.Credit, Balance = -500m, Currency = "USD" }
+            new() { Name = "Account 1", AccountType = AccountType.Checking, InitialBalance = 1000m, CurrentBalance = 1000m, Currency = "USD" },
+            new() { Name = "Account 2", AccountType = AccountType.Savings, InitialBalance = 2000m, CurrentBalance = 2000m, Currency = "USD" },
+            new() { Name = "Account 3", AccountType = AccountType.Credit, InitialBalance = -500m, CurrentBalance = -500m, Currency = "USD" }
         };
 
         await _context.Accounts.AddRangeAsync(accounts);
@@ -111,7 +124,8 @@ public class AccountServiceTests : IDisposable
         {
             Name = "Original Name",
             AccountType = AccountType.Checking,
-            Balance = 1000m,
+            InitialBalance = 1000m,
+            CurrentBalance = 1000m,
             Currency = "USD"
         };
         
@@ -119,7 +133,7 @@ public class AccountServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         account.Name = "Updated Name";
-        account.Balance = 1500m;
+        account.CurrentBalance = 1500m;
 
         // Act
         var result = await _accountService.UpdateAccountAsync(account);
@@ -127,7 +141,7 @@ public class AccountServiceTests : IDisposable
         // Assert
         result.Should().NotBeNull();
         result.Name.Should().Be("Updated Name");
-        result.Balance.Should().Be(1500m);
+        result.CurrentBalance.Should().Be(1500m);
     }
 
     [Fact]
@@ -136,9 +150,10 @@ public class AccountServiceTests : IDisposable
         // Arrange
         var account = new Account
         {
-            Name = "Account to Delete",
+            Name = "Test Account",
             AccountType = AccountType.Checking,
-            Balance = 1000m,
+            InitialBalance = 1000m,
+            CurrentBalance = 1000m,
             Currency = "USD"
         };
         
@@ -178,10 +193,10 @@ public class AccountServiceTests : IDisposable
         // Arrange
         var accounts = new List<Account>
         {
-            new() { Name = "Checking 1", AccountType = AccountType.Checking, Balance = 1000m, Currency = "USD" },
-            new() { Name = "Savings 1", AccountType = AccountType.Savings, Balance = 2000m, Currency = "USD" },
-            new() { Name = "Credit 1", AccountType = AccountType.Credit, Balance = -500m, Currency = "USD" },
-            new() { Name = "Investment 1", AccountType = AccountType.Investment, Balance = 5000m, Currency = "USD" }
+            new() { Name = "Checking 1", AccountType = AccountType.Checking, InitialBalance = 1000m, CurrentBalance = 1000m, Currency = "USD" },
+            new() { Name = "Savings 1", AccountType = AccountType.Savings, InitialBalance = 2000m, CurrentBalance = 2000m, Currency = "USD" },
+            new() { Name = "Credit 1", AccountType = AccountType.Credit, InitialBalance = -500m, CurrentBalance = -500m, Currency = "USD" },
+            new() { Name = "Investment 1", AccountType = AccountType.Investment, InitialBalance = 5000m, CurrentBalance = 5000m, Currency = "USD" }
         };
 
         await _context.Accounts.AddRangeAsync(accounts);
@@ -197,6 +212,7 @@ public class AccountServiceTests : IDisposable
 
     public void Dispose()
     {
-        _context.Dispose();
+        _context?.Dispose();
+        _serviceProvider?.Dispose();
     }
 }

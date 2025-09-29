@@ -24,7 +24,8 @@ public class TransactionServiceTests : IDisposable
         {
             Name = "Test Account",
             AccountType = AccountType.Checking,
-            Balance = 1000m,
+            InitialBalance = 1000m,
+            CurrentBalance = 1000m,
             Currency = "USD"
         };
         

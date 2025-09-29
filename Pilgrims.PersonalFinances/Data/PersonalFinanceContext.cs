@@ -22,6 +22,9 @@ public class PersonalFinanceContext : DbContext
         if (!optionsBuilder.IsConfigured)
         {
             var dbPath = Path.Combine(FileSystem.AppDataDirectory, "PersonalFinance.db");
+            
+            // For now, use standard SQLite connection
+            // TODO: Integrate with DatabaseEncryptionService for SQLCipher support
             var connectionString = $"Data Source={dbPath};";
             optionsBuilder.UseSqlite(connectionString);
         }
