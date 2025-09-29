@@ -1,8 +1,10 @@
 @using Pilgrims.PersonalFinances.Models
 @using Pilgrims.PersonalFinances.Services.Interfaces
+@using Pilgrims.PersonalFinances.Core.Logging
 @inject INotificationService NotificationService
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
+@inject ILoggingService Logger
 @implements IDisposable
 
 <div class="relative">
@@ -131,7 +133,7 @@
         catch (Exception ex)
         {
             // Silently handle errors in background refresh
-            Console.WriteLine($"Error loading notifications: {ex.Message}");
+            Logger.LogError($"Error loading notifications: {ex.Message}");
         }
     }
 

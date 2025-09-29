@@ -3,6 +3,7 @@ using Pilgrims.PersonalFinances.Data;
 using Pilgrims.PersonalFinances.Models;
 using Pilgrims.PersonalFinances.Models.Enums;
 using Pilgrims.PersonalFinances.Services.Interfaces;
+using Pilgrims.PersonalFinances.Core.Logging;
 using System.Text.Json;
 
 namespace Pilgrims.PersonalFinances.Services;
@@ -13,10 +14,12 @@ namespace Pilgrims.PersonalFinances.Services;
 public class TransactionService : ITransactionService
 {
     private readonly PersonalFinanceContext _context;
+    private readonly ILoggingService _logger;
 
-    public TransactionService(PersonalFinanceContext context)
+    public TransactionService(PersonalFinanceContext context, ILoggingService logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     #region Basic CRUD Operations
@@ -62,14 +65,14 @@ public class TransactionService : ITransactionService
         if (duplicates.Any())
         {
             // Log potential duplicate warning
-            Console.WriteLine("Potential duplicate transaction detected");
+            _logger.LogWarning("Potential duplicate transaction detected for transaction: {Description}", transaction.Description);
         }
 
         _context.Transactions.Add(transaction);
         await _context.SaveChangesAsync();
 
         // Log success
-        Console.WriteLine("Transaction Created: " + transaction.Description);
+        _logger.LogInformation("Transaction Created: {Description} with amount {Amount}", transaction.Description, transaction.Amount);
 
         return transaction;
     }
@@ -94,7 +97,7 @@ public class TransactionService : ITransactionService
         await _context.SaveChangesAsync();
 
         // Log success
-        Console.WriteLine("Transaction Updated: " + transaction.Description);
+        _logger.LogInformation("Transaction Updated: {Description} with amount {Amount}", transaction.Description, transaction.Amount);
 
         return transaction;
     }
@@ -390,7 +393,7 @@ public class TransactionService : ITransactionService
         // await _context.SaveChangesAsync();
         
         // Log success
-        Console.WriteLine("Transaction template created successfully!");
+        _logger.LogInformation("Transaction template created successfully with name: {TemplateName}", template.Name);
         return template;
     }
 
@@ -404,7 +407,7 @@ public class TransactionService : ITransactionService
         // await _context.SaveChangesAsync();
         
         // Log success
-        Console.WriteLine("Transaction template updated successfully!");
+        _logger.LogInformation("Transaction template updated successfully: {TemplateName}", template.Name);
         return template;
     }
 
@@ -422,7 +425,7 @@ public class TransactionService : ITransactionService
         // return false;
         
         // Log success
-        Console.WriteLine("Transaction template deleted successfully!");
+        _logger.LogInformation("Transaction template deleted successfully with ID: {TemplateId}", templateId);
         return true;
     }
 
@@ -489,7 +492,7 @@ public class TransactionService : ITransactionService
         if (result)
         {
             // Log success
-            Console.WriteLine($"Bulk Update Complete: {transactions.Count} transactions updated to {status}");
+            _logger.LogInformation("Bulk Update Complete: {Count} transactions updated to status {Status}", transactions.Count, status);
         }
 
         return result;
@@ -514,7 +517,7 @@ public class TransactionService : ITransactionService
         if (result)
         {
             // Log success
-            Console.WriteLine($"Bulk Update Complete: {transactions.Count} transactions updated with new category");
+            _logger.LogInformation("Bulk Update Complete: {Count} transactions updated with new category {CategoryId}", transactions.Count, categoryId);
         }
 
         return result;
@@ -581,7 +584,7 @@ public class TransactionService : ITransactionService
         await _context.SaveChangesAsync();
 
         // Log success
-        Console.WriteLine("Attachment Added: " + attachment.FileName);
+        _logger.LogInformation("Attachment Added: {FileName} for transaction {TransactionId}", attachment.FileName, attachment.TransactionId);
 
         return attachment;
     }
@@ -597,7 +600,7 @@ public class TransactionService : ITransactionService
         if (result)
         {
             // Log success
-            Console.WriteLine("Attachment Deleted: " + attachment.FileName);
+            _logger.LogInformation("Attachment Deleted: {FileName} from transaction {TransactionId}", attachment.FileName, attachment.TransactionId);
         }
 
         return result;
@@ -817,12 +820,12 @@ public class TransactionService : ITransactionService
             catch (Exception ex)
             {
                 // Log error
-                Console.WriteLine($"Import Error: Failed to import transaction: {ex.Message}");
+                _logger.LogError("Import Error: Failed to import transaction: {ErrorMessage}", ex.Message);
             }
         }
 
         // Log success
-        Console.WriteLine($"Import Complete: {importedTransactions.Count} transactions imported successfully");
+        _logger.LogInformation("Import Complete: {Count} transactions imported successfully", importedTransactions.Count);
 
         return importedTransactions;
     }

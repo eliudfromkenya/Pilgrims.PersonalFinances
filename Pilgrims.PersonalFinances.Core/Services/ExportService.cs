@@ -2,16 +2,19 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.JSInterop;
 using Pilgrims.PersonalFinances.Models.DTOs;
+using Pilgrims.PersonalFinances.Core.Logging;
 
 namespace Pilgrims.PersonalFinances.Services;
 
 public class ExportService : IExportService
 {
     private readonly IJSRuntime _jsRuntime;
+    private readonly ILoggingService _logger;
 
-    public ExportService(IJSRuntime jsRuntime)
+    public ExportService(IJSRuntime jsRuntime, ILoggingService logger)
     {
         _jsRuntime = jsRuntime;
+        _logger = logger;
     }
 
     public async Task ExportToPdfAsync(string reportType, object reportData, string fileName)
@@ -24,7 +27,7 @@ public class ExportService : IExportService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error exporting to PDF: {ex.Message}");
+            _logger.LogError("Error exporting to PDF: {ErrorMessage}", ex.Message);
             throw;
         }
     }
@@ -39,7 +42,7 @@ public class ExportService : IExportService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error exporting to CSV: {ex.Message}");
+            _logger.LogError("Error exporting to CSV: {ErrorMessage}", ex.Message);
             throw;
         }
     }
@@ -53,7 +56,7 @@ public class ExportService : IExportService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error exporting to image: {ex.Message}");
+            _logger.LogError("Error exporting to image: {ErrorMessage}", ex.Message);
             throw;
         }
     }

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components.Forms;
 using Pilgrims.PersonalFinances.Services.Interfaces;
+using Pilgrims.PersonalFinances.Core.Logging;
 
 namespace Pilgrims.PersonalFinances.Services;
 
@@ -9,6 +10,7 @@ namespace Pilgrims.PersonalFinances.Services;
 public class FileService : IFileService
 {
     private readonly string _baseStoragePath;
+    private readonly ILoggingService _logger;
     private const long MaxFileSizeBytes = 10 * 1024 * 1024; // 10MB
 
     private readonly HashSet<string> _allowedFileTypes = new()
@@ -22,8 +24,9 @@ public class FileService : IFileService
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     };
 
-    public FileService()
+    public FileService(ILoggingService logger)
     {
+        _logger = logger;
         _baseStoragePath = Path.Combine(FileSystem.AppDataDirectory, "Documents");
         Directory.CreateDirectory(_baseStoragePath);
     }
@@ -132,7 +135,7 @@ public class FileService : IFileService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error deleting file {filePath}: {ex.Message}");
+            _logger.LogError("Error deleting file {FilePath}: {ErrorMessage}", filePath, ex.Message);
         }
 
         return false;

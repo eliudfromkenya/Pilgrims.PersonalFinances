@@ -3,6 +3,7 @@ using Pilgrims.PersonalFinances.Data;
 using Pilgrims.PersonalFinances.Models;
 using Pilgrims.PersonalFinances.Models.Enums;
 using Pilgrims.PersonalFinances.Services.Interfaces;
+using Pilgrims.PersonalFinances.Core.Logging;
 
 namespace Pilgrims.PersonalFinances.Services;
 
@@ -10,11 +11,13 @@ public class NotificationService : INotificationService
 {
     private readonly PersonalFinanceContext _context;
     private readonly IScheduledTransactionService _scheduledTransactionService;
+    private readonly ILoggingService _logger;
 
-    public NotificationService(PersonalFinanceContext context, IScheduledTransactionService scheduledTransactionService)
+    public NotificationService(PersonalFinanceContext context, IScheduledTransactionService scheduledTransactionService, ILoggingService logger)
     {
         _context = context;
         _scheduledTransactionService = scheduledTransactionService;
+        _logger = logger;
     }
 
     public event EventHandler<TransactionNotification>? NotificationCreated;
@@ -87,6 +90,7 @@ public class NotificationService : INotificationService
         {
             notification.MarkAsRead();
             await _context.SaveChangesAsync();
+            _logger.LogInformation($"Notification marked as read: {notification.Title}");
             NotificationRead?.Invoke(this, notificationId);
         }
     }
@@ -328,6 +332,7 @@ public class NotificationService : INotificationService
         _context.TransactionNotifications.Add(notification);
         await _context.SaveChangesAsync();
 
+        _logger.LogNotification(type.ToString(), message, title);
         NotificationCreated?.Invoke(this, notification);
         return notification;
     }

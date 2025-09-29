@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Pilgrims.PersonalFinances.Data;
 using Pilgrims.PersonalFinances.Services;
 using Pilgrims.PersonalFinances.Services.Interfaces;
+using Pilgrims.PersonalFinances.Core.Logging;
+using Serilog;
 
 namespace Pilgrims.PersonalFinances
 {
@@ -10,6 +12,10 @@ namespace Pilgrims.PersonalFinances
     {
         public static MauiApp CreateMauiApp()
         {
+            // Configure Serilog
+            var logger = LoggingConfiguration.CreateLogger();
+            Log.Logger = logger;
+
             var builder = MauiApp.CreateBuilder();
             builder
                 .UseMauiApp<App>()
@@ -17,6 +23,10 @@ namespace Pilgrims.PersonalFinances
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                 });
+
+            // Configure logging
+            builder.Logging.ClearProviders();
+            builder.Logging.AddSerilog(logger);
 
             builder.Services.AddMauiBlazorWebView();
 
@@ -32,6 +42,8 @@ namespace Pilgrims.PersonalFinances
             });
 
             // Add Services
+            builder.Services.AddSingleton<Serilog.ILogger>(logger);
+            builder.Services.AddScoped<ILoggingService, LoggingService>();
             builder.Services.AddScoped<IDatabaseEncryptionService, DatabaseEncryptionService>();
             builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
             builder.Services.AddScoped<IThemeService, ThemeService>();
