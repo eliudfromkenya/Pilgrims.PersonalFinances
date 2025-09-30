@@ -1,5 +1,7 @@
 @using Pilgrims.PersonalFinances.Models.DTOs
+@using Pilgrims.PersonalFinances.Core.Interfaces
 @inject IJSRuntime JSRuntime
+@inject ICurrencyService CurrencyService
 
 <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10" id="budget-variance-report">
     <div class="flex items-center justify-between mb-6">
@@ -17,15 +19,15 @@
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         <div class="bg-gradient-to-r from-blue-400 to-blue-600 p-4 rounded-xl text-white">
             <div class="text-sm opacity-90">Total Budgeted</div>
-            <div class="text-2xl font-bold">@Report.TotalBudgetedAmount.ToString("C")</div>
+            <div class="text-2xl font-bold">@(formattedAmounts.TryGetValue(Report.TotalBudgetedAmount, out var formattedBudgeted) ? formattedBudgeted : Report.TotalBudgetedAmount.ToString("C"))</div>
         </div>
         <div class="bg-gradient-to-r from-purple-400 to-purple-600 p-4 rounded-xl text-white">
             <div class="text-sm opacity-90">Total Actual</div>
-            <div class="text-2xl font-bold">@Report.TotalActualAmount.ToString("C")</div>
+            <div class="text-2xl font-bold">@(formattedAmounts.TryGetValue(Report.TotalActualAmount, out var formattedActual) ? formattedActual : Report.TotalActualAmount.ToString("C"))</div>
         </div>
         <div class="bg-gradient-to-r from-@(Report.TotalVariance >= 0 ? "green" : "red")-400 to-@(Report.TotalVariance >= 0 ? "green" : "red")-600 p-4 rounded-xl text-white">
             <div class="text-sm opacity-90">Total Variance</div>
-            <div class="text-2xl font-bold">@Report.TotalVariance.ToString("C")</div>
+            <div class="text-2xl font-bold">@(formattedAmounts.TryGetValue(Report.TotalVariance, out var formattedVariance) ? formattedVariance : Report.TotalVariance.ToString("C"))</div>
         </div>
         <div class="bg-gradient-to-r from-indigo-400 to-indigo-600 p-4 rounded-xl text-white">
             <div class="text-sm opacity-90">Variance %</div>
@@ -39,11 +41,11 @@
         <div class="bg-white/50 dark:bg-gray-700/50 p-6 rounded-xl">
             <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center space-x-4">
-                    <div class="text-sm text-gray-600 dark:text-gray-300">Budgeted: @Report.TotalBudgetedAmount.ToString("C")</div>
-                <div class="text-sm text-gray-600 dark:text-gray-300">Actual: @Report.TotalActualAmount.ToString("C")</div>
+                    <div class="text-sm text-gray-600 dark:text-gray-300">Budgeted: @(formattedAmounts.TryGetValue(Report.TotalBudgetedAmount, out var formattedBudgetedAmount) ? formattedBudgetedAmount : Report.TotalBudgetedAmount.ToString("C"))</div>
+                <div class="text-sm text-gray-600 dark:text-gray-300">Actual: @(formattedAmounts.TryGetValue(Report.TotalActualAmount, out var formattedActualAmount) ? formattedActualAmount : Report.TotalActualAmount.ToString("C"))</div>
                 </div>
                 <div class="text-lg font-semibold @(Report.TotalVariance >= 0 ? "text-green-600" : "text-red-600")">
-                    @(Report.TotalVariance >= 0 ? "Under Budget" : "Over Budget") by @Math.Abs(Report.TotalVariance).ToString("C")
+                    @(Report.TotalVariance >= 0 ? "Under Budget" : "Over Budget") by @(formattedAmounts.TryGetValue(Math.Abs(Report.TotalVariance), out var formattedAbsVariance) ? formattedAbsVariance : Math.Abs(Report.TotalVariance).ToString("C"))
                 </div>
             </div>
             
@@ -90,13 +92,13 @@
                                 <div>
                                     <div class="font-semibold text-gray-800 dark:text-white">@category.CategoryName</div>
                                     <div class="text-sm text-gray-600 dark:text-gray-300">
-                                        Budgeted: @category.BudgetedAmount.ToString("C") | Actual: @category.ActualAmount.ToString("C")
+                                        Budgeted: @(formattedAmounts.TryGetValue(category.BudgetedAmount, out var formattedCategoryBudgeted) ? formattedCategoryBudgeted : category.BudgetedAmount.ToString("C")) | Actual: @(formattedAmounts.TryGetValue(category.ActualAmount, out var formattedCategoryActual) ? formattedCategoryActual : category.ActualAmount.ToString("C"))
                                     </div>
                                 </div>
                             </div>
                             <div class="text-right">
                                 <div class="text-lg font-bold @(category.Variance >= 0 ? "text-green-600" : "text-red-600")">
-                                    @(category.Variance >= 0 ? "+" : "")@category.Variance.ToString("C")
+                                    @(category.Variance >= 0 ? "+" : "")@(formattedAmounts.TryGetValue(category.Variance, out var formattedCategoryVariance) ? formattedCategoryVariance : category.Variance.ToString("C"))
                                 </div>
                                 <div class="text-sm @(variancePercentage >= 0 ? "text-green-600" : "text-red-600")">
                                     @(variancePercentage >= 0 ? "+" : "")@variancePercentage.ToString("F1")%
@@ -158,11 +160,11 @@
                                 <!-- Budgeted Bar -->
                                 <div class="bg-blue-400 rounded-t flex-1 transition-all duration-1000" 
                                      style="height: @(budgetedHeight)px; min-height: 10px;"
-                                     title="Budgeted: @month.BudgetedAmount.ToString("C")"></div>
+                                     title="Budgeted: @(formattedAmounts.TryGetValue(month.BudgetedAmount, out var formattedMonthBudgeted) ? formattedMonthBudgeted : month.BudgetedAmount.ToString("C"))"></div>
                                 <!-- Actual Bar -->
                                 <div class="@(month.ActualAmount <= month.BudgetedAmount ? "bg-green-500" : "bg-red-500") rounded-t flex-1 transition-all duration-1000" 
                                      style="height: @(actualHeight)px; min-height: 10px;"
-                                     title="Actual: @month.ActualAmount.ToString("C")"></div>
+                                     title="Actual: @(formattedAmounts.TryGetValue(month.ActualAmount, out var formattedMonthActual) ? formattedMonthActual : month.ActualAmount.ToString("C"))"></div>
                             </div>
                             <div class="text-xs text-center text-gray-600 dark:text-gray-300">
                                 <div>@month.MonthName</div>
@@ -263,18 +265,63 @@
 
 @code {
     [Parameter] public BudgetVarianceReportDto Report { get; set; } = new();
+    [Parameter] public Action<string>? OnCategoryClick { get; set; }
+    
+    private Dictionary<decimal, string> formattedAmounts = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await PreformatAmounts();
+    }
+
+    private async Task PreformatAmounts()
+    {
+        var amounts = new HashSet<decimal>();
+        
+        // Collect all amounts that need formatting
+        amounts.Add(Report.TotalBudgetedAmount);
+        amounts.Add(Report.TotalActualAmount);
+        amounts.Add(Report.TotalVariance);
+        amounts.Add(Math.Abs(Report.TotalVariance));
+        
+        if (Report.VarianceItems != null)
+        {
+            foreach (var item in Report.VarianceItems)
+            {
+                amounts.Add(item.BudgetedAmount);
+                amounts.Add(item.ActualAmount);
+                amounts.Add(item.Variance);
+                amounts.Add(Math.Abs(item.Variance));
+            }
+        }
+        
+        if (Report.MonthlyVariances != null)
+        {
+            foreach (var month in Report.MonthlyVariances)
+            {
+                amounts.Add(month.BudgetedAmount);
+                amounts.Add(month.ActualAmount);
+            }
+        }
+
+        // Format all amounts
+        foreach (var amount in amounts)
+        {
+            formattedAmounts[amount] = await CurrencyService.FormatAmountAsync(amount);
+        }
+    }
 
     private string GetCategoryIcon(string category)
     {
         return category.ToLower() switch
         {
-            var c when c.Contains("food") || c.Contains("grocery") => "🍽️",
-            var c when c.Contains("transport") || c.Contains("gas") || c.Contains("car") => "🚗",
+            var c when c.Contains("food") || c.Contains("grocery") || c.Contains("restaurant") => "🍽️",
+            var c when c.Contains("transport") || c.Contains("gas") || c.Contains("fuel") => "🚗",
             var c when c.Contains("housing") || c.Contains("rent") || c.Contains("mortgage") => "🏠",
-            var c when c.Contains("entertainment") || c.Contains("fun") => "🎬",
-            var c when c.Contains("health") || c.Contains("medical") => "🏥",
-            var c when c.Contains("shopping") || c.Contains("clothes") => "🛍️",
             var c when c.Contains("utility") || c.Contains("electric") || c.Contains("water") => "⚡",
+            var c when c.Contains("entertainment") || c.Contains("movie") || c.Contains("game") => "🎬",
+            var c when c.Contains("health") || c.Contains("medical") || c.Contains("doctor") => "🏥",
+            var c when c.Contains("shopping") || c.Contains("clothing") || c.Contains("retail") => "🛍️",
             var c when c.Contains("education") || c.Contains("learning") => "📚",
             var c when c.Contains("investment") || c.Contains("saving") => "💰",
             _ => "📊"

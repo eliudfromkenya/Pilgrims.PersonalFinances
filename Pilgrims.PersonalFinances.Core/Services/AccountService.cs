@@ -2,23 +2,34 @@ using Microsoft.EntityFrameworkCore;
 using Pilgrims.PersonalFinances.Data;
 using Pilgrims.PersonalFinances.Models;
 using Pilgrims.PersonalFinances.Models.Enums;
+using Pilgrims.PersonalFinances.Core.Interfaces;
 
 namespace Pilgrims.PersonalFinances.Services
 {
     public class AccountService : IAccountService
     {
         private readonly PersonalFinanceContext _context;
+        private readonly ICurrencyService _currencyService;
 
-        public AccountService(PersonalFinanceContext context)
+        public AccountService(PersonalFinanceContext context, ICurrencyService currencyService)
         {
             _context = context;
+            _currencyService = currencyService;
         }
 
         public async Task<IEnumerable<Account>> GetAllAccountsAsync()
         {
-            return await _context.Accounts
+            var accounts = await _context.Accounts
                 .OrderBy(a => a.Name)
                 .ToListAsync();
+
+            // Format balances using currency service
+            foreach (var account in accounts)
+            {
+                account.FormattedBalance = _currencyService.FormatAmount(account.CurrentBalance, account.Currency);
+            }
+
+            return accounts;
         }
 
         public async Task<IEnumerable<Account>> GetAccountsAsync()
@@ -28,9 +39,16 @@ namespace Pilgrims.PersonalFinances.Services
 
         public async Task<Account?> GetAccountByIdAsync(string? id)
         {
-            return await _context.Accounts
+            var account = await _context.Accounts
                 .Include(a => a.Transactions.Take(10)) // Include recent transactions
                 .FirstOrDefaultAsync(a => a.Id == id);
+
+            if (account != null)
+            {
+                account.FormattedBalance = _currencyService.FormatAmount(account.CurrentBalance, account.Currency);
+            }
+
+            return account;
         }
 
         public async Task<Account> CreateAccountAsync(Account account)
@@ -41,6 +59,12 @@ namespace Pilgrims.PersonalFinances.Services
                 throw new InvalidOperationException("An account with this name already exists.");
             }
 
+            // Set default currency if not provided
+            if (string.IsNullOrEmpty(account.Currency))
+            {
+                account.Currency = await _currencyService.GetCurrentCurrencyAsync();
+            }
+
             // Set initial values
             account.CreatedAt = DateTime.UtcNow;
             account.MarkAsDirty();
@@ -48,6 +72,9 @@ namespace Pilgrims.PersonalFinances.Services
 
             _context.Accounts.Add(account);
             await _context.SaveChangesAsync();
+
+            // Format balance for display
+            account.FormattedBalance = _currencyService.FormatAmount(account.CurrentBalance, account.Currency);
 
             return account;
         }
@@ -99,6 +126,10 @@ namespace Pilgrims.PersonalFinances.Services
             }
 
             await _context.SaveChangesAsync();
+
+            // Format balance for display
+            existingAccount.FormattedBalance = _currencyService.FormatAmount(existingAccount.CurrentBalance, existingAccount.Currency);
+
             return existingAccount;
         }
 
@@ -203,18 +234,34 @@ namespace Pilgrims.PersonalFinances.Services
 
         public async Task<IEnumerable<Account>> GetAccountsByTypeAsync(AccountType accountType)
         {
-            return await _context.Accounts
+            var accounts = await _context.Accounts
                 .Where(a => a.AccountType == accountType)
                 .OrderBy(a => a.Name)
                 .ToListAsync();
+
+            // Format balances using currency service
+            foreach (var account in accounts)
+            {
+                account.FormattedBalance = _currencyService.FormatAmount(account.CurrentBalance, account.Currency);
+            }
+
+            return accounts;
         }
 
         public async Task<IEnumerable<Account>> GetActiveAccountsAsync()
         {
-            return await _context.Accounts
+            var accounts = await _context.Accounts
                 .Where(a => a.Status == AccountStatus.Active)
                 .OrderBy(a => a.Name)
                 .ToListAsync();
+
+            // Format balances using currency service
+            foreach (var account in accounts)
+            {
+                account.FormattedBalance = _currencyService.FormatAmount(account.CurrentBalance, account.Currency);
+            }
+
+            return accounts;
         }
 
         public async Task<decimal> GetTotalBalanceAsync()

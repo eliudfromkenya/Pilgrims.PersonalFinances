@@ -1,6 +1,8 @@
 @using Pilgrims.PersonalFinances.Models.DTOs
 @using Pilgrims.PersonalFinances.Components.Shared
+@using Pilgrims.PersonalFinances.Core.Interfaces
 @inject IJSRuntime JSRuntime
+@inject ICurrencyService CurrencyService
 
 <div id="income-statement-report" class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
     <div class="flex justify-between items-center mb-6">
@@ -18,15 +20,15 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div class="bg-gradient-to-r from-green-400 to-green-600 p-4 rounded-xl text-white">
             <div class="text-sm opacity-90">Total Income</div>
-            <div class="text-2xl font-bold">@Report.TotalIncome.ToString("C")</div>
+            <div class="text-2xl font-bold">@(formattedAmounts.TryGetValue(Report.TotalIncome, out var formattedIncome) ? formattedIncome : Report.TotalIncome.ToString("C"))</div>
         </div>
         <div class="bg-gradient-to-r from-red-400 to-red-600 p-4 rounded-xl text-white">
             <div class="text-sm opacity-90">Total Expenses</div>
-            <div class="text-2xl font-bold">@Report.TotalExpenses.ToString("C")</div>
+            <div class="text-2xl font-bold">@(formattedAmounts.TryGetValue(Report.TotalExpenses, out var formattedExpenses) ? formattedExpenses : Report.TotalExpenses.ToString("C"))</div>
         </div>
         <div class="bg-gradient-to-r from-blue-400 to-blue-600 p-4 rounded-xl text-white">
             <div class="text-sm opacity-90">Net Income</div>
-            <div class="text-2xl font-bold">@Report.NetIncome.ToString("C")</div>
+            <div class="text-2xl font-bold">@(formattedAmounts.TryGetValue(Report.NetIncome, out var formattedNetIncome) ? formattedNetIncome : Report.NetIncome.ToString("C"))</div>
         </div>
     </div>
 
@@ -93,7 +95,7 @@
                                 </div>
                             </div>
                             <div class="text-right">
-                                <div class="font-semibold text-green-600">@income.Amount.ToString("C")</div>
+                                <div class="font-semibold text-green-600">@(formattedAmounts.TryGetValue(income.Amount, out var formattedIncomeAmount) ? formattedIncomeAmount : income.Amount.ToString("C"))</div>
                                 <div class="text-xs text-gray-500">@percentage.ToString("F1")%</div>
                             </div>
                         </div>
@@ -126,7 +128,7 @@
                                 </div>
                             </div>
                             <div class="text-right">
-                                <div class="font-semibold text-red-600">@expense.Amount.ToString("C")</div>
+                                <div class="font-semibold text-red-600">@(formattedAmounts.TryGetValue(expense.Amount, out var formattedExpenseAmount) ? formattedExpenseAmount : expense.Amount.ToString("C"))</div>
                                 <div class="text-xs text-gray-500">@percentage.ToString("F1")%</div>
                             </div>
                         </div>
@@ -177,4 +179,43 @@
 @code {
     [Parameter] public IncomeExpenseReportDto Report { get; set; } = new();
     [Parameter] public Action<string>? OnCategoryClick { get; set; }
+    
+    private Dictionary<decimal, string> formattedAmounts = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await PreformatAmounts();
+    }
+
+    private async Task PreformatAmounts()
+    {
+        var amounts = new HashSet<decimal>();
+        
+        // Collect all amounts that need formatting
+        amounts.Add(Report.TotalIncome);
+        amounts.Add(Report.TotalExpenses);
+        amounts.Add(Report.NetIncome);
+        
+        if (Report.IncomeByCategory != null)
+        {
+            foreach (var income in Report.IncomeByCategory)
+            {
+                amounts.Add(income.Amount);
+            }
+        }
+        
+        if (Report.ExpensesByCategory != null)
+        {
+            foreach (var expense in Report.ExpensesByCategory)
+            {
+                amounts.Add(expense.Amount);
+            }
+        }
+
+        // Format all amounts
+        foreach (var amount in amounts)
+        {
+            formattedAmounts[amount] = await CurrencyService.FormatAmountAsync(amount);
+        }
+    }
 }

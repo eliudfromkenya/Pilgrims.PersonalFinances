@@ -1,0 +1,168 @@
+@using Pilgrims.PersonalFinances.Core.Data
+@using Pilgrims.PersonalFinances.Core.Models
+@using Pilgrims.PersonalFinances.Data
+@using Microsoft.EntityFrameworkCore
+@inject PersonalFinanceContext DbContext
+@implements IDisposable
+
+<div class="relative">
+    <input type="text" 
+           @bind="searchText" 
+           @oninput="OnSearchInput"
+           @onfocus="OnFocus"
+           @onblur="OnBlur"
+           placeholder="@Placeholder"
+           class="@CssClass"
+           autocomplete="off" />
+    
+    @if (showDropdown && filteredCurrencies.Any())
+    {
+        <div class="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+            @foreach (var currency in filteredCurrencies.Take(10))
+            {
+                <div class="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer flex items-center justify-between"
+                     @onclick="() => SelectCurrency(currency)"
+                     @onmousedown:preventDefault="true">
+                    <div>
+                        <span class="font-medium">@currency.ISOCode</span>
+                        <span class="text-gray-600 dark:text-gray-400 ml-2">@currency.CurrencyName</span>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm text-gray-500 dark:text-gray-400">@currency.Country</div>
+                        @if (!string.IsNullOrEmpty(currency.SymbolOrSign))
+                        {
+                            <div class="text-lg">@currency.SymbolOrSign</div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    
+    @if (showDropdown && !filteredCurrencies.Any() && !string.IsNullOrEmpty(searchText))
+    {
+        <div class="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg">
+            <div class="px-4 py-2 text-gray-500 dark:text-gray-400">
+                No currencies found matching "@searchText"
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public string Placeholder { get; set; } = "Search currencies...";
+    [Parameter] public string CssClass { get; set; } = "w-full px-3 py-2 bg-white/50 dark:bg-gray-700/50 border border-white/20 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent";
+
+    private string searchText = string.Empty;
+    private bool showDropdown = false;
+    private List<Currency> allCurrencies = new();
+    private List<Currency> filteredCurrencies = new();
+    private Timer? debounceTimer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCurrencies();
+        
+        if(!allCurrencies.Any())
+        {
+            allCurrencies = CurrencySeedData.GetCurrencies().ToList();
+        }
+        // Set initial search text if Value is provided
+        if (!string.IsNullOrEmpty(Value))
+        {
+            var selectedCurrency = allCurrencies.FirstOrDefault(c => c.ISOCode == Value);
+            if (selectedCurrency != null)
+            {
+                searchText = $"{selectedCurrency.ISOCode} - {selectedCurrency.CurrencyName}";
+            }
+            else
+            {
+                searchText = Value;
+            }
+        }
+    }
+
+    private async Task LoadCurrencies()
+    {
+        try
+        {
+            allCurrencies = await DbContext.Currencies
+                .OrderBy(c => c.ISOCode)
+                .ToListAsync();
+        }
+        catch (Exception)
+        {
+            // If currencies table doesn't exist yet, use empty list
+            allCurrencies = new List<Currency>();
+        }
+    }
+
+    private async Task OnSearchInput(ChangeEventArgs e)
+    {
+        searchText = e.Value?.ToString() ?? string.Empty;
+        
+        // Debounce the search to avoid too many database queries
+        debounceTimer?.Dispose();
+        debounceTimer = new Timer(async _ =>
+        {
+            await InvokeAsync(async () =>
+            {
+                await FilterCurrencies();
+                StateHasChanged();
+            });
+        }, null, 300, Timeout.Infinite);
+    }
+
+    private async Task FilterCurrencies()
+    {
+        if (string.IsNullOrWhiteSpace(searchText))
+        {
+            filteredCurrencies = allCurrencies.Take(10).ToList();
+        }
+        else
+        {
+            var searchLower = searchText.ToLower();
+            filteredCurrencies = allCurrencies
+                .Where(c => 
+                    c.ISOCode.ToLower().Contains(searchLower) ||
+                    c.CurrencyName.ToLower().Contains(searchLower) ||
+                    c.Country.ToLower().Contains(searchLower))
+                .Take(10)
+                .ToList();
+        }
+    }
+
+    private async Task OnFocus()
+    {
+        showDropdown = true;
+        if (!filteredCurrencies.Any())
+        {
+            await FilterCurrencies();
+        }
+    }
+
+    private async Task OnBlur()
+    {
+        // Delay hiding dropdown to allow for click events
+        await Task.Delay(150);
+        showDropdown = false;
+    }
+
+    private async Task SelectCurrency(Currency currency)
+    {
+        searchText = $"{currency.ISOCode} - {currency.CurrencyName}";
+        showDropdown = false;
+        
+        if (ValueChanged.HasDelegate)
+        {
+            await ValueChanged.InvokeAsync(currency.ISOCode);
+        }
+    }
+
+    public void Dispose()
+    {
+        debounceTimer?.Dispose();
+    }
+}

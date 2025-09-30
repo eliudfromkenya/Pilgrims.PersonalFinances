@@ -290,7 +290,7 @@
         }
         catch (Exception ex)
         {
-            await MessagingService.ShowErrorToastAsync($"Error loading notifications: {ex.Message}");
+            MessagingService.ShowErrorToast($"Error loading notifications: {ex.Message}");
         }
         finally
         {
@@ -343,7 +343,7 @@
     private async Task RefreshNotifications()
     {
         await LoadNotifications();
-        await MessagingService.ShowSuccessToastAsync("Notifications refreshed");
+        MessagingService.ShowSuccessToast("Notifications refreshed");
     }
 
     private async Task MarkAsRead(string? notificationId)
@@ -361,7 +361,7 @@
         }
         catch (Exception ex)
         {
-            await MessagingService.ShowErrorToastAsync($"Error marking notification as read: {ex.Message}");
+            MessagingService.ShowErrorToast($"Error marking notification as read: {ex.Message}");
         }
     }
 
@@ -376,11 +376,11 @@
             }
             CalculateStatistics();
             ApplyFiltersAndSort();
-            await MessagingService.ShowSuccessToastAsync("All notifications marked as read");
+            MessagingService.ShowSuccessToast("All notifications marked as read");
         }
         catch (Exception ex)
         {
-            await MessagingService.ShowErrorToastAsync($"Error marking all notifications as read: {ex.Message}");
+            MessagingService.ShowErrorToast($"Error marking all notifications as read: {ex.Message}");
         }
     }
 
@@ -399,7 +399,7 @@
         }
         catch (Exception ex)
         {
-            await MessagingService.ShowErrorToastAsync($"Error dismissing notification: {ex.Message}");
+            MessagingService.ShowErrorToast($"Error dismissing notification: {ex.Message}");
         }
     }
 
@@ -411,11 +411,11 @@
             notifications.RemoveAll(n => n.Id == notificationId);
             CalculateStatistics();
             ApplyFiltersAndSort();
-            await MessagingService.ShowSuccessToastAsync("Notification deleted");
+            MessagingService.ShowSuccessToast("Notification deleted");
         }
         catch (Exception ex)
         {
-            await MessagingService.ShowErrorToastAsync($"Error deleting notification: {ex.Message}");
+            MessagingService.ShowErrorToast($"Error deleting notification: {ex.Message}");
         }
     }
 

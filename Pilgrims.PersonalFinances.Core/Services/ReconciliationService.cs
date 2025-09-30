@@ -4,6 +4,7 @@ using Pilgrims.PersonalFinances.Models;
 using Pilgrims.PersonalFinances.Models.DTOs;
 using Pilgrims.PersonalFinances.Models.Enums;
 using Pilgrims.PersonalFinances.Services.Interfaces;
+using Pilgrims.PersonalFinances.Core.Interfaces;
 using System.Linq;
 
 namespace Pilgrims.PersonalFinances.Services
@@ -12,11 +13,13 @@ namespace Pilgrims.PersonalFinances.Services
     {
         private readonly PersonalFinanceContext _context;
         private readonly INotificationService _notificationService;
+        private readonly ICurrencyService _currencyService;
 
-        public ReconciliationService(PersonalFinanceContext context, INotificationService notificationService)
+        public ReconciliationService(PersonalFinanceContext context, INotificationService notificationService, ICurrencyService currencyService)
         {
             _context = context;
             _notificationService = notificationService;
+            _currencyService = currencyService;
         }
 
         #region Reconciliation Session Management
@@ -153,26 +156,47 @@ namespace Pilgrims.PersonalFinances.Services
 
         public async Task<IEnumerable<ReconciliationItem>> GetReconciliationItemsAsync(string sessionId)
         {
-            return await _context.ReconciliationItems
+            var items = await _context.ReconciliationItems
                 .Where(ri => ri.ReconciliationSessionId == sessionId)
                 .OrderBy(ri => ri.TransactionDate)
                 .ToListAsync();
+
+            foreach (var item in items)
+            {
+                item.FormattedAmount = await _currencyService.FormatAmountAsync(item.Amount);
+            }
+
+            return items;
         }
 
         public async Task<IEnumerable<ReconciliationItem>> GetUnmatchedItemsAsync(string sessionId)
         {
-            return await _context.ReconciliationItems
+            var items = await _context.ReconciliationItems
                 .Where(ri => ri.ReconciliationSessionId == sessionId && ri.Status == ReconciliationItemStatus.Unmatched)
                 .OrderBy(ri => ri.TransactionDate)
                 .ToListAsync();
+
+            foreach (var item in items)
+            {
+                item.FormattedAmount = await _currencyService.FormatAmountAsync(item.Amount);
+            }
+
+            return items;
         }
 
         public async Task<IEnumerable<ReconciliationItem>> GetClearedItemsAsync(string sessionId)
         {
-            return await _context.ReconciliationItems
+            var items = await _context.ReconciliationItems
                 .Where(ri => ri.ReconciliationSessionId == sessionId && ri.IsCleared)
                 .OrderBy(ri => ri.TransactionDate)
                 .ToListAsync();
+
+            foreach (var item in items)
+            {
+                item.FormattedAmount = await _currencyService.FormatAmountAsync(item.Amount);
+            }
+
+            return items;
         }
 
         #endregion

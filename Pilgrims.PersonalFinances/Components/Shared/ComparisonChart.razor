@@ -1,4 +1,6 @@
 @using Pilgrims.PersonalFinances.Services
+@using Pilgrims.PersonalFinances.Core.Interfaces
+@inject ICurrencyService CurrencyService
 
 <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
     <div class="flex items-center justify-between mb-6">
@@ -255,6 +257,67 @@
 
     private string selectedMetric = "netIncome";
     private string selectedPeriod = "monthly";
+    private Dictionary<decimal, string> _formattedAmounts = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await PreformatAmounts();
+    }
+
+    private async Task PreformatAmounts()
+    {
+        _formattedAmounts.Clear();
+        
+        if (ComparisonData != null)
+        {
+            var amounts = new HashSet<decimal>();
+            
+            // Collect all amounts that need formatting
+            if (ComparisonData.CurrentData != null)
+            {
+                amounts.Add(ComparisonData.CurrentData.TotalIncome);
+                amounts.Add(ComparisonData.CurrentData.TotalExpenses);
+                amounts.Add(ComparisonData.CurrentData.NetIncome);
+            }
+            
+            if (ComparisonData.PreviousData != null)
+            {
+                amounts.Add(ComparisonData.PreviousData.TotalIncome);
+                amounts.Add(ComparisonData.PreviousData.TotalExpenses);
+                amounts.Add(ComparisonData.PreviousData.NetIncome);
+            }
+            
+            amounts.Add(ComparisonData.Variance);
+            
+            // Add monthly breakdown amounts
+            if (ComparisonData.MonthlyBreakdown?.Any() == true)
+            {
+                foreach (var month in ComparisonData.MonthlyBreakdown)
+                {
+                    amounts.Add(month.CurrentYearAmount);
+                    amounts.Add(month.PreviousYearAmount);
+                    amounts.Add(month.Variance);
+                }
+            }
+            
+            // Add category breakdown amounts
+            if (ComparisonData.CategoryBreakdown?.Any() == true)
+            {
+                foreach (var category in ComparisonData.CategoryBreakdown)
+                {
+                    amounts.Add(category.CurrentPeriodAmount);
+                    amounts.Add(category.PreviousPeriodAmount);
+                    amounts.Add(category.Variance);
+                }
+            }
+            
+            // Format all amounts
+            foreach (var amount in amounts)
+            {
+                _formattedAmounts[amount] = await CurrencyService.FormatAmountAsync(amount);
+            }
+        }
+    }
 
     private async Task OnMetricChanged(ChangeEventArgs e)
     {
@@ -296,6 +359,6 @@
 
     private string FormatCurrency(decimal amount)
     {
-        return amount.ToString("C0");
+        return _formattedAmounts.TryGetValue(amount, out var formatted) ? formatted : amount.ToString("C");
     }
 }

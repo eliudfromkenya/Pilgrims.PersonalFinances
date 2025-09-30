@@ -417,7 +417,7 @@
         }
         catch (Exception ex)
         {
-            await MessagingService.ShowErrorToastAsync($"Error loading data: {ex.Message}");
+            MessagingService.ShowErrorToast($"Error loading data: {ex.Message}");
         }
     }
 
@@ -454,12 +454,12 @@
             }
 
             await ScheduledTransactionService.CreateScheduledTransactionAsync(transaction);
-            await MessagingService.ShowSuccessToastAsync("Recurring transaction created successfully!");
+            MessagingService.ShowSuccessToast("Recurring transaction created successfully!");
             Navigation.NavigateTo("/recurring-transactions");
         }
         catch (Exception ex)
         {
-            await MessagingService.ShowErrorToastAsync($"Error creating transaction: {ex.Message}");
+            MessagingService.ShowErrorToast($"Error creating transaction: {ex.Message}");
         }
         finally
         {

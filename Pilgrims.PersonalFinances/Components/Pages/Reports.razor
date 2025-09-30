@@ -3,8 +3,10 @@
 @using Pilgrims.PersonalFinances.Models.Enums
 @using Pilgrims.PersonalFinances.Models.DTOs
 @using Pilgrims.PersonalFinances.Core.ViewModels
+@using Pilgrims.PersonalFinances.Core.Interfaces
 @inject ReportsViewModel ViewModel
 @inject NavigationManager Navigation
+@inject ICurrencyService CurrencyService
 
 <PageTitle>Reports - Pilgrims Personal Finance</PageTitle>
 
@@ -83,7 +85,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
                     <div class="bg-gradient-to-r from-indigo-400 to-indigo-600 p-4 rounded-xl text-white">
                         <div class="text-sm opacity-90">Net Worth</div>
-                        <div class="text-2xl font-bold">@ViewModel.BalanceSheet.NetWorth.ToString("C")</div>
+                        <div class="text-2xl font-bold">@(formattedAmounts.TryGetValue(ViewModel.BalanceSheet.NetWorth, out var netWorthFormatted) ? netWorthFormatted : ViewModel.BalanceSheet.NetWorth.ToString("C"))</div>
                         @if (ViewModel.PreviousBalanceSheet != null)
                         {
                             var change = ViewModel.BalanceSheet.NetWorth - ViewModel.PreviousBalanceSheet.NetWorth;
@@ -95,17 +97,17 @@
                     </div>
                     <div class="bg-gradient-to-r from-purple-400 to-purple-600 p-4 rounded-xl text-white">
                         <div class="text-sm opacity-90">Total Income</div>
-                        <div class="text-2xl font-bold">@(ViewModel.IncomeStatement?.TotalIncome.ToString("C") ?? "$0.00")</div>
+                        <div class="text-2xl font-bold">@(ViewModel.IncomeStatement != null && formattedAmounts.TryGetValue(ViewModel.IncomeStatement.TotalIncome, out var incomeFormatted) ? incomeFormatted : (ViewModel.IncomeStatement?.TotalIncome.ToString("C") ?? "$0.00"))</div>
                         <div class="text-xs opacity-75 mt-1">Selected period</div>
                     </div>
                     <div class="bg-gradient-to-r from-pink-400 to-pink-600 p-4 rounded-xl text-white">
                         <div class="text-sm opacity-90">Total Expenses</div>
-                        <div class="text-2xl font-bold">@(ViewModel.IncomeStatement?.TotalExpenses.ToString("C") ?? "$0.00")</div>
+                        <div class="text-2xl font-bold">@(ViewModel.IncomeStatement != null && formattedAmounts.TryGetValue(ViewModel.IncomeStatement.TotalExpenses, out var expensesFormatted) ? expensesFormatted : (ViewModel.IncomeStatement?.TotalExpenses.ToString("C") ?? "$0.00"))</div>
                         <div class="text-xs opacity-75 mt-1">@(ViewModel.IncomeStatement != null && ViewModel.IncomeStatement.TotalIncome > 0 ? ((ViewModel.IncomeStatement.TotalExpenses / ViewModel.IncomeStatement.TotalIncome) * 100).ToString("F0") + "% of income" : "N/A")</div>
                     </div>
                     <div class="bg-gradient-to-r from-rose-400 to-rose-600 p-4 rounded-xl text-white">
                         <div class="text-sm opacity-90">Net Income</div>
-                        <div class="text-2xl font-bold">@(ViewModel.IncomeStatement?.NetIncome.ToString("C") ?? "$0.00")</div>
+                        <div class="text-2xl font-bold">@(ViewModel.IncomeStatement != null && formattedAmounts.TryGetValue(ViewModel.IncomeStatement.NetIncome, out var netIncomeFormatted) ? netIncomeFormatted : (ViewModel.IncomeStatement?.NetIncome.ToString("C") ?? "$0.00"))</div>
                         <div class="text-xs opacity-75 mt-1">@(ViewModel.IncomeStatement != null && ViewModel.IncomeStatement.TotalIncome > 0 ? ((ViewModel.IncomeStatement.NetIncome / ViewModel.IncomeStatement.TotalIncome) * 100).ToString("F0") + "% savings rate" : "N/A")</div>
                     </div>
                 </div>
@@ -280,9 +282,36 @@
 </style>
 
 @code {
+    private Dictionary<decimal, string> formattedAmounts = new();
+
     protected override async Task OnInitializedAsync()
     {
         await ViewModel.InitializeCommand.ExecuteAsync(null);
+        await PreformatAmounts();
+    }
+
+    private async Task PreformatAmounts()
+    {
+        var amounts = new HashSet<decimal>();
+        
+        // Collect all amounts that need formatting
+        if (ViewModel.BalanceSheet != null)
+        {
+            amounts.Add(ViewModel.BalanceSheet.NetWorth);
+        }
+        
+        if (ViewModel.IncomeStatement != null)
+        {
+            amounts.Add(ViewModel.IncomeStatement.TotalIncome);
+            amounts.Add(ViewModel.IncomeStatement.TotalExpenses);
+            amounts.Add(ViewModel.IncomeStatement.NetIncome);
+        }
+
+        // Format all amounts
+        foreach (var amount in amounts)
+        {
+            formattedAmounts[amount] = await CurrencyService.FormatAmountAsync(amount);
+        }
     }
 
     private void OnCategoryClick(string categoryName)

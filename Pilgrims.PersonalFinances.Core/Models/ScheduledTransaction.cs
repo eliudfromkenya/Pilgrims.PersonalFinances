@@ -236,10 +236,10 @@ namespace Pilgrims.PersonalFinances.Models
         public bool IsDueSoon => NextDueDate.HasValue && NextDueDate.Value.Date <= DateTime.Today.AddDays(7) && NextDueDate.Value.Date > DateTime.Today && IsActive;
 
         /// <summary>
-        /// Gets the formatted amount as a string
+        /// Gets or sets the formatted amount as a string (populated by currency service)
         /// </summary>
         [NotMapped]
-        public string FormattedAmount => Amount.ToString("C2");
+        public string FormattedAmount { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets the recurrence description

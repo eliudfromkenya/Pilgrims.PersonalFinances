@@ -363,7 +363,7 @@
             // TODO: Save settings to database via NotificationService
             await Task.Delay(1000); // Simulate save operation
             
-            await MessagingService.ShowSuccessToastAsync("Notification settings saved successfully!");
+            MessagingService.ShowSuccessToast("Notification settings saved successfully!");
         }
         catch (Exception ex)
         {

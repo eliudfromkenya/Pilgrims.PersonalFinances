@@ -52,9 +52,9 @@ namespace Pilgrims.PersonalFinances.Models.DTOs
         }
 
         /// <summary>
-        /// Gets the formatted amount as a string
+        /// Gets or sets the formatted amount as a string (populated by currency service)
         /// </summary>
-        public string FormattedAmount => Amount.ToString("C2");
+        public string FormattedAmount { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets the tags as a list

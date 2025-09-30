@@ -107,8 +107,11 @@ namespace Pilgrims.PersonalFinances.Models
         [NotMapped]
         public bool IsCredit => Amount > 0 || ItemType == ReconciliationItemType.Deposit || ItemType == ReconciliationItemType.Interest;
 
+        /// <summary>
+        /// Gets or sets the formatted amount as a string (populated by currency service)
+        /// </summary>
         [NotMapped]
-        public string FormattedAmount => Amount.ToString("C");
+        public string FormattedAmount { get; set; } = string.Empty;
 
         [NotMapped]
         public string AmountCssClass => IsDebit ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400";

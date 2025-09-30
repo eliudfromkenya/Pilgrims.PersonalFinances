@@ -3,6 +3,8 @@ using Pilgrims.PersonalFinances.Models.Enums;
 using Pilgrims.PersonalFinances.Services;
 using Pilgrims.PersonalFinances.Tests.Data;
 using Microsoft.Extensions.DependencyInjection;
+using Moq;
+using Pilgrims.PersonalFinances.Core.Interfaces;
 
 namespace Pilgrims.PersonalFinances.Tests.Services;
 
@@ -27,7 +29,10 @@ public class AccountServiceTests : IDisposable
             .Options;
         
         _context = new TestPersonalFinanceContext(options);
-        _accountService = new AccountService(_context);
+        var mockCurrencyService = new Mock<ICurrencyService>();
+        mockCurrencyService.Setup(x => x.FormatAmount(It.IsAny<decimal>(), It.IsAny<string>(), It.IsAny<bool>())).Returns("$0.00");
+        mockCurrencyService.Setup(x => x.GetCurrentCurrencyAsync()).ReturnsAsync("USD");
+        _accountService = new AccountService(_context, mockCurrencyService.Object);
     }
 
     [Fact]

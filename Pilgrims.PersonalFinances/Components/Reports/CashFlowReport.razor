@@ -1,5 +1,8 @@
+@using Pilgrims.PersonalFinances.Core.Interfaces
 @using Pilgrims.PersonalFinances.Models.DTOs
+@using Pilgrims.PersonalFinances.Services.Interfaces
 @inject IJSRuntime JSRuntime
+@inject ICurrencyService CurrencyService
 
 <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10" id="cash-flow-report">
     <div class="flex items-center justify-between mb-6">
@@ -17,19 +20,19 @@
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         <div class="bg-gradient-to-r from-blue-400 to-blue-600 p-4 rounded-xl text-white">
             <div class="text-sm opacity-90">Operating Cash Flow</div>
-            <div class="text-2xl font-bold">@Report.OperatingCashFlow.ToString("C")</div>
+            <div class="text-2xl font-bold">@(formattedAmounts.TryGetValue(Report.OperatingCashFlow, out var formattedOperating) ? formattedOperating : Report.OperatingCashFlow.ToString("C"))</div>
         </div>
         <div class="bg-gradient-to-r from-purple-400 to-purple-600 p-4 rounded-xl text-white">
             <div class="text-sm opacity-90">Investing Cash Flow</div>
-            <div class="text-2xl font-bold">@Report.InvestingCashFlow.ToString("C")</div>
+            <div class="text-2xl font-bold">@(formattedAmounts.TryGetValue(Report.InvestingCashFlow, out var formattedInvesting) ? formattedInvesting : Report.InvestingCashFlow.ToString("C"))</div>
         </div>
         <div class="bg-gradient-to-r from-indigo-400 to-indigo-600 p-4 rounded-xl text-white">
             <div class="text-sm opacity-90">Financing Cash Flow</div>
-            <div class="text-2xl font-bold">@Report.FinancingCashFlow.ToString("C")</div>
+            <div class="text-2xl font-bold">@(formattedAmounts.TryGetValue(Report.FinancingCashFlow, out var formattedFinancing) ? formattedFinancing : Report.FinancingCashFlow.ToString("C"))</div>
         </div>
         <div class="bg-gradient-to-r from-green-400 to-green-600 p-4 rounded-xl text-white">
             <div class="text-sm opacity-90">Net Cash Flow</div>
-            <div class="text-2xl font-bold">@Report.NetCashFlow.ToString("C")</div>
+            <div class="text-2xl font-bold">@(formattedAmounts.TryGetValue(Report.NetCashFlow, out var formattedNet) ? formattedNet : Report.NetCashFlow.ToString("C"))</div>
         </div>
     </div>
 
@@ -48,7 +51,7 @@
                     <div class="bg-gray-400 rounded-t" style="height: @(Math.Abs(Report.StartingCash) / maxValue * 200)px; min-height: 20px; width: 100%;"></div>
                     <div class="text-xs text-center mt-2 text-gray-600 dark:text-gray-300">
                         <div>Starting</div>
-                        <div class="font-semibold">@Report.StartingCash.ToString("C")</div>
+                        <div class="font-semibold">@(formattedAmounts.TryGetValue(Report.StartingCash, out var formattedStartingChart) ? formattedStartingChart : Report.StartingCash.ToString("C"))</div>
                     </div>
                 </div>
                 
@@ -58,7 +61,7 @@
                          style="height: @(Math.Abs(Report.OperatingCashFlow) / maxValue * 200)px; min-height: 20px; width: 100%;"></div>
                     <div class="text-xs text-center mt-2 text-gray-600 dark:text-gray-300">
                         <div>Operating</div>
-                        <div class="font-semibold">@Report.OperatingCashFlow.ToString("C")</div>
+                        <div class="font-semibold">@(formattedAmounts.TryGetValue(Report.OperatingCashFlow, out var formattedOperatingChart) ? formattedOperatingChart : Report.OperatingCashFlow.ToString("C"))</div>
                     </div>
                 </div>
                 
@@ -68,7 +71,7 @@
                          style="height: @(Math.Abs(Report.InvestingCashFlow) / maxValue * 200)px; min-height: 20px; width: 100%;"></div>
                     <div class="text-xs text-center mt-2 text-gray-600 dark:text-gray-300">
                         <div>Investing</div>
-                        <div class="font-semibold">@Report.InvestingCashFlow.ToString("C")</div>
+                        <div class="font-semibold">@(formattedAmounts.TryGetValue(Report.InvestingCashFlow, out var formattedInvestingChart) ? formattedInvestingChart : Report.InvestingCashFlow.ToString("C"))</div>
                     </div>
                 </div>
                 
@@ -78,7 +81,7 @@
                          style="height: @(Math.Abs(Report.FinancingCashFlow) / maxValue * 200)px; min-height: 20px; width: 100%;"></div>
                     <div class="text-xs text-center mt-2 text-gray-600 dark:text-gray-300">
                         <div>Financing</div>
-                        <div class="font-semibold">@Report.FinancingCashFlow.ToString("C")</div>
+                        <div class="font-semibold">@(formattedAmounts.TryGetValue(Report.FinancingCashFlow, out var formattedFinancingChart) ? formattedFinancingChart : Report.FinancingCashFlow.ToString("C"))</div>
                     </div>
                 </div>
                 
@@ -87,7 +90,7 @@
                     <div class="bg-green-500 rounded-t" style="height: @(Math.Abs(Report.EndingCash) / maxValue * 200)px; min-height: 20px; width: 100%;"></div>
                     <div class="text-xs text-center mt-2 text-gray-600 dark:text-gray-300">
                         <div>Ending</div>
-                        <div class="font-semibold">@Report.EndingCash.ToString("C")</div>
+                        <div class="font-semibold">@(formattedAmounts.TryGetValue(Report.EndingCash, out var formattedEndingChart) ? formattedEndingChart : Report.EndingCash.ToString("C"))</div>
                     </div>
                 </div>
             </div>
@@ -114,7 +117,7 @@
                                 <span class="text-gray-700 dark:text-gray-300">@activity.CategoryName</span>
                             </div>
                             <span class="font-semibold @(activity.Amount >= 0 ? "text-green-600" : "text-red-600")">
-                                @activity.Amount.ToString("C")
+                                @(formattedAmounts.TryGetValue(activity.Amount, out var formattedActivity) ? formattedActivity : activity.Amount.ToString("C"))
                             </span>
                         </div>
                     }
@@ -126,7 +129,7 @@
                 <div class="border-t pt-3 mt-3">
                     <div class="flex justify-between font-semibold text-blue-600">
                         <span>Total Operating</span>
-                        <span>@Report.OperatingCashFlow.ToString("C")</span>
+                        <span>@(formattedAmounts.TryGetValue(Report.OperatingCashFlow, out var formattedOperatingTotal) ? formattedOperatingTotal : Report.OperatingCashFlow.ToString("C"))</span>
                     </div>
                 </div>
             </div>
@@ -150,7 +153,7 @@
                                 <span class="text-gray-700 dark:text-gray-300">@activity.CategoryName</span>
                             </div>
                             <span class="font-semibold @(activity.Amount >= 0 ? "text-green-600" : "text-red-600")">
-                                @activity.Amount.ToString("C")
+                                @(formattedAmounts.TryGetValue(activity.Amount, out var formattedInvestingActivity) ? formattedInvestingActivity : activity.Amount.ToString("C"))
                             </span>
                         </div>
                     }
@@ -162,7 +165,7 @@
                 <div class="border-t pt-3 mt-3">
                     <div class="flex justify-between font-semibold text-purple-600">
                         <span>Total Investing</span>
-                        <span>@Report.InvestingCashFlow.ToString("C")</span>
+                        <span>@(formattedAmounts.TryGetValue(Report.InvestingCashFlow, out var formattedInvestingTotal) ? formattedInvestingTotal : Report.InvestingCashFlow.ToString("C"))</span>
                     </div>
                 </div>
             </div>
@@ -186,7 +189,7 @@
                                 <span class="text-gray-700 dark:text-gray-300">@activity.CategoryName</span>
                             </div>
                             <span class="font-semibold @(activity.Amount >= 0 ? "text-green-600" : "text-red-600")">
-                                @activity.Amount.ToString("C")
+                                @(formattedAmounts.TryGetValue(activity.Amount, out var formattedFinancingActivity) ? formattedFinancingActivity : activity.Amount.ToString("C"))
                             </span>
                         </div>
                     }
@@ -198,7 +201,7 @@
                 <div class="border-t pt-3 mt-3">
                     <div class="flex justify-between font-semibold text-indigo-600">
                         <span>Total Financing</span>
-                        <span>@Report.FinancingCashFlow.ToString("C")</span>
+                        <span>@(formattedAmounts.TryGetValue(Report.FinancingCashFlow, out var formattedFinancingTotal) ? formattedFinancingTotal : Report.FinancingCashFlow.ToString("C"))</span>
                     </div>
                 </div>
             </div>
@@ -223,7 +226,7 @@
                                  style="height: @(height)px; min-height: 10px; width: 100%;"></div>
                             <div class="text-xs text-center mt-2 text-gray-600 dark:text-gray-300">
                                 <div>@month.Date.ToString("MMM")</div>
-                                <div class="font-semibold text-xs">@month.Amount.ToString("C0")</div>
+                                <div class="font-semibold text-xs">@(formattedAmounts.TryGetValue(month.Amount, out var formattedMonthly) ? formattedMonthly.Replace("$", "").Replace(",", "").Substring(0, Math.Min(formattedMonthly.Replace("$", "").Replace(",", "").Length, 6)) + "k" : month.Amount.ToString("C0"))</div>
                             </div>
                         </div>
                     }
@@ -264,7 +267,7 @@
                 <div class="flex justify-between items-center">
                     <span class="text-gray-600 dark:text-gray-300">Cash Position Change</span>
                     <span class="font-semibold @(Report.NetCashFlow >= 0 ? "text-green-600" : "text-red-600")">
-                        @Report.NetCashFlow.ToString("C")
+                        @(formattedAmounts.TryGetValue(Report.NetCashFlow, out var formattedNetCashFlowInsight) ? formattedNetCashFlowInsight : Report.NetCashFlow.ToString("C"))
                     </span>
                 </div>
             </div>
@@ -320,4 +323,41 @@
 
 @code {
     [Parameter] public CashFlowReportDto Report { get; set; } = new();
+    
+    private Dictionary<decimal, string> formattedAmounts = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await PreformatAmounts();
+    }
+
+    private async Task PreformatAmounts()
+    {
+        // Preformat all amounts for consistent currency display
+        formattedAmounts.Clear();
+        
+        var amountsToFormat = new List<decimal>
+        {
+            Report.OperatingCashFlow,
+            Report.InvestingCashFlow,
+            Report.FinancingCashFlow,
+            Report.NetCashFlow,
+            Report.StartingCash,
+            Report.EndingCash
+        };
+        
+        // Add monthly cash flow amounts
+        if (Report.MonthlyTrends != null)
+        {
+            foreach (var monthly in Report.MonthlyTrends)
+            {
+                amountsToFormat.Add(monthly.Amount);
+            }
+        }
+        
+        foreach (var amount in amountsToFormat.Distinct())
+        {
+            formattedAmounts[amount] = await CurrencyService.FormatAmountAsync(amount);
+        }
+    }
 }

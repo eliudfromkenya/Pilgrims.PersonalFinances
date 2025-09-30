@@ -1,5 +1,7 @@
 @using Pilgrims.PersonalFinances.Models.DTOs
+@using Pilgrims.PersonalFinances.Core.Interfaces
 @inject IJSRuntime JSRuntime
+@inject ICurrencyService CurrencyService
 
 <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10" id="account-summary-report">
     <div class="flex items-center justify-between mb-6">
@@ -17,7 +19,7 @@
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         <div class="bg-gradient-to-r from-blue-400 to-blue-600 p-4 rounded-xl text-white">
             <div class="text-sm opacity-90">Total Balance</div>
-            <div class="text-2xl font-bold">@Report.TotalBalance.ToString("C")</div>
+            <div class="text-2xl font-bold">@(formattedAmounts.TryGetValue(Report.TotalBalance, out var formattedTotalBalance) ? formattedTotalBalance : Report.TotalBalance.ToString("C"))</div>
         </div>
         <div class="bg-gradient-to-r from-green-400 to-green-600 p-4 rounded-xl text-white">
             <div class="text-sm opacity-90">Total Accounts</div>
@@ -29,7 +31,9 @@
         </div>
         <div class="bg-gradient-to-r from-indigo-400 to-indigo-600 p-4 rounded-xl text-white">
             <div class="text-sm opacity-90">Avg Balance</div>
-            <div class="text-2xl font-bold">@((Report.Accounts?.Count > 0 ? Report.TotalBalance / Report.Accounts.Count : 0).ToString("C"))</div>
+            <div class="text-2xl font-bold">@{
+                var avgBalance = Report.Accounts?.Count > 0 ? Report.TotalBalance / Report.Accounts.Count : 0;
+            }@(formattedAmounts.TryGetValue(avgBalance, out var formattedAvgBalance) ? formattedAvgBalance : avgBalance.ToString("C"))</div>
         </div>
     </div>
 
@@ -171,7 +175,7 @@
                 {
                     var totalBalance = group.Sum(a => a.Balance);
                     var accountCount = group.Count();
-                    var avgBalance = accountCount > 0 ? totalBalance / accountCount : 0;
+                    var avgAccountBalance = accountCount > 0 ? totalBalance / accountCount : 0;
                     var percentage = Report.TotalBalance > 0 ? (totalBalance / Report.TotalBalance) * 100 : 0;
                     
                     <div class="bg-gradient-to-br from-white/60 to-white/30 dark:from-gray-700/60 dark:to-gray-700/30 p-4 rounded-xl border border-white/20">
@@ -194,7 +198,7 @@
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-gray-600 dark:text-gray-400">Avg Balance</span>
-                                <span class="font-semibold">@avgBalance.ToString("C")</span>
+                                <span class="font-semibold">@avgAccountBalance.ToString("C")</span>
                             </div>
                         </div>
                     </div>
@@ -212,7 +216,7 @@
                 {
                     var maxMonthlyBalance = Report.MonthlyBreakdown.Max(m => m.Accounts?.Max(a => a.Balance) ?? 0);
                     if (maxMonthlyBalance == 0) maxMonthlyBalance = 10000;
-                    var topAccountsForChart = Report.Accounts?.OrderByDescending(a => a.Balance).Take(5).ToList() ?? new List<AccountSummaryDto>();
+                    var topAccountsForChart = Report.Accounts?.OrderByDescending(a => a.Balance).Take(5).ToList() ?? new List<Pilgrims.PersonalFinances.Models.DTOs.AccountSummaryDto>();
                     var colors = new[] { "#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ef4444" };
                     @foreach (var month in Report.MonthlyBreakdown.OrderBy(m => m.Month))
                     {
@@ -449,5 +453,67 @@
         }
         
         return recommendations.Take(4).ToList();
+    }
+
+    private Dictionary<decimal, string> formattedAmounts = new();
+
+    private async Task PreformatAmounts()
+    {
+        var amounts = new List<decimal>();
+        
+        // Add main summary amounts
+        amounts.Add(Report.TotalBalance);
+        if (Report.Accounts?.Count > 0)
+        {
+            amounts.Add(Report.TotalBalance / Report.Accounts.Count);
+        }
+        
+        // Add individual account balances and monthly changes
+        if (Report.Accounts?.Any() == true)
+        {
+            foreach (var account in Report.Accounts)
+            {
+                amounts.Add(account.Balance);
+                amounts.Add(account.MonthlyChange);
+            }
+        }
+        
+        // Add account type totals
+        if (Report.Accounts?.Any() == true)
+        {
+            var accountTypes = Report.Accounts.GroupBy(a => a.AccountType);
+            foreach (var type in accountTypes)
+            {
+                amounts.Add(type.Sum(a => a.Balance));
+                amounts.Add(type.Average(a => a.Balance));
+            }
+        }
+        
+        // Add monthly trend amounts
+        if (Report.MonthlyTrends?.Any() == true)
+        {
+            foreach (var month in Report.MonthlyTrends)
+            {
+                if (month.Accounts?.Any() == true)
+                {
+                    foreach (var account in month.Accounts)
+                    {
+                        amounts.Add(account.Balance);
+                    }
+                    amounts.Add(month.Accounts.Sum(a => a.Balance));
+                }
+            }
+        }
+        
+        // Format all amounts
+        foreach (var amount in amounts.Distinct())
+        {
+            formattedAmounts[amount] = await CurrencyService.FormatAmountAsync(amount);
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await PreformatAmounts();
     }
 }

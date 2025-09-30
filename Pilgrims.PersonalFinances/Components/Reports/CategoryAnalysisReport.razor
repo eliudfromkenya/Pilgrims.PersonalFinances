@@ -1,5 +1,8 @@
 @using Pilgrims.PersonalFinances.Models.DTOs
+@using Pilgrims.PersonalFinances.Services.Interfaces
+@using Pilgrims.PersonalFinances.Core.Interfaces
 @inject IJSRuntime JSRuntime
+@inject ICurrencyService CurrencyService
 
 <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10" id="category-analysis-report">
     <div class="flex items-center justify-between mb-6">
@@ -17,7 +20,7 @@
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         <div class="bg-gradient-to-r from-blue-400 to-blue-600 p-4 rounded-xl text-white">
             <div class="text-sm opacity-90">Total Spending</div>
-            <div class="text-2xl font-bold">@Report.TotalSpending.ToString("C")</div>
+            <div class="text-2xl font-bold">@(formattedAmounts.TryGetValue(Report.TotalSpending, out var formattedTotalSpending) ? formattedTotalSpending : Report.TotalSpending.ToString("C"))</div>
         </div>
         <div class="bg-gradient-to-r from-purple-400 to-purple-600 p-4 rounded-xl text-white">
             <div class="text-sm opacity-90">Categories</div>
@@ -29,7 +32,9 @@
         </div>
         <div class="bg-gradient-to-r from-indigo-400 to-indigo-600 p-4 rounded-xl text-white">
             <div class="text-sm opacity-90">Avg per Category</div>
-            <div class="text-2xl font-bold">@((Report.Categories?.Count > 0 ? Report.TotalSpending / Report.Categories.Count : 0).ToString("C"))</div>
+            <div class="text-2xl font-bold">@{
+                var avgPerCategory = Report.Categories?.Count > 0 ? Report.TotalSpending / Report.Categories.Count : 0;
+            }@(formattedAmounts.TryGetValue(avgPerCategory, out var formattedAvgPerCategory) ? formattedAvgPerCategory : avgPerCategory.ToString("C"))</div>
         </div>
     </div>
 
@@ -78,7 +83,7 @@
                                     </div>
                                 </div>
                                 <div class="text-right">
-                                    <div class="font-bold text-lg">@category.Amount.ToString("C")</div>
+                                    <div class="font-bold text-lg">@(formattedAmounts.TryGetValue(category.Amount, out var formattedCategoryAmount) ? formattedCategoryAmount : category.Amount.ToString("C"))</div>
                                     <div class="text-sm text-gray-500">@totalPercentage.ToString("F1")% of total</div>
                                 </div>
                             </div>
@@ -102,7 +107,7 @@
                 {
                     var maxMonthlyValue = Report.MonthlyBreakdown.Max(m => m.Categories?.Max(c => c.Amount) ?? 0);
                     if (maxMonthlyValue == 0) maxMonthlyValue = 1000;
-                    var topCategoriesForChart = Report.Categories?.OrderByDescending(c => c.Amount).Take(5).ToList() ?? new List<Pilgrims.PersonalFinances.Models.DTOs.CategorySummaryDto>();
+                    var topCategoriesForChart = Report.Categories?.OrderByDescending(c => c.Amount).Take(5).ToList() ?? new List<CategorySummaryDto>();
                     var colors = new[] { "#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ef4444" };
                     
                     @foreach (var month in Report.MonthlyBreakdown.OrderBy(m => m.Month))
@@ -117,13 +122,15 @@
                                     
                                     <div class="w-full transition-all duration-1000 cursor-pointer hover:opacity-80" 
                                          style="height: @(height)px; min-height: @(monthlyAmount > 0 ? "4" : "0")px; background-color: @colors[i];"
-                                         title="@category.Name: @monthlyAmount.ToString("C")"
+                                         title="@category.Name: @(formattedAmounts.TryGetValue(monthlyAmount, out var formattedMonthlyAmount) ? formattedMonthlyAmount : monthlyAmount.ToString("C"))"
                                          @onclick="() => OnCategoryClick(category.Name)"></div>
                                 }
                             </div>
                             <div class="text-xs text-center mt-2 text-gray-600 dark:text-gray-300">
                                 <div>@month.Month.ToString("MMM")</div>
-                                <div class="font-semibold">@(month.Categories?.Sum(c => c.Amount).ToString("C0") ?? "$0")</div>
+                                <div class="font-semibold">@{
+                                    var monthlyTotal = month.Categories?.Sum(c => c.Amount) ?? 0;
+                                }@(formattedAmounts.TryGetValue(monthlyTotal, out var formattedMonthlyTotal) ? formattedMonthlyTotal : monthlyTotal.ToString("C0"))</div>
                             </div>
                         </div>
                     }
@@ -234,7 +241,63 @@
 </div>
 
 @code {
-    [Parameter] public CategoryAnalysisDto Report { get; set; } = new();
+    [Parameter] public Pilgrims.PersonalFinances.Models.DTOs.CategoryAnalysisDto Report { get; set; } = new();
+    
+    private Dictionary<decimal, string> formattedAmounts = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await PreformatAmounts();
+    }
+
+    private async Task PreformatAmounts()
+    {
+        // Preformat all amounts for consistent currency display
+        formattedAmounts.Clear();
+        
+        var amountsToFormat = new List<decimal>
+        {
+            Report.TotalSpending
+        };
+        
+        // Add category amounts
+        if (Report.Categories != null)
+        {
+            foreach (var category in Report.Categories)
+            {
+                amountsToFormat.Add(category.Amount);
+            }
+        }
+        
+        // Add average per category
+        if (Report.Categories?.Count > 0)
+        {
+            amountsToFormat.Add(Report.TotalSpending / Report.Categories.Count);
+        }
+        
+        // Add monthly breakdown amounts
+        if (Report.MonthlyBreakdown != null)
+        {
+            foreach (var month in Report.MonthlyBreakdown)
+            {
+                if (month.Categories != null)
+                {
+                    foreach (var category in month.Categories)
+                    {
+                        amountsToFormat.Add(category.Amount);
+                    }
+                    
+                    // Add monthly totals
+                    amountsToFormat.Add(month.Categories.Sum(c => c.Amount));
+                }
+            }
+        }
+        
+        foreach (var amount in amountsToFormat.Distinct())
+        {
+            formattedAmounts[amount] = await CurrencyService.FormatAmountAsync(amount);
+        }
+    }
     [Parameter] public EventCallback<string> OnCategoryDrillDown { get; set; }
 
     private string GetCategoryIcon(string category)

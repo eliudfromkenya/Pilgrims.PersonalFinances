@@ -85,10 +85,10 @@ namespace Pilgrims.PersonalFinances.Models
                   .ToList();
 
         /// <summary>
-        /// Gets the formatted amount as a string
+        /// Gets or sets the formatted amount as a string (populated by currency service)
         /// </summary>
         [NotMapped]
-        public string FormattedAmount => Amount.ToString("C2");
+        public string FormattedAmount { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets the display name for this template

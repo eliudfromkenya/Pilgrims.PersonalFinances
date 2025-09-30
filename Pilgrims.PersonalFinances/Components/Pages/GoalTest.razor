@@ -3,10 +3,12 @@
 @using Pilgrims.PersonalFinances.Services.Interfaces
 @using Pilgrims.PersonalFinances.Data
 @using Microsoft.EntityFrameworkCore
+@using Pilgrims.PersonalFinances.Core.Interfaces
 
 @inject INotificationService NotificationService
 @inject PersonalFinanceContext Context
 @inject IJSRuntime JSRuntime
+@inject ICurrencyService CurrencyService
 
 <PageTitle>Goal Test - Pilgrims Personal Finance</PageTitle>
 
@@ -99,7 +101,7 @@
                             </div>
                             <p class="text-sm text-[var(--text-secondary)] mb-2">@goal.Description</p>
                             <div class="flex justify-between items-center text-sm">
-                                <span class="text-[var(--text-primary)]">Target: @goal.TargetAmount.ToString("C")</span>
+                                <span class="text-[var(--text-primary)]">Target: @(formattedAmounts.TryGetValue(goal.TargetAmount, out var formatted) ? formatted : goal.TargetAmount.ToString("C"))</span>
                                 <span class="text-[var(--text-secondary)]">Due: @goal.TargetDate.ToString("MMM dd, yyyy")</span>
                             </div>
                             @if (!string.IsNullOrEmpty(goal.Category))
@@ -178,13 +180,32 @@
     private List<Goal> goals = new();
     private List<TestResult> testResults = new();
     private string? lastCreatedGoalId;
+    private Dictionary<decimal, string> formattedAmounts = new();
 
     protected override async Task OnInitializedAsync()
     {
         await LoadGoals();
+        await PreformatAmounts();
         
         // Run initial tests
         await RunModelTests();
+    }
+
+    private async Task PreformatAmounts()
+    {
+        var amounts = new HashSet<decimal>();
+        
+        // Collect all amounts that need formatting
+        foreach (var goal in goals)
+        {
+            amounts.Add(goal.TargetAmount);
+        }
+
+        // Format all amounts
+        foreach (var amount in amounts)
+        {
+            formattedAmounts[amount] = await CurrencyService.FormatAmountAsync(amount);
+        }
     }
 
     private async Task RunModelTests()

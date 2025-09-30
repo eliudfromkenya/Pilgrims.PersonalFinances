@@ -7,5 +7,6 @@ namespace Pilgrims.PersonalFinances.Models.DTOs
         public decimal TotalBalance { get; set; }
         public List<AccountSummaryDto> Accounts { get; set; } = new();
         public List<MonthlyBreakdownDto> MonthlyBreakdown { get; set; } = new();
+        public List<MonthlyBreakdownDto> MonthlyTrends { get; set; } = new();
     }
 }

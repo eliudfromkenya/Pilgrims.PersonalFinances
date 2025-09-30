@@ -396,11 +396,11 @@
         {
             await ScheduledTransactionService.ProcessDueTransactionAsync(transaction.Id);
             await LoadData(); // Refresh data
-            await MessagingService.ShowSuccessToastAsync("Transaction processed successfully");
+            MessagingService.ShowSuccessToast("Transaction processed successfully");
         }
         catch (Exception ex)
         {
-            await MessagingService.ShowErrorToastAsync($"Error processing transaction: {ex.Message}");
+            MessagingService.ShowErrorToast($"Error processing transaction: {ex.Message}");
         }
     }
 
@@ -411,12 +411,12 @@
             if (transaction.IsActive)
             {
                 await ScheduledTransactionService.PauseAsync(transaction.Id);
-                await MessagingService.ShowInfoToastAsync("Transaction paused");
+                MessagingService.ShowInfoToast("Transaction paused");
             }
             else
             {
                 await ScheduledTransactionService.ResumeAsync(transaction.Id);
-                await MessagingService.ShowSuccessToastAsync("Transaction resumed");
+                MessagingService.ShowSuccessToast("Transaction resumed");
             }
             await LoadData(); // Refresh data
         }
@@ -435,11 +435,11 @@
             {
                 await ScheduledTransactionService.DeleteAsync(transaction.Id);
                 await LoadData(); // Refresh data
-                await MessagingService.ShowSuccessToastAsync("Transaction deleted successfully");
+                MessagingService.ShowSuccessToast("Transaction deleted successfully");
             }
             catch (Exception ex)
             {
-                await MessagingService.ShowErrorToastAsync($"Error deleting transaction: {ex.Message}");
+                MessagingService.ShowErrorToast($"Error deleting transaction: {ex.Message}");
             }
         }
     }

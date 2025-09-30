@@ -1,13 +1,16 @@
-using Microsoft.Extensions.Logging;
+using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.EntityFrameworkCore;
-using Pilgrims.PersonalFinances.Data;
-using Pilgrims.PersonalFinances.Services;
-using Pilgrims.PersonalFinances.Services.Interfaces;
+using Microsoft.Extensions.Logging;
+using Pilgrims.PersonalFinances.Core.Interfaces;
 using Pilgrims.PersonalFinances.Core.Logging;
 using Pilgrims.PersonalFinances.Core.Messaging.Interfaces;
 using Pilgrims.PersonalFinances.Core.Messaging.Services;
+using Pilgrims.PersonalFinances.Core.Services;
+using Pilgrims.PersonalFinances.Core.Services.Interfaces;
 using Pilgrims.PersonalFinances.Core.ViewModels;
-using CommunityToolkit.Mvvm.Messaging;
+using Pilgrims.PersonalFinances.Data;
+using Pilgrims.PersonalFinances.Services;
+using Pilgrims.PersonalFinances.Services.Interfaces;
 using Serilog;
 
 namespace Pilgrims.PersonalFinances
@@ -67,6 +70,8 @@ namespace Pilgrims.PersonalFinances
             builder.Services.AddScoped<IExportService, ExportService>();
             builder.Services.AddScoped<IComparisonService, ComparisonService>();
             builder.Services.AddScoped<IObligationService, ObligationService>();
+            builder.Services.AddScoped<ICurrencyService, CurrencyService>();
+            builder.Services.AddScoped<IApplicationSettingsService, ApplicationSettingsService>();
             builder.Services.AddSingleton<IScheduledTransactionBackgroundService, ScheduledTransactionBackgroundService>();
             builder.Services.AddHostedService<ScheduledTransactionBackgroundService>();
             builder.Services.AddHostedService<InsuranceNotificationBackgroundService>();

@@ -3,6 +3,7 @@ using Pilgrims.PersonalFinances.Data;
 using Pilgrims.PersonalFinances.Models;
 using Pilgrims.PersonalFinances.Models.Enums;
 using Pilgrims.PersonalFinances.Services.Interfaces;
+using Pilgrims.PersonalFinances.Core.Interfaces;
 using System.Text.Json;
 
 namespace Pilgrims.PersonalFinances.Services;
@@ -14,33 +15,49 @@ public class ScheduledTransactionService : IScheduledTransactionService
 {
     private readonly PersonalFinanceContext _context;
     private readonly ITransactionService _transactionService;
+    private readonly ICurrencyService _currencyService;
 
-    public ScheduledTransactionService(PersonalFinanceContext context, ITransactionService transactionService)
+    public ScheduledTransactionService(PersonalFinanceContext context, ITransactionService transactionService, ICurrencyService currencyService)
     {
         _context = context;
         _transactionService = transactionService;
+        _currencyService = currencyService;
     }
 
     #region Basic CRUD Operations
 
     public async Task<IEnumerable<ScheduledTransaction>> GetAllScheduledTransactionsAsync()
     {
-        return await _context.ScheduledTransactions
+        var scheduledTransactions = await _context.ScheduledTransactions
             .Include(st => st.Account)
             .Include(st => st.Category)
             .Include(st => st.TransferToAccount)
             .OrderBy(st => st.Name)
             .ToListAsync();
+
+        foreach (var scheduledTransaction in scheduledTransactions)
+        {
+            scheduledTransaction.FormattedAmount = await _currencyService.FormatAmountAsync(scheduledTransaction.Amount);
+        }
+
+        return scheduledTransactions;
     }
 
     public async Task<ScheduledTransaction?> GetScheduledTransactionByIdAsync(string id)
     {
-        return await _context.ScheduledTransactions
+        var scheduledTransaction = await _context.ScheduledTransactions
             .Include(st => st.Account)
             .Include(st => st.Category)
             .Include(st => st.TransferToAccount)
             .Include(st => st.GeneratedTransactions)
             .FirstOrDefaultAsync(st => st.Id == id);
+
+        if (scheduledTransaction != null)
+        {
+            scheduledTransaction.FormattedAmount = await _currencyService.FormatAmountAsync(scheduledTransaction.Amount);
+        }
+
+        return scheduledTransaction;
     }
 
     public async Task<ScheduledTransaction> CreateScheduledTransactionAsync(ScheduledTransaction scheduledTransaction)

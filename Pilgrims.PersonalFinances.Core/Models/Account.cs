@@ -1,4 +1,5 @@
 using Pilgrims.PersonalFinances.Models.Enums;
+using Pilgrims.PersonalFinances.Core.Interfaces;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -29,7 +30,7 @@ namespace Pilgrims.PersonalFinances.Models
         public decimal CurrentBalance { get; set; }
 
         [StringLength(10)]
-        public string Currency { get; set; } = "USD";
+        public string Currency { get; set; } = string.Empty;
 
         public bool IsActive { get; set; } = true;
 
@@ -104,7 +105,7 @@ namespace Pilgrims.PersonalFinances.Models
         public string DisplayName => !string.IsNullOrEmpty(BankName) ? $"{Name} ({BankName})" : Name;
 
         [NotMapped]
-        public string FormattedBalance => $"{CurrentBalance:C} {Currency}";
+        public string FormattedBalance { get; set; } = string.Empty;
 
         [NotMapped]
         public string AccountTypeDisplay => AccountType switch

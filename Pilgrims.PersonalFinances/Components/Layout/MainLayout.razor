@@ -1,9 +1,14 @@
 @using Pilgrims.PersonalFinances.Components.Shared
 @using Pilgrims.PersonalFinances.Components.Layout
 @using Pilgrims.PersonalFinances.Services
+@using Pilgrims.PersonalFinances.Core.Messaging.Services
+@using Pilgrims.PersonalFinances.Core.Messaging.Messages
+@using CommunityToolkit.Mvvm.Messaging
 @inherits LayoutComponentBase
 @inject IThemeService ThemeService
 @inject IJSRuntime JSRuntime
+@inject NotificationHandler NotificationHandler
+@inject IMessenger Messenger
 @implements IDisposable
 
 <div class="page min-h-screen bg-blue-50 dark:bg-slate-900 transition-colors duration-300" id="app-container">
@@ -68,6 +73,12 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // Register NotificationHandler with the messenger
+        Messenger.Register<ToastNotificationMessage>(NotificationHandler);
+        Messenger.Register<ConfirmationDialogMessage>(NotificationHandler);
+        Messenger.Register<AlertDialogMessage>(NotificationHandler);
+        Messenger.Register<SystemNotificationMessage>(NotificationHandler);
+
         // Subscribe to theme changes
         ThemeService.ThemeChanged += OnThemeChanged;
 
@@ -120,6 +131,12 @@
 
     public void Dispose()
     {
+        // Unregister NotificationHandler from the messenger
+        Messenger.Unregister<ToastNotificationMessage>(NotificationHandler);
+        Messenger.Unregister<ConfirmationDialogMessage>(NotificationHandler);
+        Messenger.Unregister<AlertDialogMessage>(NotificationHandler);
+        Messenger.Unregister<SystemNotificationMessage>(NotificationHandler);
+
         ThemeService.ThemeChanged -= OnThemeChanged;
     }
 }

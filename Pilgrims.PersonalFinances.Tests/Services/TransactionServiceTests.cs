@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Pilgrims.PersonalFinances.Models.Enums;
 using Pilgrims.PersonalFinances.Services;
+using Moq;
+using Pilgrims.PersonalFinances.Core.Interfaces;
+using Pilgrims.PersonalFinances.Core.Logging;
 
 namespace Pilgrims.PersonalFinances.Tests.Services;
 
@@ -17,7 +20,10 @@ public class TransactionServiceTests : IDisposable
             .Options;
 
         _context = new PersonalFinanceContext(options);
-        _transactionService = new TransactionService(_context);
+        var mockLogger = new Mock<ILoggingService>();
+        var mockCurrencyService = new Mock<ICurrencyService>();
+        mockCurrencyService.Setup(x => x.FormatAmount(It.IsAny<decimal>(), It.IsAny<string>(), It.IsAny<bool>())).Returns("$0.00");
+        _transactionService = new TransactionService(_context, mockLogger.Object, mockCurrencyService.Object);
 
         // Create a test account
         _testAccount = new Account

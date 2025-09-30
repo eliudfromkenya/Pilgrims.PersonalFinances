@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Pilgrims.PersonalFinances.Models;
 using Pilgrims.PersonalFinances.Models.Enums;
+using Pilgrims.PersonalFinances.Core.Models;
+using Pilgrims.PersonalFinances.Core.Data;
 
 namespace Pilgrims.PersonalFinances.Data;
 
@@ -105,6 +107,12 @@ public class PersonalFinanceContext : DbContext
     // User Management
     public DbSet<User> Users { get; set; }
     public DbSet<UserSession> UserSessions { get; set; }
+
+    // Application Settings
+    public DbSet<ApplicationSettings> ApplicationSettings { get; set; }
+
+    // Currency Management
+    public DbSet<Currency> Currencies { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -1109,12 +1117,29 @@ public class PersonalFinanceContext : DbContext
             entity.HasIndex(e => e.TargetDate);
         });
 
+        // Configure ApplicationSettings entity
+        modelBuilder.Entity<ApplicationSettings>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.DefaultCurrency).IsRequired().HasMaxLength(10);
+            entity.Property(e => e.DateFormat).HasMaxLength(50);
+            entity.Property(e => e.NumberFormat).HasMaxLength(50);
+            entity.Property(e => e.Theme).HasMaxLength(50);
+            entity.Property(e => e.LastUpdatedVersion).HasMaxLength(20);
+            entity.Property(e => e.LastModifiedByUserId).HasMaxLength(50);
+
+            entity.HasIndex(e => e.IsActive);
+        });
+
         // Seed data for categories if needed
         modelBuilder.Entity<Category>().HasData(
             new Category { Id = "1", Name = "Debt Payment", ColorCode = "#FF6B6B", CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
             new Category { Id = "2", Name = "Interest", ColorCode = "#FF4757", CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
             new Category { Id = "3", Name = "Credit Card", ColorCode = "#FF3838", CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) }
         );
+
+        // Seed data for currencies
+        modelBuilder.Entity<Currency>().HasData(CurrencySeedData.GetCurrencies());
     }
 
     public override int SaveChanges()

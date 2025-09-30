@@ -1,0 +1,141 @@
+@page "/test-notifications"
+@using Pilgrims.PersonalFinances.Core.Messaging.Interfaces
+@using Pilgrims.PersonalFinances.Core.Messaging.Extensions
+@inject IMessagingService MessagingService
+
+<PageTitle>Test Notifications - Pilgrims Personal Finance</PageTitle>
+
+<div class="container mx-auto p-6">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-8">Test Notifications</h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Toast Notifications -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Toast Notifications</h2>
+                <div class="space-y-3">
+                    <button @onclick="ShowSuccessToast" 
+                            class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                        Show Success Toast
+                    </button>
+                    <button @onclick="ShowErrorToast" 
+                            class="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                        Show Error Toast
+                    </button>
+                    <button @onclick="ShowWarningToast" 
+                            class="w-full px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors">
+                        Show Warning Toast
+                    </button>
+                    <button @onclick="ShowInfoToast" 
+                            class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        Show Info Toast
+                    </button>
+                </div>
+            </div>
+
+            <!-- Alert Dialogs -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Alert Dialogs</h2>
+                <div class="space-y-3">
+                    <button @onclick="ShowAlert" 
+                            class="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                        Show Alert Dialog
+                    </button>
+                    <button @onclick="ShowConfirmation" 
+                            class="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                        Show Confirmation Dialog
+                    </button>
+                </div>
+                
+                @if (!string.IsNullOrEmpty(lastResult))
+                {
+                    <div class="mt-4 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                        <p class="text-sm text-gray-700 dark:text-gray-300">
+                            Last Result: <strong>@lastResult</strong>
+                        </p>
+                    </div>
+                }
+            </div>
+
+            <!-- System Notifications -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">System Notifications</h2>
+                <div class="space-y-3">
+                    <button @onclick="ShowSystemNotification" 
+                            class="w-full px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors">
+                        Show System Notification
+                    </button>
+                </div>
+            </div>
+
+            <!-- Test Results -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Test Instructions</h2>
+                <div class="text-sm text-gray-600 dark:text-gray-400 space-y-2">
+                    <p>• Click the buttons above to test different notification types</p>
+                    <p>• Toast notifications should appear in the top-right corner</p>
+                    <p>• Alert dialogs should show browser alert/confirm dialogs</p>
+                    <p>• System notifications currently use toast notifications</p>
+                    <p>• Check the browser console for any errors</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string lastResult = string.Empty;
+
+    private void ShowSuccessToast()
+    {
+        MessagingService.ShowSuccessToast("Success! This is a success toast notification.");
+    }
+
+    private void ShowErrorToast()
+    {
+        MessagingService.ShowErrorToast("Error! This is an error toast notification.");
+    }
+
+    private void ShowWarningToast()
+    {
+        MessagingService.ShowWarningToast("Warning! This is a warning toast notification.");
+    }
+
+    private void ShowInfoToast()
+    {
+        MessagingService.ShowInfoToast("Info! This is an info toast notification.");
+    }
+
+    private async Task ShowAlert()
+    {
+        try
+        {
+            await MessagingService.ShowAlertAsync("Test Alert", "This is a test alert dialog message.");
+            lastResult = "Alert shown successfully";
+        }
+        catch (Exception ex)
+        {
+            lastResult = $"Alert failed: {ex.Message}";
+        }
+        StateHasChanged();
+    }
+
+    private async Task ShowConfirmation()
+    {
+        try
+        {
+            var result = await MessagingService.ShowConfirmationAsync("Test Confirmation", "Do you want to proceed with this test?");
+            lastResult = $"Confirmation result: {(result ? "Yes" : "No")}";
+        }
+        catch (Exception ex)
+        {
+            lastResult = $"Confirmation failed: {ex.Message}";
+        }
+        StateHasChanged();
+    }
+
+    private void ShowSystemNotification()
+    {
+        MessagingService.ShowSystemNotification("System Notification", "This is a test system notification.", Core.Messaging.Messages.SystemNotificationType.Info);
+    }
+}
