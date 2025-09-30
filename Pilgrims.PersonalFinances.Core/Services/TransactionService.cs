@@ -4,6 +4,7 @@ using Pilgrims.PersonalFinances.Models;
 using Pilgrims.PersonalFinances.Models.Enums;
 using Pilgrims.PersonalFinances.Services.Interfaces;
 using Pilgrims.PersonalFinances.Core.Logging;
+using Pilgrims.PersonalFinances.Core.Interfaces;
 using System.Text.Json;
 
 namespace Pilgrims.PersonalFinances.Services;
@@ -15,11 +16,13 @@ public class TransactionService : ITransactionService
 {
     private readonly PersonalFinanceContext _context;
     private readonly ILoggingService _logger;
+    private readonly ICurrencyService _currencyService;
 
-    public TransactionService(PersonalFinanceContext context, ILoggingService logger)
+    public TransactionService(PersonalFinanceContext context, ILoggingService logger, ICurrencyService currencyService)
     {
         _context = context;
         _logger = logger;
+        _currencyService = currencyService;
     }
 
     #region Basic CRUD Operations
@@ -302,10 +305,17 @@ public class TransactionService : ITransactionService
 
     public async Task<IEnumerable<SplitTransaction>> GetSplitTransactionsAsync(string parentTransactionId)
     {
-        return await _context.SplitTransactions
+        var splitTransactions = await _context.SplitTransactions
             .Include(st => st.Category)
             .Where(st => st.TransactionId == parentTransactionId)
             .ToListAsync();
+
+        foreach (var splitTransaction in splitTransactions)
+        {
+            splitTransaction.FormattedAmount = await _currencyService.FormatAmountAsync(splitTransaction.Amount);
+        }
+
+        return splitTransactions;
     }
 
     public async Task<SplitTransaction> CreateSplitTransactionAsync(SplitTransaction splitTransaction)
@@ -348,7 +358,7 @@ public class TransactionService : ITransactionService
     public async Task<List<TransactionTemplate>> GetTransactionTemplatesAsync()
     {
         // Mock data for now - replace with actual database call
-        return new List<TransactionTemplate>
+        var templates = new List<TransactionTemplate>
         {
             new TransactionTemplate
             {
@@ -379,6 +389,13 @@ public class TransactionService : ITransactionService
                 //UpdatedAt = DateTime.UtcNow.AddDays(-15)
             }
         };
+
+        foreach (var template in templates)
+        {
+            template.FormattedAmount = await _currencyService.FormatAmountAsync(template.Amount);
+        }
+
+        return templates;
     }
 
     public async Task<TransactionTemplate> CreateTransactionTemplateAsync(TransactionTemplate template)

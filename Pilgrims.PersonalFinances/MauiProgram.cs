@@ -8,6 +8,7 @@ using Pilgrims.PersonalFinances.Core.Messaging.Services;
 using Pilgrims.PersonalFinances.Core.Services;
 using Pilgrims.PersonalFinances.Core.Services.Interfaces;
 using Pilgrims.PersonalFinances.Core.ViewModels;
+using Pilgrims.PersonalFinances.Core.Interceptors;
 using Pilgrims.PersonalFinances.Data;
 using Pilgrims.PersonalFinances.Services;
 using Pilgrims.PersonalFinances.Services.Interfaces;
@@ -37,8 +38,12 @@ namespace Pilgrims.PersonalFinances
 
             builder.Services.AddMauiBlazorWebView();
 
+            // Add Audit Services
+            builder.Services.AddScoped<AuditInterceptor>();
+            builder.Services.AddScoped<IAuditService, AuditService>();
+
             // Add Entity Framework with encrypted SQLite
-            builder.Services.AddDbContext<PersonalFinanceContext>(options =>
+            builder.Services.AddDbContext<PersonalFinanceContext>((serviceProvider, options) =>
             {
                 var dbPath = Path.Combine(FileSystem.AppDataDirectory, "PersonalFinance.db");
                 
@@ -46,6 +51,13 @@ namespace Pilgrims.PersonalFinances
                 // TODO: Integrate with DatabaseEncryptionService for SQLCipher support
                 var connectionString = $"Data Source={dbPath};";
                 options.UseSqlite(connectionString);
+                
+                // Add audit interceptor
+                var auditInterceptor = serviceProvider.GetService<AuditInterceptor>();
+                if (auditInterceptor != null)
+                {
+                    options.AddInterceptors(auditInterceptor);
+                }
             });
 
             // Add Services

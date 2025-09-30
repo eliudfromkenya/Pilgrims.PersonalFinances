@@ -5,13 +5,17 @@ using Pilgrims.PersonalFinances.Models;
 using Pilgrims.PersonalFinances.Models.Enums;
 using Pilgrims.PersonalFinances.Core.Models;
 using Pilgrims.PersonalFinances.Core.Data;
+using Pilgrims.PersonalFinances.Core.Interceptors;
 
 namespace Pilgrims.PersonalFinances.Data;
 
 public class PersonalFinanceContext : DbContext
 {
-    public PersonalFinanceContext(DbContextOptions<PersonalFinanceContext> options) : base(options)
+    private readonly AuditInterceptor? _auditInterceptor;
+
+    public PersonalFinanceContext(DbContextOptions<PersonalFinanceContext> options, AuditInterceptor? auditInterceptor = null) : base(options)
     {
+        _auditInterceptor = auditInterceptor;
     }
 
     // Parameterless constructor for EF migrations
@@ -30,6 +34,12 @@ public class PersonalFinanceContext : DbContext
             // TODO: Integrate with DatabaseEncryptionService for SQLCipher support
             var connectionString = $"Data Source={dbPath};";
             optionsBuilder.UseSqlite(connectionString);
+        }
+        
+        // Add audit interceptor if available
+        if (_auditInterceptor != null)
+        {
+            optionsBuilder.AddInterceptors(_auditInterceptor);
         }
         
         // Suppress the pending model changes warning
@@ -113,6 +123,10 @@ public class PersonalFinanceContext : DbContext
 
     // Currency Management
     public DbSet<Currency> Currencies { get; set; }
+
+    // Audit Trail System
+    public DbSet<AuditLog> AuditLogs { get; set; }
+    public DbSet<AuditEntry> AuditEntries { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
