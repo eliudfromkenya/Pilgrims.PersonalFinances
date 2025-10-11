@@ -54,7 +54,7 @@ namespace Pilgrims.PersonalFinances.Core.ViewModels
         private BudgetVarianceReportDto? budgetVariance;
 
         [ObservableProperty]
-        private List<Pilgrims.PersonalFinances.Models.DTOs.NetWorthTrendDto>? netWorthTrend;
+        private Pilgrims.PersonalFinances.Models.DTOs.NetWorthTrendDto? netWorthTrend;
 
         [ObservableProperty]
         private Pilgrims.PersonalFinances.Models.DTOs.CategoryAnalysisDto? categoryAnalysis;
@@ -144,7 +144,8 @@ namespace Pilgrims.PersonalFinances.Core.ViewModels
                         BudgetVariance = await _reportService.GenerateBudgetVarianceReportAsync(StartDate, EndDate);
                         break;
                     case ReportType.NetWorthTrend:
-                        NetWorthTrend = await _reportService.GenerateNetWorthTrendAsync(StartDate, EndDate);
+                        var netWorthTrendList = await _reportService.GenerateNetWorthTrendAsync(StartDate, EndDate);
+                        NetWorthTrend = netWorthTrendList?.FirstOrDefault();
                         break;
                     case ReportType.CategoryAnalysis:
                         CategoryAnalysis = await _reportService.GenerateCategoryAnalysisAsync(StartDate, EndDate);

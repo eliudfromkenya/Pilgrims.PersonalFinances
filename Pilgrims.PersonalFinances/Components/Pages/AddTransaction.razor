@@ -5,11 +5,10 @@
 @using Pilgrims.PersonalFinances.Services.Interfaces
 @using Pilgrims.PersonalFinances.Services
 @using Pilgrims.PersonalFinances.Components.Shared
-@using Pilgrims.PersonalFinances.Core.Messaging.Interfaces
 @inject ITransactionService TransactionService
 @inject IAccountService AccountService
 @inject NavigationManager Navigation
-@inject IMessagingService MessagingService
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Add Transaction - Pilgrims Personal Finance</PageTitle>
 
@@ -589,7 +588,7 @@
             {
                 if (!ValidateSplitTransactions())
                 {
-                    await MessagingService.ShowAlertAsync("Split transaction amounts must equal the total transaction amount.");
+                    await JSRuntime.InvokeVoidAsync("alert", "Split transaction amounts must equal the total transaction amount.");
                     return;
                 }
                 transaction.IsSplit = true;
@@ -636,12 +635,12 @@
                 }
             }
             
-            await MessagingService.ShowAlertAsync("Transaction saved successfully!");
+            await JSRuntime.InvokeVoidAsync("alert", "Transaction saved successfully!");
             Navigation.NavigateTo("/transactions");
         }
         catch (Exception ex)
         {
-            await MessagingService.ShowAlertAsync($"Error saving transaction: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("alert", $"Error saving transaction: {ex.Message}");
         }
         finally
         {
@@ -714,7 +713,7 @@
             }
             else
             {
-                await MessagingService.ShowAlertAsync($"File {file.Name} is too large. Maximum size is 10MB.");
+                await JSRuntime.InvokeVoidAsync("alert", $"File {file.Name} is too large. Maximum size is 10MB.");
             }
         }
     }
@@ -756,10 +755,7 @@
     
     private async Task SaveAsTemplate()
     {
-        // TODO: Implement proper input dialog in messaging service
-        // For now, using a placeholder template name
-        var templateName = $"Template_{DateTime.Now:yyyyMMdd_HHmmss}";
-        
+        var templateName = await JSRuntime.InvokeAsync<string>("prompt", "Enter template name:");
         if (!string.IsNullOrWhiteSpace(templateName))
         {
             var template = new Models.TransactionTemplate
@@ -774,7 +770,7 @@
             };
             
             await TransactionService.CreateTransactionTemplateAsync(template);
-            await MessagingService.ShowAlertAsync("Template saved successfully!");
+            await JSRuntime.InvokeVoidAsync("alert", "Template saved successfully!");
         }
     }
     
@@ -792,7 +788,6 @@
             TransactionType.Expense => "💸",
             TransactionType.Transfer => "🔄",
             TransactionType.Adjustment => "⚖️",
-            TransactionType.InitialBalance => "🏦",
             _ => "💳"
         };
     }
@@ -805,7 +800,6 @@
             TransactionType.Expense => "Money spent",
             TransactionType.Transfer => "Between accounts",
             TransactionType.Adjustment => "Balance correction",
-            TransactionType.InitialBalance => "Initial balance",
             _ => ""
         };
     }

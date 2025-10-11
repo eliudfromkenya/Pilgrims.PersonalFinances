@@ -628,41 +628,4 @@ namespace Pilgrims.PersonalFinances.Services
         #endregion
     }
 
-    // Additional DTOs for new report types
-
-    //public class CategoryAnalysisDto
-    //{
-    //    public DateTime StartDate { get; set; }
-    //    public DateTime EndDate { get; set; }
-    //    public decimal TotalSpending { get; set; }
-    //    public List<CategorySummaryDto> Categories { get; set; } = new();
-    //    public List<MonthlyBreakdownDto> MonthlyBreakdown { get; set; } = new();
-    //}
-
-    //public class AccountSummaryReportDto
-    //{
-    //    public DateTime StartDate { get; set; }
-    //    public DateTime EndDate { get; set; }
-    //    public decimal TotalBalance { get; set; }
-    //    public List<AccountSummaryDto> Accounts { get; set; } = new();
-    //    public List<MonthlyBreakdownDto> MonthlyBreakdown { get; set; } = new();
-    //}
-
-    //public class MonthlyBreakdownDto
-    //{
-    //    public DateTime Month { get; set; }
-    //    public List<CategorySummaryDto> Categories { get; set; } = new();
-    //    public List<AccountSummaryDto> Accounts { get; set; } = new();
-    //}
-
-    //public class CategoryVarianceDto
-    //{
-    //    public string CategoryId { get; set; } = string.Empty;
-    //    public string CategoryName { get; set; } = string.Empty;
-    //    public decimal BudgetedAmount { get; set; }
-    //    public decimal ActualAmount { get; set; }
-    //    public decimal Variance { get; set; }
-    //    public decimal VariancePercentage { get; set; }
-    //    public string Status { get; set; } = string.Empty;
-    //}
 }

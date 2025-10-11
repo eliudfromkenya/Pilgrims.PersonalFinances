@@ -1,8 +1,11 @@
+@using Pilgrims.PersonalFinances.Core.Localization.Interfaces
+@inject ILocalizationService LocalizationService
+
 <!-- Brand Header -->
 @* <div class="sticky top-0 z-10 shadow-lg bg-gradient-to-r from-slate-600 to-gray-600 backdrop-blur-lg border-b border-white/20">
     <div class="px-6 py-4">
         <a class="text-2xl font-bold text-white hover:opacity-80 transition-all duration-300" href="">
-            💰 Pilgrims Personal Finance
+            💰 @LocalizationService.GetString("AppTitle")
         </a>
     </div>
 </div> *@
@@ -15,7 +18,7 @@
             <NavLink class="flex items-center py-1 px-1 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md" 
                      href="" Match="NavLinkMatch.All">
                 <span class="text-xl mr-3 group-hover:scale-110 transition-transform duration-300">📊</span> 
-                <span class="font-medium">Dashboard</span>
+                <span class="font-medium">@LocalizationService.GetString("Dashboard")</span>
             </NavLink>
         </div>
 
@@ -26,7 +29,7 @@
                 <button @onclick="() => ToggleSubmenu(SubmenuType.Accounts)" 
                         class="flex items-center py-1 px-1 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md flex-1 w-full text-left">
                     <span class="text-xl mr-3 group-hover:scale-110 transition-transform duration-300">🏦</span> 
-                    <span class="font-medium">Accounts</span>
+                    <span class="font-medium">@LocalizationService.GetString("Accounts")</span>
                     <span class="text-sm transition-transform duration-300 ml-auto @(activeSubmenu == SubmenuType.Accounts ? "rotate-180" : "")">▼</span>
                 </button>               
             </div>
@@ -37,17 +40,17 @@
                     <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
                              href="accounts">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">📋</span> 
-                        <span>All Accounts</span>
+                        <span>@LocalizationService.GetString("AllAccounts")</span>
                     </NavLink>
                     <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
                              href="accounts/create">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">➕</span> 
-                        <span>Create Account</span>
+                        <span>@LocalizationService.GetString("CreateAccount")</span>
                     </NavLink>
                     <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
                              href="accounts/transfer">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">🔄</span> 
-                        <span>Transfer Funds</span>
+                        <span>@LocalizationService.GetString("TransferFunds")</span>
                     </NavLink>
                 </div>
             </div>
@@ -60,7 +63,7 @@
                 <button @onclick="() => ToggleSubmenu(SubmenuType.Transactions)" 
                         class="flex items-center py-1 px-1 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md flex-1 w-full text-left">
                     <span class="text-xl mr-3 group-hover:scale-110 transition-transform duration-300">💳</span> 
-                    <span class="font-medium">Transactions</span>
+                    <span class="font-medium">@LocalizationService.GetString("Transactions")</span>
                     <span class="text-sm transition-transform duration-300 ml-auto @(activeSubmenu == SubmenuType.Transactions ? "rotate-180" : "")">▼</span>
                 </button>               
             </div>
@@ -71,27 +74,27 @@
                     <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 text-sm" 
                              href="transactions">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">📋</span>
-                        <span>All Transactions</span>
+                        <span>@LocalizationService.GetString("AllTransactions")</span>
                     </NavLink>
                     <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 text-sm" 
                              href="transactions/add">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">➕</span>
-                        <span>Add Transaction</span>
+                        <span>@LocalizationService.GetString("AddTransaction")</span>
                     </NavLink>
                     <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 text-sm" 
                              href="transactions/templates">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">📝</span>
-                        <span>Templates</span>
+                        <span>@LocalizationService.GetString("Templates")</span>
                     </NavLink>
                     <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 text-sm" 
                              href="transactions/recurring">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">🔄</span>
-                        <span>Recurring</span>
+                        <span>@LocalizationService.GetString("Recurring")</span>
                     </NavLink>
                     <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 text-sm" 
                              href="transactions/import">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">📥</span>
-                        <span>Import</span>
+                        <span>@LocalizationService.GetString("Import")</span>
                     </NavLink>
                 </div>
             </div>
@@ -104,7 +107,7 @@
                 <button @onclick="() => ToggleSubmenu(SubmenuType.Reconciliation)" 
                         class="flex items-center py-1 px-1 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md flex-1 w-full text-left">
                     <span class="text-xl mr-3 group-hover:scale-110 transition-transform duration-300">⚖️</span> 
-                    <span class="font-medium">Reconciliation</span>
+                    <span class="font-medium">@LocalizationService.GetString("Reconciliation")</span>
                     <span class="text-sm transition-transform duration-300 ml-auto @(activeSubmenu == SubmenuType.Reconciliation ? "rotate-180" : "")">▼</span>
                 </button>               
             </div>
@@ -115,22 +118,22 @@
                     <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
                              href="reconciliation">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">📊</span> 
-                        <span>Dashboard</span>
+                        <span>@LocalizationService.GetString("Dashboard")</span>
                     </NavLink>
                     <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
                              href="reconciliation/process">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">⚙️</span> 
-                        <span>Start Reconciliation</span>
+                        <span>@LocalizationService.GetString("StartReconciliation")</span>
                     </NavLink>
                     <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
                              href="reconciliation/history">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">📋</span> 
-                        <span>History</span>
+                        <span>@LocalizationService.GetString("History")</span>
                     </NavLink>
                     <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
                              href="reconciliation/reports">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">📈</span> 
-                        <span>Reports</span>
+                        <span>@LocalizationService.GetString("Reports")</span>
                     </NavLink>
                 </div>
             </div>
@@ -143,48 +146,48 @@
                 <button @onclick="() => ToggleSubmenu(SubmenuType.Budget)" 
                         class="flex items-center py-1 px-1 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md flex-1 w-full text-left">
                     <span class="text-xl mr-3 group-hover:scale-110 transition-transform duration-300">💰</span> 
-                    <span class="font-medium">Budget &amp; Goals</span>
+                    <span class="font-medium">@LocalizationService.GetString("BudgetAndGoals")</span>
                     <span class="text-sm transition-transform duration-300 ml-auto @(activeSubmenu == SubmenuType.Budget ? "rotate-180" : "")">▼</span>
                 </button>               
             </div>
-            
+
             <!-- Budget Submenu -->
             <div class="overflow-hidden transition-all duration-300 @(activeSubmenu == SubmenuType.Budget ? "max-h-96 opacity-100" : "max-h-0 opacity-0")">
                 <div class="ml-8 mt-2 space-y-1 border-l-2 border-blue-200 dark:border-blue-800 pl-4">
                     <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
                              href="budget-dashboard">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">📊</span> 
-                        <span>Dashboard</span>
+                        <span>@LocalizationService.GetString("Dashboard")</span>
                     </NavLink>
                     <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
                              href="budget/create">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">➕</span> 
-                        <span>Create Budget</span>
+                        <span>@LocalizationService.GetString("CreateBudget")</span>
                     </NavLink>
                     <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
                              href="budget/templates">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">📝</span> 
-                        <span>Templates</span>
+                        <span>@LocalizationService.GetString("Templates")</span>
                     </NavLink>
                     <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
                              href="budget/analytics">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">📈</span> 
-                        <span>Analytics</span>
+                        <span>@LocalizationService.GetString("Analytics")</span>
                     </NavLink>
                     <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
                              href="budget/alerts">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">🚨</span> 
-                        <span>Alerts</span>
+                        <span>@LocalizationService.GetString("Alerts")</span>
                     </NavLink>
                     <NavLink class="flex items-center py-1 px-1 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md"
                              href="goals">
                         <span class="text-xl mr-3 group-hover:scale-110 transition-transform duration-300">🎯</span>
-                        <span class="font-medium">Goals</span>
+                        <span class="font-medium">@LocalizationService.GetString("Goals")</span>
                     </NavLink>
                     <NavLink class="flex items-center py-1 px-1 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md"
                              href="goal-test">
                         <span class="text-xl mr-3 group-hover:scale-110 transition-transform duration-300">🧪</span>
-                        <span class="font-medium">Goal Test</span>
+                        <span class="font-medium">@LocalizationService.GetString("GoalTest")</span>
                     </NavLink>
                 </div>
             </div>
@@ -197,7 +200,7 @@
                 <button @onclick="() => ToggleSubmenu(SubmenuType.Income)" 
                         class="flex items-center py-1 px-1 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md flex-1 w-full text-left">
                     <span class="text-xl mr-3 group-hover:scale-110 transition-transform duration-300">💵</span> 
-                    <span class="font-medium">Income</span>
+                    <span class="font-medium">@LocalizationService.GetString("Income")</span>
                     <span class="text-sm transition-transform duration-300 ml-auto @(activeSubmenu == SubmenuType.Income ? "rotate-180" : "")">▼</span>
                 </button>               
             </div>
@@ -208,40 +211,31 @@
                     <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
                              href="income-dashboard">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">📊</span> 
-                        <span>Dashboard</span>
+                        <span>@LocalizationService.GetString("Dashboard")</span>
                     </NavLink>
                     <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
                              href="income-list">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">📋</span> 
-                        <span>All Incomes</span>
+                        <span>@LocalizationService.GetString("AllIncomes")</span>
                     </NavLink>
                     <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
                              href="income-create">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">➕</span> 
-                        <span>Add Income</span>
+                        <span>@LocalizationService.GetString("AddIncome")</span>
                     </NavLink>
                     <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
                              href="income-categories">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">🏷️</span> 
-                        <span>Categories</span>
+                        <span>@LocalizationService.GetString("Categories")</span>
                     </NavLink>
                     <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
                              href="income-forecasting">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">🔮</span> 
-                        <span>Forecasting</span>
+                        <span>@LocalizationService.GetString("Forecasting")</span>
                     </NavLink>
                 </div>
             </div>
         </div>
-
-        <!-- Investments -->
-       @*  <div class="px-2">
-            <NavLink class="flex items-center py-1 px-1 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md" 
-                     href="investments">
-                <span class="text-xl mr-3 group-hover:scale-110 transition-transform duration-300">📈</span> 
-                <span class="font-medium">Investments</span>
-            </NavLink>
-        </div> *@
 
         <!-- Asset Management Section -->
         <div class="px-2">
@@ -250,7 +244,7 @@
                 <button @onclick="() => ToggleSubmenu(SubmenuType.Assets)" 
                         class="flex items-center py-1 px-1 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md flex-1 w-full text-left">
                     <span class="text-xl mr-3 group-hover:scale-110 transition-transform duration-300">🏠</span> 
-                    <span class="font-medium">Assets &amp; Investments</span>
+                    <span class="font-medium">@LocalizationService.GetString("AssetsAndInvestments")</span>
                     <span class="text-sm transition-transform duration-300 ml-auto @(activeSubmenu == SubmenuType.Assets ? "rotate-180" : "")">▼</span>
                 </button>               
             </div>
@@ -261,17 +255,17 @@
                     <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
                              href="assets">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">📋</span> 
-                        <span>Asset Register</span>
+                        <span>@LocalizationService.GetString("AssetRegister")</span>
                     </NavLink>
                     <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
                              href="assets/create">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">➕</span> 
-                        <span>Add Asset</span>
+                        <span>@LocalizationService.GetString("AddAsset")</span>
                     </NavLink>
                     <NavLink class="flex items-center py-1 px-1 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md"
                              href="investments">
                         <span class="text-xl mr-3 group-hover:scale-110 transition-transform duration-300">📈</span>
-                        <span class="font-medium">Investments</span>
+                        <span class="font-medium">@LocalizationService.GetString("Investments")</span>
                     </NavLink>
                 </div>
             </div>
@@ -284,7 +278,7 @@
                 <button @onclick="() => ToggleSubmenu(SubmenuType.Insurance)" 
                         class="flex items-center py-1 px-1 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md flex-1 w-full text-left">
                     <span class="text-xl mr-3 group-hover:scale-110 transition-transform duration-300">🛡️</span> 
-                    <span class="font-medium">Insurance</span>
+                    <span class="font-medium">@LocalizationService.GetString("Insurance")</span>
                     <span class="text-sm transition-transform duration-300 ml-auto @(activeSubmenu == SubmenuType.Insurance ? "rotate-180" : "")">▼</span>
                 </button>               
             </div>
@@ -295,27 +289,27 @@
                     <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
                              href="insurance/dashboard">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">📊</span> 
-                        <span>Dashboard</span>
+                        <span>@LocalizationService.GetString("Dashboard")</span>
                     </NavLink>
                     <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
                              href="insurance/policies">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">📋</span> 
-                        <span>All Policies</span>
+                        <span>@LocalizationService.GetString("AllPolicies")</span>
                     </NavLink>
                     <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
                              href="insurance/add">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">➕</span> 
-                        <span>Add Policy</span>
+                        <span>@LocalizationService.GetString("AddPolicy")</span>
                     </NavLink>
                     <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
                              href="insurance/premiums">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">💰</span> 
-                        <span>Premium Tracking</span>
+                        <span>@LocalizationService.GetString("PremiumTracking")</span>
                     </NavLink>
                     <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
                              href="insurance/claims">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">📄</span> 
-                        <span>Claims Management</span>
+                        <span>@LocalizationService.GetString("ClaimsManagement")</span>
                     </NavLink>
                 </div>
             </div>
@@ -328,7 +322,7 @@
                 <button @onclick="() => ToggleSubmenu(SubmenuType.Debts)" 
                         class="w-full flex items-center py-1 px-1 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md">
                     <span class="text-xl mr-3 group-hover:scale-110 transition-transform duration-300">💳</span> 
-                    <span class="font-medium">Debts &amp; Obligations</span>
+                    <span class="font-medium">@LocalizationService.GetString("DebtsAndObligations")</span>
                     <span class="text-sm transition-transform duration-300 ml-auto @(activeSubmenu == SubmenuType.Debts ? "rotate-180" : "")">▼</span>
                 </button>               
             </div>
@@ -339,52 +333,52 @@
                     <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
                              href="debt-dashboard">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">📊</span> 
-                        <span>Dashboard</span>
+                        <span>@LocalizationService.GetString("Dashboard")</span>
                     </NavLink>
                     <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
                              href="debts">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">📋</span> 
-                        <span>All Debts</span>
+                        <span>@LocalizationService.GetString("AllDebts")</span>
                     </NavLink>
                     <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
                              href="debts/create">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">➕</span> 
-                        <span>Add Debt</span>
+                        <span>@LocalizationService.GetString("AddDebt")</span>
                     </NavLink>
                     <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
                              href="creditors">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">🏢</span> 
-                        <span>Creditors</span>
+                        <span>@LocalizationService.GetString("Creditors")</span>
                     </NavLink>
                     <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
                              href="obligations/overview">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">🤝</span> 
-                        <span>Obligations</span>
+                        <span>@LocalizationService.GetString("Obligations")</span>
                     </NavLink>
                     <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1" 
                              href="obligations/payoff-calculator">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">🧮</span> 
-                        <span>Payoff Calculator</span>
+                        <span>@LocalizationService.GetString("PayoffCalculator")</span>
                     </NavLink>
                     <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1"
                              href="obligations/dashboard">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">📊</span>
-                        <span>Dashboard</span>
+                        <span>@LocalizationService.GetString("Dashboard")</span>
                     </NavLink>
                     <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1"
                              href="obligations">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">📋</span>
-                        <span>All Obligations</span>
+                        <span>@LocalizationService.GetString("AllObligations")</span>
                     </NavLink>
                     <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1"
                              href="obligations/add">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">➕</span>
-                        <span>Add Obligation</span>
+                        <span>@LocalizationService.GetString("AddObligation")</span>
                     </NavLink>
                     <NavLink class="flex items-center py-1 px-3 rounded-lg transition-all duration-300 group text-sm text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1"
                              href="obligations/payoff-calculator">
                         <span class="text-base mr-2 group-hover:scale-110 transition-transform duration-300">🧮</span>
-                        <span>Payoff Calculator</span>
+                        <span>@LocalizationService.GetString("PayoffCalculator")</span>
                     </NavLink>
 
                 </div>
@@ -444,7 +438,7 @@
             <NavLink class="flex items-center py-1 px-1 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md" 
                      href="reports">
                 <span class="text-xl mr-3 group-hover:scale-110 transition-transform duration-300">📊</span> 
-                <span class="font-medium">Reports</span>
+                <span class="font-medium">@LocalizationService.GetString("Reports")</span>
             </NavLink>
         </div>
 
@@ -453,7 +447,7 @@
             <NavLink class="flex items-center py-1 px-1 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md" 
                      href="settings">
                 <span class="text-xl mr-3 group-hover:scale-110 transition-transform duration-300">⚙️</span> 
-                <span class="font-medium">Settings</span>
+                <span class="font-medium">@LocalizationService.GetString("Settings")</span>
             </NavLink>
         </div>
 
@@ -462,7 +456,7 @@
             <NavLink class="flex items-center py-1 px-1 rounded-lg transition-all duration-300 group text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-1 hover:-translate-y-0.5 hover:shadow-md" 
                      href="notification-settings">
                 <span class="text-xl mr-3 group-hover:scale-110 transition-transform duration-300">🔔</span> 
-                <span class="font-medium">Notifications</span>
+                <span class="font-medium">@LocalizationService.GetString("Notifications")</span>
             </NavLink>
         </div>
 

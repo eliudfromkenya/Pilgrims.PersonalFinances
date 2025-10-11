@@ -3,13 +3,10 @@
 @using Pilgrims.PersonalFinances.Models.Enums
 @using Pilgrims.PersonalFinances.Services.Interfaces
 @using Pilgrims.PersonalFinances.Services
-@using Pilgrims.PersonalFinances.Core.Messaging.Interfaces
-@using Pilgrims.PersonalFinances.Core.Messaging.Extensions
 @inject IScheduledTransactionService ScheduledTransactionService
 @inject ITransactionService TransactionService
 @inject IAccountService AccountService
 @inject NavigationManager Navigation
-@inject IMessagingService MessagingService
 @inject IJSRuntime JSRuntime
 
 <PageTitle>Recurring Transactions - Pilgrims Personal Finance</PageTitle>
@@ -396,11 +393,11 @@
         {
             await ScheduledTransactionService.ProcessDueTransactionAsync(transaction.Id);
             await LoadData(); // Refresh data
-            MessagingService.ShowSuccessToast("Transaction processed successfully");
+            await JSRuntime.InvokeVoidAsync("showToast", "Transaction processed successfully", "success");
         }
         catch (Exception ex)
         {
-            MessagingService.ShowErrorToast($"Error processing transaction: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("showToast", $"Error processing transaction: {ex.Message}", "error");
         }
     }
 
@@ -411,12 +408,12 @@
             if (transaction.IsActive)
             {
                 await ScheduledTransactionService.PauseAsync(transaction.Id);
-                MessagingService.ShowInfoToast("Transaction paused");
+                await JSRuntime.InvokeVoidAsync("showToast", "Transaction paused", "info");
             }
             else
             {
                 await ScheduledTransactionService.ResumeAsync(transaction.Id);
-                MessagingService.ShowSuccessToast("Transaction resumed");
+                await JSRuntime.InvokeVoidAsync("showToast", "Transaction resumed", "success");
             }
             await LoadData(); // Refresh data
         }
@@ -428,18 +425,18 @@
 
     private async Task DeleteTransaction(ScheduledTransaction transaction)
     {
-        var confirmed = await MessagingService.ShowConfirmationAsync($"Are you sure you want to delete '{transaction.Name}'?");
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete '{transaction.Name}'?");
         if (confirmed)
         {
             try
             {
                 await ScheduledTransactionService.DeleteAsync(transaction.Id);
                 await LoadData(); // Refresh data
-                MessagingService.ShowSuccessToast("Transaction deleted successfully");
+                await JSRuntime.InvokeVoidAsync("showToast", "Transaction deleted successfully", "success");
             }
             catch (Exception ex)
             {
-                MessagingService.ShowErrorToast($"Error deleting transaction: {ex.Message}");
+                await JSRuntime.InvokeVoidAsync("showToast", $"Error deleting transaction: {ex.Message}", "error");
             }
         }
     }
@@ -451,8 +448,6 @@
             TransactionType.Income => "bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300",
             TransactionType.Expense => "bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-300",
             TransactionType.Transfer => "bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300",
-            TransactionType.Adjustment => "bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300",
-            TransactionType.InitialBalance => "bg-gray-100 text-gray-600 dark:bg-gray-900 dark:text-gray-300",
             _ => "bg-gray-100 text-gray-600 dark:bg-gray-900 dark:text-gray-300"
         };
     }
@@ -464,8 +459,6 @@
             TransactionType.Income => "💰",
             TransactionType.Expense => "💸",
             TransactionType.Transfer => "🔄",
-            TransactionType.Adjustment => "⚖️",
-            TransactionType.InitialBalance => "🏦",
             _ => "💳"
         };
     }
@@ -477,8 +470,6 @@
             TransactionType.Income => "text-green-600 dark:text-green-400",
             TransactionType.Expense => "text-red-600 dark:text-red-400",
             TransactionType.Transfer => "text-blue-600 dark:text-blue-400",
-            TransactionType.Adjustment => "text-purple-600 dark:text-purple-400",
-            TransactionType.InitialBalance => "text-gray-600 dark:text-gray-400",
             _ => "text-[var(--text-primary)]"
         };
     }

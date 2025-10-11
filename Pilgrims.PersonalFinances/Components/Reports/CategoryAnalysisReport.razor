@@ -107,7 +107,7 @@
                 {
                     var maxMonthlyValue = Report.MonthlyBreakdown.Max(m => m.Categories?.Max(c => c.Amount) ?? 0);
                     if (maxMonthlyValue == 0) maxMonthlyValue = 1000;
-                    var topCategoriesForChart = Report.Categories?.OrderByDescending(c => c.Amount).Take(5).ToList() ?? new List<CategorySummaryDto>();
+                    var topCategoriesForChart = Report.Categories?.OrderByDescending(c => c.Amount).Take(5).ToList() ?? new List<Pilgrims.PersonalFinances.Models.DTOs.CategorySummaryDto>();
                     var colors = new[] { "#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ef4444" };
                     
                     @foreach (var month in Report.MonthlyBreakdown.OrderBy(m => m.Month))

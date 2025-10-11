@@ -1,12 +1,14 @@
 @page "/settings"
 @using Pilgrims.PersonalFinances.Components.Shared
+@using Pilgrims.PersonalFinances.Core.Localization.Interfaces
 @using Pilgrims.PersonalFinances.Models
 @using Pilgrims.PersonalFinances.Models.Enums
 @using Pilgrims.PersonalFinances.Core.Models
 @using Pilgrims.PersonalFinances.Core.Services.Interfaces
 @using Microsoft.Extensions.Logging
+@inject ILocalizationService LocalizationService
 
-<PageTitle>Settings - Pilgrims Personal Finance</PageTitle>
+<PageTitle>@LocalizationService.GetString("Settings") - @LocalizationService.GetString("PersonalFinance")</PageTitle>
 
 <!-- Particle Background -->
 <div class="fixed inset-0 overflow-hidden pointer-events-none">
@@ -27,20 +29,20 @@
             <div class="flex items-center justify-between mb-4">
                 <div>
                     <h1 class="text-4xl font-bold bg-gradient-to-r from-slate-600 to-gray-600 bg-clip-text text-transparent">
-                        ⚙️ Settings & Preferences
+                        ⚙️ @LocalizationService.GetString("SettingsAndPreferences")
                     </h1>
-                    <p class="text-[var(--text-secondary)] mt-2">Customize your financial management experience</p>
+                    <p class="text-[var(--text-secondary)] mt-2">@LocalizationService.GetString("CustomizeYourExperience")</p>
                 </div>
                 <button @onclick="SaveSettingsAsync" 
                         disabled="@(isSaving || isLoading)"
                         class="px-6 py-3 bg-gradient-to-r from-slate-500 to-gray-600 text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
                     @if (isSaving)
                     {
-                        <span class="mr-2">⏳</span> <span>Saving...</span>
+                        <span class="mr-2">⏳</span> <span>@LocalizationService.GetString("Saving")</span>
                     }
                     else
                     {
-                        <span class="mr-2">💾</span> <span>Save Changes</span>
+                        <span class="mr-2">💾</span> <span>@LocalizationService.GetString("SaveChanges")</span>
                     }
                 </button>
             </div>
@@ -73,31 +75,31 @@
         <!-- Account Settings -->
         <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
             <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
-                <span class="mr-2">👤</span> Account Settings
+                <span class="mr-2">👤</span> @LocalizationService.GetString("AccountSettings")
             </h3>
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Full Name</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">@LocalizationService.GetString("FullName")</label>
                     <input type="text" value="John Doe" class="w-full px-3 py-2 bg-white/50 dark:bg-gray-700/50 border border-white/20 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent">
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email Address</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">@LocalizationService.GetString("EmailAddress")</label>
                     <input type="email" value="john.doe@example.com" class="w-full px-3 py-2 bg-white/50 dark:bg-gray-700/50 border border-white/20 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent">
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Phone Number</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">@LocalizationService.GetString("PhoneNumber")</label>
                     <input type="tel" value="+1 (555) 123-4567" class="w-full px-3 py-2 bg-white/50 dark:bg-gray-700/50 border border-white/20 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent">
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Time Zone</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">@LocalizationService.GetString("TimeZone")</label>
                     <select class="w-full px-3 py-2 bg-white/50 dark:bg-gray-700/50 border border-white/20 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent">
-                        <option>Eastern Time (ET)</option>
-                        <option>Central Time (CT)</option>
-                        <option>Mountain Time (MT)</option>
-                        <option>Pacific Time (PT)</option>
+                        <option>@LocalizationService.GetString("EasternTime")</option>
+                        <option>@LocalizationService.GetString("CentralTime")</option>
+                        <option>@LocalizationService.GetString("MountainTime")</option>
+                        <option>@LocalizationService.GetString("PacificTime")</option>
                     </select>
                 </div>
                 
@@ -115,9 +117,9 @@
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Default Currency</label>
-                    <CurrencyAutocomplete @bind-Value="selectedCurrency" 
-                                        @bind:after="OnCurrencyChanged"
-                                        Placeholder="Search and select currency..." />
+                    <CurrencyAutocomplete 
+                        @bind-Value="selectedCurrency"                       
+                        Placeholder="Search and select currency..." />
                 </div>
                 
                 <div>
@@ -302,14 +304,10 @@
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Language</label>
-                    <select class="w-full px-3 py-2 bg-white/50 dark:bg-gray-700/50 border border-white/20 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent">
-                        <option>English (US)</option>
-                        <option>English (UK)</option>
-                        <option>Spanish</option>
-                        <option>French</option>
-                        <option>German</option>
-                    </select>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">@LocalizationService.GetString("Language")</label>
+                    <div class="w-full">
+                        <LanguageSelector />
+                    </div>
                 </div>
                 
                 <div>
@@ -471,7 +469,7 @@
 @code {
     [Inject] private IApplicationSettingsService ApplicationSettingsService { get; set; } = default!;
     [Inject] private ILogger<Settings> Logger { get; set; } = default!;
-    
+
     private string selectedCurrency = "USD";
     private ApplicationSettings? currentSettings;
     private bool isLoading = false;
@@ -490,15 +488,15 @@
         {
             isLoading = true;
             errorMessage = null;
-            
+
             currentSettings = await ApplicationSettingsService.GetSettingsAsync();
             selectedCurrency = currentSettings.DefaultCurrency ?? "USD";
-            
+
             Logger.LogInformation("Settings loaded successfully. Default currency: {Currency}", selectedCurrency);
         }
         catch (Exception ex)
         {
-            errorMessage = "Failed to load settings. Please try again.";
+            errorMessage = $"Failed to load settings. Please try again.{ex.Message}";
             Logger.LogError(ex, "Error loading application settings");
         }
         finally

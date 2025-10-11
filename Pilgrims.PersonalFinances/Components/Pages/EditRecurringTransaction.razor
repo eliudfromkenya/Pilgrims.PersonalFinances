@@ -3,13 +3,11 @@
 @using Pilgrims.PersonalFinances.Models.Enums
 @using Pilgrims.PersonalFinances.Services.Interfaces
 @using Pilgrims.PersonalFinances.Services
-@using Pilgrims.PersonalFinances.Core.Messaging.Interfaces
-@using Pilgrims.PersonalFinances.Core.Messaging.Extensions
 @inject IScheduledTransactionService ScheduledTransactionService
 @inject ITransactionService TransactionService
 @inject IAccountService AccountService
 @inject NavigationManager Navigation
-@inject IMessagingService MessagingService
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Edit Recurring Transaction - Pilgrims Personal Finance</PageTitle>
 
@@ -471,7 +469,7 @@ else
         }
         catch (Exception ex)
         {
-            await MessagingService.ShowErrorToastAsync($"Error loading data: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("console.error", "Error loading data:", ex.Message);
         }
         finally
         {
@@ -542,12 +540,12 @@ else
             }
 
             await ScheduledTransactionService.UpdateScheduledTransactionAsync(transaction);
-            await MessagingService.ShowSuccessToastAsync("Recurring transaction updated successfully!");
+            await JSRuntime.InvokeVoidAsync("showToast", "Recurring transaction updated successfully!", "success");
             Navigation.NavigateTo("/recurring-transactions");
         }
         catch (Exception ex)
         {
-            await MessagingService.ShowErrorToastAsync($"Error updating transaction: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("showToast", $"Error updating transaction: {ex.Message}", "error");
         }
         finally
         {
@@ -622,8 +620,6 @@ else
             TransactionType.Income => "text-green-600 dark:text-green-400",
             TransactionType.Expense => "text-red-600 dark:text-red-400",
             TransactionType.Transfer => "text-blue-600 dark:text-blue-400",
-            TransactionType.Adjustment => "text-purple-600 dark:text-purple-400",
-            TransactionType.InitialBalance => "text-gray-600 dark:text-gray-400",
             _ => "text-[var(--text-primary)]"
         };
     }

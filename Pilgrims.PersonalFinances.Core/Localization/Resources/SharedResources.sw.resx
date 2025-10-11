@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  
+  <!-- Common UI Elements -->
+  <data name="Save" xml:space="preserve">
+    <value>Hifadhi</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Ghairi</value>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>Futa</value>
+  </data>
+  <data name="Edit" xml:space="preserve">
+    <value>Hariri</value>
+  </data>
+  <data name="Add" xml:space="preserve">
+    <value>Ongeza</value>
+  </data>
+  <data name="Search" xml:space="preserve">
+    <value>Tafuta</value>
+  </data>
+  <data name="Filter" xml:space="preserve">
+    <value>Chuja</value>
+  </data>
+  <data name="Export" xml:space="preserve">
+    <value>Hamisha</value>
+  </data>
+  <data name="Print" xml:space="preserve">
+    <value>Chapisha</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>Funga</value>
+  </data>
+  <data name="Yes" xml:space="preserve">
+    <value>Ndiyo</value>
+  </data>
+  <data name="No" xml:space="preserve">
+    <value>Hapana</value>
+  </data>
+  <data name="OK" xml:space="preserve">
+    <value>Sawa</value>
+  </data>
+  
+  <!-- Navigation -->
+  <data name="Dashboard" xml:space="preserve">
+    <value>Dashibodi</value>
+  </data>
+  <data name="Accounts" xml:space="preserve">
+    <value>Akaunti</value>
+  </data>
+  <data name="Transactions" xml:space="preserve">
+    <value>Miamala</value>
+  </data>
+  <data name="Budget" xml:space="preserve">
+    <value>Bajeti</value>
+  </data>
+  <data name="Reports" xml:space="preserve">
+    <value>Ripoti</value>
+  </data>
+  <data name="Settings" xml:space="preserve">
+    <value>Mipangilio</value>
+  </data>
+  <data name="Goals" xml:space="preserve">
+    <value>Malengo</value>
+  </data>
+  <data name="Investments" xml:space="preserve">
+    <value>Uwekezaji</value>
+  </data>
+  <data name="Debts" xml:space="preserve">
+    <value>Madeni</value>
+  </data>
+  <data name="Assets" xml:space="preserve">
+    <value>Mali</value>
+  </data>
+  <data name="Insurance" xml:space="preserve">
+    <value>Bima</value>
+  </data>
+  
+  <!-- Financial Terms -->
+  <data name="Income" xml:space="preserve">
+    <value>Mapato</value>
+  </data>
+  <data name="Expense" xml:space="preserve">
+    <value>Matumizi</value>
+  </data>
+  <data name="Balance" xml:space="preserve">
+    <value>Salio</value>
+  </data>
+  <data name="Amount" xml:space="preserve">
+    <value>Kiasi</value>
+  </data>
+  <data name="Date" xml:space="preserve">
+    <value>Tarehe</value>
+  </data>
+  <data name="Category" xml:space="preserve">
+    <value>Jamii</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>Maelezo</value>
+  </data>
+  <data name="Currency" xml:space="preserve">
+    <value>Sarafu</value>
+  </data>
+  <data name="Total" xml:space="preserve">
+    <value>Jumla</value>
+  </data>
+  <data name="Remaining" xml:space="preserve">
+    <value>Iliyobaki</value>
+  </data>
+  <data name="Spent" xml:space="preserve">
+    <value>Iliyotumika</value>
+  </data>
+  
+  <!-- Messages -->
+  <data name="SuccessfullySaved" xml:space="preserve">
+    <value>Imehifadhiwa kwa mafanikio</value>
+  </data>
+  <data name="SuccessfullyDeleted" xml:space="preserve">
+    <value>Imefutwa kwa mafanikio</value>
+  </data>
+  <data name="ErrorOccurred" xml:space="preserve">
+    <value>Kosa limetokea</value>
+  </data>
+  <data name="ConfirmDelete" xml:space="preserve">
+    <value>Una uhakika unataka kufuta kipengee hiki?</value>
+  </data>
+  <data name="NoDataFound" xml:space="preserve">
+    <value>Hakuna data iliyopatikana</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Inapakia...</value>
+  </data>
+  
+  <!-- Validation Messages -->
+  <data name="RequiredField" xml:space="preserve">
+    <value>Sehemu hii inahitajika</value>
+  </data>
+  <data name="InvalidEmail" xml:space="preserve">
+    <value>Tafadhali ingiza anwani sahihi ya barua pepe</value>
+  </data>
+  <data name="InvalidAmount" xml:space="preserve">
+    <value>Tafadhali ingiza kiasi sahihi</value>
+  </data>
+  <data name="InvalidDate" xml:space="preserve">
+    <value>Tafadhali ingiza tarehe sahihi</value>
+  </data>
+  
+  <!-- Account Types -->
+  <data name="Checking" xml:space="preserve">
+    <value>Ukaguzi</value>
+  </data>
+  <data name="Savings" xml:space="preserve">
+    <value>Akiba</value>
+  </data>
+  <data name="Credit" xml:space="preserve">
+    <value>Mkopo</value>
+  </data>
+  <data name="Investment" xml:space="preserve">
+    <value>Uwekezaji</value>
+  </data>
+  <data name="Loan" xml:space="preserve">
+    <value>Mkopo</value>
+  </data>
+  
+  <!-- Time Periods -->
+  <data name="Daily" xml:space="preserve">
+    <value>Kila siku</value>
+  </data>
+  <data name="Weekly" xml:space="preserve">
+    <value>Kila wiki</value>
+  </data>
+  <data name="Monthly" xml:space="preserve">
+    <value>Kila mwezi</value>
+  </data>
+  <data name="Yearly" xml:space="preserve">
+    <value>Kila mwaka</value>
+  </data>
+  
+  <!-- Application Title -->
+  <data name="AppTitle" xml:space="preserve">
+    <value>Msimamizi wa Fedha za Kibinafsi</value>
+  </data>
+  
+  <!-- Language Names -->
+  <data name="English" xml:space="preserve">
+    <value>Kiingereza</value>
+  </data>
+  <data name="Swahili" xml:space="preserve">
+    <value>Kiswahili</value>
+  </data>
+  <data name="French" xml:space="preserve">
+    <value>Kifaransa</value>
+  </data>
+  <data name="German" xml:space="preserve">
+    <value>Kijerumani</value>
+  </data>
+  <data name="Spanish" xml:space="preserve">
+    <value>Kihispania</value>
+  </data>
+  <data name="SelectLanguage" xml:space="preserve">
+    <value>Chagua Lugha</value>
+  </data>
+  <data name="Notifications" xml:space="preserve">
+    <value>Arifa</value>
+  </data>
+  <data name="StayUpdatedWithTransactions" xml:space="preserve">
+    <value>Baki umejulishwa na miamala yako</value>
+  </data>
+  <data name="MarkAllRead" xml:space="preserve">
+    <value>Weka Yote Kama Imesomwa</value>
+  </data>
+  <data name="Refresh" xml:space="preserve">
+    <value>Onyesha Upya</value>
+  </data>
+  <data name="Unread" xml:space="preserve">
+    <value>Haijasomwa</value>
+  </data>
+  <data name="HighPriority" xml:space="preserve">
+    <value>Kipaumbele cha Juu</value>
+  </data>
+  <data name="AllNotifications" xml:space="preserve">
+    <value>Arifa Zote</value>
+  </data>
+  <data name="UnreadOnly" xml:space="preserve">
+    <value>Zisizosomwa Tu</value>
+  </data>
+  <data name="Reminders" xml:space="preserve">
+    <value>Vikumbusho</value>
+  </data>
+  <data name="OverdueAlerts" xml:space="preserve">
+    <value>Tahadhari za Kuchelewa</value>
+  </data>
+  <data name="ApprovalRequests" xml:space="preserve">
+    <value>Maombi ya Idhini</value>
+  </data>
+  <data name="Sort" xml:space="preserve">
+    <value>Panga</value>
+  </data>
+  <data name="NewestFirst" xml:space="preserve">
+    <value>Mpya Kwanza</value>
+  </data>
+</root>

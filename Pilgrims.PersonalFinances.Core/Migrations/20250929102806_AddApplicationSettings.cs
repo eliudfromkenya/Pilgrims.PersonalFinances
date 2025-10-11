@@ -64,7 +64,7 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
             migrationBuilder.InsertData(
                 table: "ApplicationSettings",
                 columns: new[] { "Id", "DefaultCurrency", "DateFormat", "NumberFormat", "Theme", "ShowCurrencyCode", "CurrencyDecimalPlaces", "LastUpdatedVersion", "LastModifiedByUserId", "IsActive", "CreatedAt", "UpdatedAt", "IsDirty" },
-                values: new object[] { "default-settings", "USD", "MM/dd/yyyy", "en-US", "Light", false, 2, "1.0.0", null, true, new DateTime(2025, 9, 29, 10, 28, 5, 507, DateTimeKind.Utc), null, false });
+                values: new object[] { "default-settings", "KES", "MM/dd/yyyy", "en-US", "Light", false, 2, "1.0.0", null, true, new DateTime(2025, 9, 29, 10, 28, 5, 507, DateTimeKind.Utc), null, false });
         }
 
         /// <inheritdoc />

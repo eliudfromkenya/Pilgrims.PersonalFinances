@@ -8,8 +8,9 @@
 @inject INotificationService NotificationService
 @inject NavigationManager Navigation
 @inject IMessagingService MessagingService
+@inject ILocalizationService LocalizationService
 
-<PageTitle>Notifications - Pilgrims Personal Finance</PageTitle>
+<PageTitle>@LocalizationService.GetString("Notifications") - @LocalizationService.GetString("PersonalFinance")</PageTitle>
 
 <!-- Particle Background -->
 <div class="fixed inset-0 overflow-hidden pointer-events-none">
@@ -30,16 +31,16 @@
             <div class="flex items-center justify-between">
                 <div>
                     <h1 class="text-4xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                        🔔 Notifications
+                        🔔 @LocalizationService.GetString("Notifications")
                     </h1>
-                    <p class="text-[var(--text-secondary)] mt-2">Stay updated with your recurring transactions</p>
+                    <p class="text-[var(--text-secondary)] mt-2">@LocalizationService.GetString("StayUpdatedWithTransactions")</p>
                 </div>
                 <div class="flex items-center space-x-4">
                     @if (unreadCount > 0)
                     {
                         <button @onclick="MarkAllAsRead" 
                                 class="px-4 py-2 text-sm bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors">
-                            Mark All Read
+                            @LocalizationService.GetString("MarkAllRead")
                         </button>
                     }
                     <button @onclick="RefreshNotifications" disabled="@isLoading"
@@ -53,7 +54,7 @@
                         }
                         else
                         {
-                            <span>Refresh</span>
+                            <span>@LocalizationService.GetString("Refresh")</span>
                         }
                     </button>
                 </div>
@@ -66,7 +67,7 @@
         <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-[var(--text-secondary)]">Total</p>
+                    <p class="text-sm text-[var(--text-secondary)]">@LocalizationService.GetString("Total")</p>
                     <p class="text-2xl font-bold text-[var(--text-primary)]">@notifications.Count</p>
                 </div>
                 <div class="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-full">
@@ -80,7 +81,7 @@
         <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-[var(--text-secondary)]">Unread</p>
+                    <p class="text-sm text-[var(--text-secondary)]">@LocalizationService.GetString("Unread")</p>
                     <p class="text-2xl font-bold text-orange-600 dark:text-orange-400">@unreadCount</p>
                 </div>
                 <div class="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-full">
@@ -94,7 +95,7 @@
         <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-[var(--text-secondary)]">High Priority</p>
+                    <p class="text-sm text-[var(--text-secondary)]">@LocalizationService.GetString("HighPriority")</p>
                     <p class="text-2xl font-bold text-red-600 dark:text-red-400">@highPriorityCount</p>
                 </div>
                 <div class="p-3 bg-red-100 dark:bg-red-900/30 rounded-full">
@@ -108,7 +109,7 @@
         <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-[var(--text-secondary)]">Today</p>
+                    <p class="text-sm text-[var(--text-secondary)]">@LocalizationService.GetString("Today")</p>
                     <p class="text-2xl font-bold text-green-600 dark:text-green-400">@todayCount</p>
                 </div>
                 <div class="p-3 bg-green-100 dark:bg-green-900/30 rounded-full">
@@ -125,26 +126,26 @@
         <div class="glass-card p-4 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
             <div class="flex flex-wrap items-center gap-4">
                 <div class="flex items-center space-x-2">
-                    <label class="text-sm font-medium text-[var(--text-primary)]">Filter:</label>
+                    <label class="text-sm font-medium text-[var(--text-primary)]">@LocalizationService.GetString("Filter"):</label>
                     <select @bind="selectedFilter" @bind:after="ApplyFilter"
                             class="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-                        <option value="all">All Notifications</option>
-                        <option value="unread">Unread Only</option>
-                        <option value="high">High Priority</option>
-                        <option value="reminder">Reminders</option>
-                        <option value="overdue">Overdue Alerts</option>
-                        <option value="approval">Approval Requests</option>
+                        <option value="all">@LocalizationService.GetString("AllNotifications")</option>
+                        <option value="unread">@LocalizationService.GetString("UnreadOnly")</option>
+                        <option value="high">@LocalizationService.GetString("HighPriority")</option>
+                        <option value="reminder">@LocalizationService.GetString("Reminders")</option>
+                        <option value="overdue">@LocalizationService.GetString("OverdueAlerts")</option>
+                        <option value="approval">@LocalizationService.GetString("ApprovalRequests")</option>
                     </select>
                 </div>
                 
                 <div class="flex items-center space-x-2">
-                    <label class="text-sm font-medium text-[var(--text-primary)]">Sort:</label>
+                    <label class="text-sm font-medium text-[var(--text-primary)]">@LocalizationService.GetString("Sort"):</label>
                     <select @bind="selectedSort" @bind:after="ApplySort"
                             class="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-                        <option value="date_desc">Newest First</option>
-                        <option value="date_asc">Oldest First</option>
-                        <option value="priority">Priority</option>
-                        <option value="type">Type</option>
+                        <option value="date_desc">@LocalizationService.GetString("NewestFirst")</option>
+                        <option value="date_asc">@LocalizationService.GetString("OldestFirst")</option>
+                        <option value="priority">@LocalizationService.GetString("Priority")</option>
+                        <option value="type">@LocalizationService.GetString("Type")</option>
                     </select>
                 </div>
             </div>
