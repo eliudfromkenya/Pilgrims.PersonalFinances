@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Pilgrims.PersonalFinances.Models.Enums;
+using Pilgrims.PersonalFinances.Core.Models.Enums;
 
-namespace Pilgrims.PersonalFinances.Models
+namespace Pilgrims.PersonalFinances.Core.Models
 {
     /// <summary>
     /// Represents notifications related to obligations (group welfare, chamas, saccos)
@@ -46,13 +46,13 @@ namespace Pilgrims.PersonalFinances.Models
         /// Type of notification
         /// </summary>
         [Required]
-        public Enums.AppNotificationType NotificationType { get; set; }
+        public AppNotificationType NotificationType { get; set; }
 
         /// <summary>
         /// Priority level of the notification
         /// </summary>
         [Required]
-        public Enums.NotificationPriority Priority { get; set; } = Enums.NotificationPriority.Medium;
+        public NotificationPriority Priority { get; set; } = NotificationPriority.Medium;
 
         /// <summary>
         /// When the notification should be sent
@@ -102,7 +102,7 @@ namespace Pilgrims.PersonalFinances.Models
                 ObligationId = obligation.Id,
                 Title = $"{obligation.Type} Payment Due: {obligation.Name}",
                 Message = $"Your {obligation.Type.ToString().ToLower()} contribution of {amount:C} to {obligation.Name} is due on {dueDate:MMM dd, yyyy}.",
-                NotificationType = Enums.AppNotificationType.ObligationPaymentDue,
+                NotificationType = AppNotificationType.ObligationPaymentDue,
                 Priority = NotificationPriority.High,
                 ScheduledDate = scheduledDate
             };
@@ -118,7 +118,7 @@ namespace Pilgrims.PersonalFinances.Models
                 ObligationId = obligation.Id,
                 Title = $"Arrears Alert: {obligation.Name}",
                 Message = $"You have outstanding arrears of {arrearsAmount:C} for {obligation.Name}. Please make a payment to avoid penalties.",
-                NotificationType = Enums.AppNotificationType.ObligationArrears,
+                NotificationType = AppNotificationType.ObligationArrears,
                 Priority = NotificationPriority.Critical,
                 ScheduledDate = DateTime.Now
             };
@@ -135,7 +135,7 @@ namespace Pilgrims.PersonalFinances.Models
                 ObligationBenefitId = benefit.Id,
                 Title = $"Benefit Available: {obligation.Name}",
                 Message = $"A new benefit of {benefit.Amount:C} is available from {obligation.Name}. Benefit type: {benefit.BenefitType}",
-                NotificationType = Enums.AppNotificationType.ObligationBenefitAvailable,
+                NotificationType = AppNotificationType.ObligationBenefitAvailable,
                 Priority = NotificationPriority.Medium,
                 ScheduledDate = DateTime.Now
             };
@@ -152,7 +152,7 @@ namespace Pilgrims.PersonalFinances.Models
                 ObligationId = obligation.Id,
                 Title = $"Contribution Reminder: {obligation.Name}",
                 Message = $"Don't forget your upcoming {obligation.Type.ToString().ToLower()} contribution of {amount:C} to {obligation.Name} on {nextContributionDate:MMM dd, yyyy}.",
-                NotificationType = Enums.AppNotificationType.GroupContributionReminder,
+                NotificationType = AppNotificationType.GroupContributionReminder,
                 Priority = NotificationPriority.Medium,
                 ScheduledDate = scheduledDate
             };
@@ -185,3 +185,4 @@ namespace Pilgrims.PersonalFinances.Models
         }
     }
 }
+

@@ -1,6 +1,6 @@
-using Pilgrims.PersonalFinances.Models.Enums;
+using Pilgrims.PersonalFinances.Core.Models.Enums;
 
-namespace Pilgrims.PersonalFinances.Models.DTOs
+namespace Pilgrims.PersonalFinances.Core.Models.DTOs
 {
     public class BankStatementItemDto
     {

@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Pilgrims.PersonalFinances.Models.Enums;
+using Pilgrims.PersonalFinances.Core.Models.Enums;
 using Pilgrims.PersonalFinances.Services;
 using Pilgrims.PersonalFinances.Tests.Data;
 using Microsoft.Extensions.DependencyInjection;

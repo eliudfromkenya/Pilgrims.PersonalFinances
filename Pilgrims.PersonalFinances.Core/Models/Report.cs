@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Pilgrims.PersonalFinances.Models.Enums;
+using Pilgrims.PersonalFinances.Core.Models.Enums;
 
-namespace Pilgrims.PersonalFinances.Models
+namespace Pilgrims.PersonalFinances.Core.Models
 {
     /// <summary>
     /// Represents a generated report instance
@@ -260,16 +260,16 @@ namespace Pilgrims.PersonalFinances.Models
                 {
                     return DateRangePreset.Value switch
                     {
-                        Enums.DateRangePreset.Today => "Today",
-                        Enums.DateRangePreset.Yesterday => "Yesterday",
-                        Enums.DateRangePreset.ThisWeek => "This Week",
-                        Enums.DateRangePreset.LastWeek => "Last Week",
-                        Enums.DateRangePreset.ThisMonth => "This Month",
-                        Enums.DateRangePreset.LastMonth => "Last Month",
-                        Enums.DateRangePreset.ThisQuarter => "This Quarter",
-                        Enums.DateRangePreset.LastQuarter => "Last Quarter",
-                        Enums.DateRangePreset.ThisYear => "This Year",
-                        Enums.DateRangePreset.LastYear => "Last Year",
+                        DateRangePreset.Today => "Today",
+                        DateRangePreset.Yesterday => "Yesterday",
+                        DateRangePreset.ThisWeek => "This Week",
+                        DateRangePreset.LastWeek => "Last Week",
+                        DateRangePreset.ThisMonth => "This Month",
+                        DateRangePreset.LastMonth => "Last Month",
+                        DateRangePreset.ThisQuarter => "This Quarter",
+                        DateRangePreset.LastQuarter => "Last Quarter",
+                        DateRangePreset.ThisYear => "This Year",
+                        DateRangePreset.LastYear => "Last Year",
                         _ => "Custom Range"
                     };
                 }
@@ -400,3 +400,4 @@ namespace Pilgrims.PersonalFinances.Models
         }
     }
 }
+

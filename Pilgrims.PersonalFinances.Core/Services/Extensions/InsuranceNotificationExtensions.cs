@@ -1,8 +1,8 @@
-using Pilgrims.PersonalFinances.Models;
-using Pilgrims.PersonalFinances.Models.Enums;
-using Pilgrims.PersonalFinances.Services.Interfaces;
+using Pilgrims.PersonalFinances.Core.Models;
+using Pilgrims.PersonalFinances.Core.Models.Enums;
+using Pilgrims.PersonalFinances.Core.Services.Interfaces;
 
-namespace Pilgrims.PersonalFinances.Services.Extensions
+namespace Pilgrims.PersonalFinances.Core.Services.Extensions
 {
     public static class InsuranceNotificationExtensions
     {

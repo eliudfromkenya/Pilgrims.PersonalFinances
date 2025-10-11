@@ -1,6 +1,6 @@
 using System;
 using Pilgrims.PersonalFinances.Core.Models;
-using Pilgrims.PersonalFinances.Models;
+using Pilgrims.PersonalFinances.Core.Models;
 
 namespace Pilgrims.PersonalFinances.Core.Models
 {

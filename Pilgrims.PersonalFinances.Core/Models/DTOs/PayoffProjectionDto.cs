@@ -1,4 +1,4 @@
-namespace Pilgrims.PersonalFinances.Models.DTOs
+namespace Pilgrims.PersonalFinances.Core.Models.DTOs
 {
     /// <summary>
     /// Projection data for debt payoff scenarios

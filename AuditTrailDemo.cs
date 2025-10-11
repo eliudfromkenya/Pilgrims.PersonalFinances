@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 using Pilgrims.PersonalFinances.Core.Messaging.Interfaces;
 using Pilgrims.PersonalFinances.Data;
 using Pilgrims.PersonalFinances.Models;
-using Pilgrims.PersonalFinances.Services.Interfaces;
+using Pilgrims.PersonalFinances.Core.Services.Interfaces;
 
 namespace Pilgrims.PersonalFinances.Demo
 {

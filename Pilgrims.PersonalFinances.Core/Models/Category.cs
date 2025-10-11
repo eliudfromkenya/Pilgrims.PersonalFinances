@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Pilgrims.PersonalFinances.Models;
+namespace Pilgrims.PersonalFinances.Core.Models;
 
 /// <summary>
 /// Represents a transaction category with hierarchical support

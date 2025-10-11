@@ -1,6 +1,6 @@
 using System.ComponentModel;
 
-namespace Pilgrims.PersonalFinances.Models.Enums
+namespace Pilgrims.PersonalFinances.Core.Models.Enums
 {
     /// <summary>
     /// Defines the status states of financial accounts

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Pilgrims.PersonalFinances.Core.Models;
-using Pilgrims.PersonalFinances.Models.Enums;
+using Pilgrims.PersonalFinances.Core.Models.Enums;
 
 namespace Pilgrims.PersonalFinances.Core.Services.Interfaces
 {

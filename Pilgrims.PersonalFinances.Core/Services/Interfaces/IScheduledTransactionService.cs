@@ -1,7 +1,7 @@
-using Pilgrims.PersonalFinances.Models;
-using Pilgrims.PersonalFinances.Models.Enums;
+using Pilgrims.PersonalFinances.Core.Models;
+using Pilgrims.PersonalFinances.Core.Models.Enums;
 
-namespace Pilgrims.PersonalFinances.Services.Interfaces;
+namespace Pilgrims.PersonalFinances.Core.Services.Interfaces;
 
 /// <summary>
 /// Service interface for managing scheduled transactions with comprehensive CRUD operations

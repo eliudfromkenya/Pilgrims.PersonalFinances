@@ -5,9 +5,9 @@ using Pilgrims.PersonalFinances.Core.Messaging.Messages;
 using Pilgrims.PersonalFinances.Core.Services;
 using Pilgrims.PersonalFinances.Core.Services.Interfaces;
 using Pilgrims.PersonalFinances.Core.Models.DTOs;
-using Pilgrims.PersonalFinances.Services.Interfaces;
-using Pilgrims.PersonalFinances.Models.Enums;
-using Pilgrims.PersonalFinances.Models.DTOs;
+using Pilgrims.PersonalFinances.Core.Services.Interfaces;
+using Pilgrims.PersonalFinances.Core.Models.Enums;
+using Pilgrims.PersonalFinances.Core.Models.DTOs;
 
 namespace Pilgrims.PersonalFinances.Core.ViewModels
 {

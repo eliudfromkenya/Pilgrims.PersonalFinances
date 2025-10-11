@@ -1,5 +1,5 @@
 using Pilgrims.PersonalFinances.Core.Models.DTOs;
-using Pilgrims.PersonalFinances.Models.DTOs;
+using Pilgrims.PersonalFinances.Core.Models.DTOs;
 
 namespace Pilgrims.PersonalFinances.Core.Services
 {

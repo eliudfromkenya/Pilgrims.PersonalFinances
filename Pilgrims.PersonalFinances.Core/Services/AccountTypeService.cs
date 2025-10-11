@@ -8,7 +8,7 @@ using Pilgrims.PersonalFinances.Core.Data;
 using Pilgrims.PersonalFinances.Core.Models;
 using Pilgrims.PersonalFinances.Core.Services.Interfaces;
 using Pilgrims.PersonalFinances.Data;
-using Pilgrims.PersonalFinances.Models.Enums;
+using Pilgrims.PersonalFinances.Core.Models.Enums;
 
 namespace Pilgrims.PersonalFinances.Core.Services
 {

@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Pilgrims.PersonalFinances.Models.Enums;
+using Pilgrims.PersonalFinances.Core.Models.Enums;
 
-namespace Pilgrims.PersonalFinances.Models
+namespace Pilgrims.PersonalFinances.Core.Models
 {
     /// <summary>
     /// Represents a notification for scheduled transactions
@@ -70,7 +70,7 @@ namespace Pilgrims.PersonalFinances.Models
     /// Priority level of the notification
     /// </summary>
     [Required]
-    public Enums.NotificationPriority Priority { get; set; } = Enums.NotificationPriority.Normal;
+    public NotificationPriority Priority { get; set; } = NotificationPriority.Normal;
 
         /// <summary>
         /// Additional data for the notification (JSON)
@@ -266,7 +266,7 @@ namespace Pilgrims.PersonalFinances.Models
                 ScheduledTransactionId = scheduledTransaction.Id,
                 Title = $"Upcoming Transaction: {scheduledTransaction.Name}",
                 Message = $"Your scheduled transaction '{scheduledTransaction.Name}' for {scheduledTransaction.FormattedAmount} is due on {scheduledTransaction.NextDueDate?.ToString("MMM dd, yyyy")}.",
-                NotificationType = Enums.AppNotificationType.BillReminder,
+                NotificationType = AppNotificationType.BillReminder,
                 ScheduledDate = reminderDate,
                 Priority = NotificationPriority.Normal
             };
@@ -284,7 +284,7 @@ namespace Pilgrims.PersonalFinances.Models
                 ScheduledTransactionId = scheduledTransaction.Id,
                 Title = $"Overdue Transaction: {scheduledTransaction.Name}",
                 Message = $"Your scheduled transaction '{scheduledTransaction.Name}' for {scheduledTransaction.FormattedAmount} was due on {scheduledTransaction.NextDueDate?.ToString("MMM dd, yyyy")} and is now overdue.",
-                NotificationType = Enums.AppNotificationType.BudgetAlert,
+                NotificationType = AppNotificationType.BudgetAlert,
                 ScheduledDate = DateTime.Now,
                 Priority = NotificationPriority.High
             };
@@ -302,7 +302,7 @@ namespace Pilgrims.PersonalFinances.Models
                 ScheduledTransactionId = scheduledTransaction.Id,
                 Title = $"Approval Required: {scheduledTransaction.Name}",
                 Message = $"Your scheduled transaction '{scheduledTransaction.Name}' for {scheduledTransaction.FormattedAmount} is ready to be created. Please review and approve.",
-                NotificationType = Enums.AppNotificationType.SystemAlert,
+                NotificationType = AppNotificationType.SystemAlert,
                 ScheduledDate = DateTime.Now,
                 Priority = NotificationPriority.High
             };
@@ -321,7 +321,7 @@ namespace Pilgrims.PersonalFinances.Models
                 ScheduledTransactionId = scheduledTransaction.Id,
                 Title = $"Transaction Created: {scheduledTransaction.Name}",
                 Message = $"Your scheduled transaction '{scheduledTransaction.Name}' for {scheduledTransaction.FormattedAmount} has been automatically created on {createdTransaction.Date:MMM dd, yyyy}.",
-                NotificationType = Enums.AppNotificationType.SystemAlert,
+                NotificationType = AppNotificationType.SystemAlert,
                 ScheduledDate = DateTime.Now,
                 Priority = NotificationPriority.Normal
             };
@@ -340,7 +340,7 @@ namespace Pilgrims.PersonalFinances.Models
                 ScheduledTransactionId = scheduledTransaction.Id,
                 Title = $"Error Processing: {scheduledTransaction.Name}",
                 Message = $"An error occurred while processing your scheduled transaction '{scheduledTransaction.Name}': {errorMessage}",
-                NotificationType = Enums.AppNotificationType.SystemAlert,
+                NotificationType = AppNotificationType.SystemAlert,
                 ScheduledDate = DateTime.Now,
                 Priority = NotificationPriority.High,
                 ErrorMessage = errorMessage
@@ -389,3 +389,4 @@ namespace Pilgrims.PersonalFinances.Models
         Approval = 6
     }
 }
+

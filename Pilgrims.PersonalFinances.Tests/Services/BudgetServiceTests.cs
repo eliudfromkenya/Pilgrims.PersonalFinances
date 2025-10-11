@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Pilgrims.PersonalFinances.Models.Enums;
+using Pilgrims.PersonalFinances.Core.Models.Enums;
 
 namespace Pilgrims.PersonalFinances.Tests.Services;
 

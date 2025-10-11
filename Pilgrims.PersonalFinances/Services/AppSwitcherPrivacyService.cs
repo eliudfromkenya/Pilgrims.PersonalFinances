@@ -1,5 +1,5 @@
 using Microsoft.Extensions.Logging;
-using Pilgrims.PersonalFinances.Services.Interfaces;
+using Pilgrims.PersonalFinances.Core.Services.Interfaces;
 
 namespace Pilgrims.PersonalFinances.Services;
 

@@ -1,6 +1,6 @@
 using Microsoft.JSInterop;
 
-namespace Pilgrims.PersonalFinances.Services
+namespace Pilgrims.PersonalFinances.Core.Services
 {
     public class WindowService : IWindowService
     {

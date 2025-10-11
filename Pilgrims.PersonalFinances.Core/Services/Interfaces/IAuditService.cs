@@ -1,6 +1,6 @@
-using Pilgrims.PersonalFinances.Models;
+using Pilgrims.PersonalFinances.Core.Models;
 
-namespace Pilgrims.PersonalFinances.Services.Interfaces
+namespace Pilgrims.PersonalFinances.Core.Services.Interfaces
 {
     /// <summary>
     /// Interface for audit trail service operations

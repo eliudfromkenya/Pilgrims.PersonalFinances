@@ -1,7 +1,7 @@
 using Pilgrims.PersonalFinances.Core.Models;
 using System.ComponentModel.DataAnnotations;
 
-namespace Pilgrims.PersonalFinances.Models
+namespace Pilgrims.PersonalFinances.Core.Models
 {
     /// <summary>
     /// Represents a detailed audit entry for tracking individual field changes
