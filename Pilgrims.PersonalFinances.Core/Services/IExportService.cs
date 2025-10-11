@@ -1,6 +1,6 @@
-using Pilgrims.PersonalFinances.Models.DTOs;
+using Pilgrims.PersonalFinances.Core.Models.DTOs;
 
-namespace Pilgrims.PersonalFinances.Services
+namespace Pilgrims.PersonalFinances.Core.Services
 {
     public interface IExportService
     {

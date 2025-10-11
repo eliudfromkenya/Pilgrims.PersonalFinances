@@ -2,7 +2,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using Pilgrims.PersonalFinances.Data;
 using Pilgrims.PersonalFinances.Services;
-using Pilgrims.PersonalFinances.Services.Interfaces;
+using Pilgrims.PersonalFinances.Core.Services.Interfaces;
 using Pilgrims.PersonalFinances.Core.Localization.Interfaces;
 using Pilgrims.PersonalFinances.Core.Localization.Services;
 using CommunityToolkit.Mvvm.Messaging;
@@ -67,7 +67,7 @@ namespace Pilgrims.PersonalFinances
             builder.Services.AddScoped<IExportService, ExportService>();
             builder.Services.AddScoped<IComparisonService, ComparisonService>();
             builder.Services.AddScoped<ILocalizationService, LocalizationService>();
-
+            builder.Services.AddScoped<IAccountTypeService, AccountTypeService>();
             // ViewModels
             builder.Services.AddScoped<NotificationBellViewModel>();
 

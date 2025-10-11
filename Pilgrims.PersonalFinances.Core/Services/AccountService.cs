@@ -71,7 +71,7 @@ namespace Pilgrims.PersonalFinances.Services
             account.CurrentBalance = account.InitialBalance;
 
             _context.Accounts.Add(account);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync().ConfigureAwait(false);
 
             // Format balance for display
             account.FormattedBalance = _currencyService.FormatAmount(account.CurrentBalance, account.Currency);
@@ -125,7 +125,7 @@ namespace Pilgrims.PersonalFinances.Services
                 existingAccount.CurrentBalance = account.InitialBalance;
             }
 
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync().ConfigureAwait(false);
 
             // Format balance for display
             existingAccount.FormattedBalance = _currencyService.FormatAmount(existingAccount.CurrentBalance, existingAccount.Currency);
@@ -145,7 +145,7 @@ namespace Pilgrims.PersonalFinances.Services
             }
 
             _context.Accounts.Remove(account);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync().ConfigureAwait(false);
             return true;
         }
 
@@ -153,10 +153,10 @@ namespace Pilgrims.PersonalFinances.Services
         {
             var account = await _context.Accounts.FindAsync(id);
             if (account == null) return false;
-
+        
             account.Status = AccountStatus.Closed;
             account.MarkAsDirty();
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync().ConfigureAwait(false);
             return true;
         }
 
@@ -167,7 +167,7 @@ namespace Pilgrims.PersonalFinances.Services
 
         public async Task<bool> TransferFundsAsync(string? fromAccountId, string? toAccountId, decimal amount, string description, DateTime? transferDate)
         {
-            using var transaction = await _context.Database.BeginTransactionAsync();
+            using var transaction = await _context.Database.BeginTransactionAsync().ConfigureAwait(false);
             try
             {
                 var fromAccount = await _context.Accounts.FindAsync(fromAccountId);
@@ -204,14 +204,13 @@ namespace Pilgrims.PersonalFinances.Services
                 };
 
                 _context.Transactions.AddRange(transferOut, transferIn);
-                await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
-
+                await _context.SaveChangesAsync().ConfigureAwait(false);
+                await transaction.CommitAsync().ConfigureAwait(false);
                 return true;
             }
             catch
             {
-                await transaction.RollbackAsync();
+                await transaction.RollbackAsync().ConfigureAwait(false);
                 return false;
             }
         }
@@ -222,7 +221,7 @@ namespace Pilgrims.PersonalFinances.Services
             if (account == null) return false;
 
             account.Reconcile(bankBalance, reconciliationDate);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync().ConfigureAwait(false);
             return true;
         }
 

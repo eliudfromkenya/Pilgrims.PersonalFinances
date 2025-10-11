@@ -34,7 +34,7 @@ namespace Pilgrims.PersonalFinances.Core.Messaging.Services
             _messenger.Send(confirmationMessage);
             
             // Wait for the response from the UI handler
-            return await confirmationMessage.ResponseSource.Task;
+            return await confirmationMessage.ResponseSource.Task.ConfigureAwait(false);
         }
 
         /// <summary>
@@ -46,7 +46,7 @@ namespace Pilgrims.PersonalFinances.Core.Messaging.Services
             _messenger.Send(alertMessage);
             
             // Wait for the response from the UI handler
-            await alertMessage.ResponseSource.Task;
+            await alertMessage.ResponseSource.Task.ConfigureAwait(false);
         }
 
         /// <summary>

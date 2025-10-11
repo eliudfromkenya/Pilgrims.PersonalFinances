@@ -48,7 +48,7 @@ namespace Pilgrims.PersonalFinances.Core.Interceptors
         {
             if (eventData.Context != null && result > 0)
             {
-                _ = Task.Run(async () => await ProcessAuditInfoAsync(eventData.Context));
+                _ = Task.Run(() => ProcessAuditInfo(eventData.Context));
             }
             return base.SavedChanges(eventData, result);
         }
@@ -57,7 +57,7 @@ namespace Pilgrims.PersonalFinances.Core.Interceptors
         {
             if (eventData.Context != null && result > 0)
             {
-                _ = Task.Run(async () => await ProcessAuditInfoAsync(eventData.Context), cancellationToken);
+                _ = Task.Run(() => ProcessAuditInfo(eventData.Context), cancellationToken);
             }
             return base.SavedChangesAsync(eventData, result, cancellationToken);
         }
@@ -88,7 +88,7 @@ namespace Pilgrims.PersonalFinances.Core.Interceptors
             }
         }
 
-        private async Task ProcessAuditInfoAsync(DbContext context)
+        private void ProcessAuditInfo(DbContext context)
         {
             try
             {
@@ -106,7 +106,7 @@ namespace Pilgrims.PersonalFinances.Core.Interceptors
 
                 foreach (var auditInfo in auditInfos)
                 {
-                    await PublishAuditMessageAsync(messagingService, auditInfo);
+                    PublishAuditMessage(messagingService, auditInfo);
                 }
             }
             catch (Exception ex)
@@ -164,7 +164,7 @@ namespace Pilgrims.PersonalFinances.Core.Interceptors
             }
         }
 
-        private async Task PublishAuditMessageAsync(IMessagingService messagingService, EntityAuditInfo auditInfo)
+        private void PublishAuditMessage(IMessagingService messagingService, EntityAuditInfo auditInfo)
         {
             try
             {
