@@ -1,0 +1,507 @@
+@page "/accounts/{id:int}"
+@using Pilgrims.PersonalFinances.Models
+@using Pilgrims.PersonalFinances.Models.Enums
+@using Pilgrims.PersonalFinances.Services
+@inject IAccountService AccountService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Account Details - Personal Finance</PageTitle>
+
+<div class="min-h-screen relative overflow-hidden" style="background: var(--primary-bg);">
+    <!-- Animated Background -->
+    <div class="absolute inset-0 overflow-hidden">
+        <div class="particles"></div>
+        <div class="absolute inset-0" style="background: linear-gradient(135deg, var(--accent-color)/5 0%, var(--secondary-color)/5 100%);"></div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="relative z-10 container mx-auto px-4 py-8">
+        @if (isLoading)
+        {
+            <div class="flex justify-center items-center py-20">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2" style="border-color: var(--accent-color);"></div>
+            </div>
+        }
+        else if (account == null)
+        {
+            <div class="text-center py-20">
+                <div class="text-6xl mb-4">❌</div>
+                <h3 class="text-2xl font-bold mb-2" style="color: var(--text-primary);">Account Not Found</h3>
+                <p class="mb-6" style="color: var(--text-secondary);">
+                    The account you're looking for doesn't exist or has been deleted.
+                </p>
+                <button @onclick="GoBack" 
+                        class="px-6 py-3 rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-lg font-semibold"
+                        style="background: var(--accent-color); color: white;">
+                    Go Back to Accounts
+                </button>
+            </div>
+        }
+        else
+        {
+            <!-- Header Section -->
+            <div class="mb-8">
+                <div class="flex items-center justify-between mb-6">
+                    <button @onclick="GoBack" 
+                            class="flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 hover:scale-105"
+                            style="background: var(--card-bg); color: var(--text-primary); border: 1px solid var(--border-color);">
+                        <span>←</span> Back to Accounts
+                    </button>
+                    
+                    <div class="flex gap-3">
+                        <button @onclick="EditAccount" 
+                                class="px-4 py-2 rounded-lg transition-all duration-300 hover:scale-105 font-semibold"
+                                style="background: var(--accent-color); color: white;">
+                            Edit Account
+                        </button>
+                        <button @onclick="ReconcileAccount" 
+                                class="px-4 py-2 rounded-lg transition-all duration-300 hover:scale-105 font-semibold"
+                                style="background: var(--secondary-color); color: white;">
+                            Reconcile
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Account Header Card -->
+                <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-8 mb-8"
+                     style="background: var(--card-bg); border-color: var(--border-color);">
+                    <div class="flex items-center gap-6 mb-6">
+                        <div class="w-20 h-20 rounded-full flex items-center justify-center text-4xl transition-transform duration-300 hover:scale-110"
+                             style="background-color: @account.ColorCode; color: white;">
+                            @GetAccountTypeIcon(account.AccountType)
+                        </div>
+                        <div class="flex-1">
+                            <h1 class="text-3xl font-bold mb-2" style="color: var(--text-primary);">
+                                @account.Name
+                            </h1>
+                            <div class="flex items-center gap-4 text-sm" style="color: var(--text-secondary);">
+                                <span class="flex items-center gap-1">
+                                    @GetAccountTypeIcon(account.AccountType) @GetAccountTypeDisplay(account.AccountType)
+                                </span>
+                                <span class="flex items-center gap-1">
+                                    @GetStatusIcon(account.Status) @account.Status
+                                </span>
+                                <span>@account.Currency</span>
+                                @if (!string.IsNullOrEmpty(account.BankName))
+                                {
+                                    <span>🏦 @account.BankName</span>
+                                }
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-sm mb-1" style="color: var(--text-secondary);">Current Balance</div>
+                            <div class="text-3xl font-bold @(account.CurrentBalance >= 0 ? "text-green-500" : "text-red-500")">
+                                @account.CurrentBalance.ToString("C")
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Stats -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="text-center p-4 rounded-lg" style="background: var(--accent-color)/10;">
+                            <div class="text-2xl font-bold" style="color: var(--accent-color);">
+                                @account.InitialBalance.ToString("C")
+                            </div>
+                            <div class="text-sm" style="color: var(--text-secondary);">Initial Balance</div>
+                        </div>
+                        <div class="text-center p-4 rounded-lg" style="background: var(--secondary-color)/10;">
+                            <div class="text-2xl font-bold" style="color: var(--secondary-color);">
+                                @totalTransactions
+                            </div>
+                            <div class="text-sm" style="color: var(--text-secondary);">Total Transactions</div>
+                        </div>
+                        <div class="text-center p-4 rounded-lg" style="background: var(--success-color)/10;">
+                            <div class="text-2xl font-bold" style="color: var(--success-color);">
+                                @monthlyIncome.ToString("C")
+                            </div>
+                            <div class="text-sm" style="color: var(--text-secondary);">Monthly Income</div>
+                        </div>
+                        <div class="text-center p-4 rounded-lg" style="background: var(--error-color)/10;">
+                            <div class="text-2xl font-bold" style="color: var(--error-color);">
+                                @monthlyExpenses.ToString("C")
+                            </div>
+                            <div class="text-sm" style="color: var(--text-secondary);">Monthly Expenses</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Balance History Chart -->
+                <div class="lg:col-span-2">
+                    <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-6"
+                         style="background: var(--card-bg); border-color: var(--border-color);">
+                        <h3 class="text-xl font-bold mb-4" style="color: var(--text-primary);">
+                            Balance History
+                        </h3>
+                        <div class="h-64 flex items-center justify-center" style="color: var(--text-secondary);">
+                            <!-- Placeholder for chart - would integrate with Chart.js or similar -->
+                            <div class="text-center">
+                                <div class="text-4xl mb-2">📈</div>
+                                <p>Balance history chart would be displayed here</p>
+                                <p class="text-sm mt-2">Integration with charting library needed</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Account Information -->
+                <div class="space-y-6">
+                    <!-- Account Details -->
+                    <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-6"
+                         style="background: var(--card-bg); border-color: var(--border-color);">
+                        <h3 class="text-xl font-bold mb-4" style="color: var(--text-primary);">
+                            Account Information
+                        </h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between">
+                                <span style="color: var(--text-secondary);">Account Type:</span>
+                                <span style="color: var(--text-primary);">@GetAccountTypeDisplay(account.AccountType)</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span style="color: var(--text-secondary);">Currency:</span>
+                                <span style="color: var(--text-primary);">@account.Currency</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span style="color: var(--text-secondary);">Status:</span>
+                                <span class="flex items-center gap-1" style="color: var(--text-primary);">
+                                    @GetStatusIcon(account.Status) @account.Status
+                                </span>
+                            </div>
+                            @if (!string.IsNullOrEmpty(account.BankName))
+                            {
+                                <div class="flex justify-between">
+                                    <span style="color: var(--text-secondary);">Bank:</span>
+                                    <span style="color: var(--text-primary);">@account.BankName</span>
+                                </div>
+                            }
+                            @if (!string.IsNullOrEmpty(account.AccountNumber))
+                            {
+                                <div class="flex justify-between">
+                                    <span style="color: var(--text-secondary);">Account #:</span>
+                                    <span style="color: var(--text-primary);">@account.AccountNumber</span>
+                                </div>
+                            }
+                            @if (account.CreditLimit.HasValue && account.CreditLimit > 0)
+                            {
+                                <div class="flex justify-between">
+                                    <span style="color: var(--text-secondary);">Credit Limit:</span>
+                                    <span style="color: var(--text-primary);">@account.CreditLimit.Value.ToString("C")</span>
+                                </div>
+                            }
+                            @if (account.InterestRate.HasValue && account.InterestRate > 0)
+                            {
+                                <div class="flex justify-between">
+                                    <span style="color: var(--text-secondary);">Interest Rate:</span>
+                                    <span style="color: var(--text-primary);">@account.InterestRate.Value.ToString("P2")</span>
+                                </div>
+                            }
+                            @if (!string.IsNullOrEmpty(account.BrokerName))
+                            {
+                                <div class="flex justify-between">
+                                    <span style="color: var(--text-secondary);">Broker:</span>
+                                    <span style="color: var(--text-primary);">@account.BrokerName</span>
+                                </div>
+                            }
+                            <div class="flex justify-between">
+                                <span style="color: var(--text-secondary);">Created:</span>
+                                <span style="color: var(--text-primary);">@account.CreatedAt.ToString("MMM dd, yyyy")</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span style="color: var(--text-secondary);">Last Updated:</span>
+                                <span style="color: var(--text-primary);">@account.UpdatedAt?.ToString("MMM dd, yyyy")</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-6"
+                         style="background: var(--card-bg); border-color: var(--border-color);">
+                        <h3 class="text-xl font-bold mb-4" style="color: var(--text-primary);">
+                            Quick Actions
+                        </h3>
+                        <div class="space-y-3">
+                            <button @onclick="AddTransaction" 
+                                    class="w-full p-3 rounded-lg transition-all duration-300 hover:scale-105 font-semibold text-left"
+                                    style="background: var(--accent-color); color: white;">
+                                💰 Add Transaction
+                            </button>
+                            <button @onclick="TransferFunds" 
+                                    class="w-full p-3 rounded-lg transition-all duration-300 hover:scale-105 font-semibold text-left"
+                                    style="background: var(--secondary-color); color: white;">
+                                🔄 Transfer Funds
+                            </button>
+                            <button @onclick="ViewTransactions" 
+                                    class="w-full p-3 rounded-lg transition-all duration-300 hover:scale-105 font-semibold text-left"
+                                    style="background: var(--card-bg); color: var(--text-primary); border: 2px solid var(--border-color);">
+                                📋 View All Transactions
+                            </button>
+                            <button @onclick="ExportData" 
+                                    class="w-full p-3 rounded-lg transition-all duration-300 hover:scale-105 font-semibold text-left"
+                                    style="background: var(--card-bg); color: var(--text-primary); border: 2px solid var(--border-color);">
+                                📊 Export Data
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Transactions -->
+            <div class="mt-8">
+                <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-6"
+                     style="background: var(--card-bg); border-color: var(--border-color);">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-bold" style="color: var(--text-primary);">
+                            Recent Transactions
+                        </h3>
+                        <button @onclick="ViewTransactions" 
+                                class="px-4 py-2 rounded-lg transition-all duration-300 hover:scale-105 font-semibold"
+                                style="background: var(--accent-color); color: white;">
+                            View All
+                        </button>
+                    </div>
+
+                    @if (recentTransactions.Any())
+                    {
+                        <div class="space-y-3">
+                            @foreach (var transaction in recentTransactions.Take(5))
+                            {
+                                <div class="flex items-center justify-between p-4 rounded-lg transition-all duration-300 hover:scale-105"
+                                     style="background: var(--input-bg); border: 1px solid var(--border-color);">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg"
+                                             style="background: var(--accent-color)/20; color: var(--accent-color);">
+                                            @GetTransactionIcon(transaction.Type)
+                                        </div>
+                                        <div>
+                                            <div class="font-semibold" style="color: var(--text-primary);">
+                                                @transaction.Description
+                                            </div>
+                                            <div class="text-sm" style="color: var(--text-secondary);">
+                                                @transaction.Date.ToString("MMM dd, yyyy") • @transaction.Category
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="font-bold @(transaction.Amount >= 0 ? "text-green-500" : "text-red-500")">
+                                            @(transaction.Amount >= 0 ? "+" : "")@transaction.Amount.ToString("C")
+                                        </div>
+                                        <div class="text-sm" style="color: var(--text-secondary);">
+                                            Balance: @transaction.RunningBalance.ToString("C")
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-12" style="color: var(--text-secondary);">
+                            <div class="text-4xl mb-4">📝</div>
+                            <p>No transactions found for this account</p>
+                            <button @onclick="AddTransaction" 
+                                    class="mt-4 px-6 py-3 rounded-lg transition-all duration-300 hover:scale-105 font-semibold"
+                                    style="background: var(--accent-color); color: white;">
+                                Add First Transaction
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Particles CSS -->
+<style>
+    .particles {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .particles::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background-image: 
+            radial-gradient(2px 2px at 20px 30px, rgba(255,255,255,0.1), transparent),
+            radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.1), transparent),
+            radial-gradient(1px 1px at 90px 40px, rgba(255,255,255,0.1), transparent),
+            radial-gradient(1px 1px at 130px 80px, rgba(255,255,255,0.1), transparent);
+        background-repeat: repeat;
+        background-size: 200px 200px;
+        animation: particles 20s linear infinite;
+    }
+
+    @@keyframes particles {
+        0% { transform: translate(0, 0); }
+        100% { transform: translate(-200px, -200px); }
+    }
+</style>
+
+@code {
+    [Parameter] public string? AccountId { get; set; }
+    
+    private Account? account;
+    private List<Transaction> recentTransactions = new();
+    private bool isLoading = true;
+    private int totalTransactions = 0;
+    private decimal monthlyIncome = 0;
+    private decimal monthlyExpenses = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAccountDetails();
+    }
+
+    private async Task LoadAccountDetails()
+    {
+        try
+        {
+            isLoading = true;
+            
+            // Load account details
+            account = await AccountService.GetAccountByIdAsync(AccountId);
+            
+            if (account != null)
+            {
+                // Load recent transactions (placeholder - would need transaction service)
+                // recentTransactions = await TransactionService.GetRecentTransactionsAsync(AccountId, 10);
+                
+                // Calculate statistics (placeholder - would need actual transaction data)
+                totalTransactions = recentTransactions.Count;
+                
+                var currentMonth = DateTime.Now.Month;
+                var currentYear = DateTime.Now.Year;
+                
+                monthlyIncome = recentTransactions
+                    .Where(t => t.Date.Month == currentMonth && t.Date.Year == currentYear && t.Amount > 0)
+                    .Sum(t => t.Amount);
+                    
+                monthlyExpenses = Math.Abs(recentTransactions
+                    .Where(t => t.Date.Month == currentMonth && t.Date.Year == currentYear && t.Amount < 0)
+                    .Sum(t => t.Amount));
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error loading account details: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private string GetAccountTypeIcon(AccountType accountType)
+    {
+        return accountType switch
+        {
+            AccountType.Checking => "🏦",
+            AccountType.Savings => "💰",
+            AccountType.Cash => "💵",
+            AccountType.CreditCard => "💳",
+            AccountType.Investment => "📈",
+            AccountType.Loan => "🏠",
+            AccountType.Credit => "💳",
+            AccountType.Other => "📋",
+            _ => "📋"
+        };
+    }
+
+    private string GetAccountTypeDisplay(AccountType accountType)
+    {
+        return accountType switch
+        {
+            AccountType.Checking => "Checking Account",
+            AccountType.Savings => "Savings Account",
+            AccountType.Cash => "Cash Account",
+            AccountType.CreditCard => "Credit Card",
+            AccountType.Investment => "Investment Account",
+            AccountType.Loan => "Loan Account",
+            AccountType.Credit => "Credit Account",
+            AccountType.Other => "Other",
+            _ => "Unknown"
+        };
+    }
+
+    private string GetStatusIcon(AccountStatus status)
+    {
+        return status switch
+        {
+            AccountStatus.Active => "✅",
+            AccountStatus.Inactive => "⏸️",
+            AccountStatus.Closed => "❌",
+            _ => "❓"
+        };
+    }
+
+    private string GetTransactionIcon(string type)
+    {
+        return type.ToLower() switch
+        {
+            "income" => "💰",
+            "expense" => "💸",
+            "transfer" => "🔄",
+            "deposit" => "⬇️",
+            "withdrawal" => "⬆️",
+            _ => "💳"
+        };
+    }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/accounts");
+    }
+
+    private void EditAccount()
+    {
+        NavigationManager.NavigateTo($"/accounts/{AccountId}/edit");
+    }
+
+    private void AddTransaction()
+    {
+        NavigationManager.NavigateTo($"/transactions/create?accountId={AccountId}");
+    }
+
+    private void ViewTransactions()
+    {
+        NavigationManager.NavigateTo($"/transactions?accountId={AccountId}");
+    }
+
+    private void TransferFunds()
+    {
+        NavigationManager.NavigateTo($"/accounts/transfer?fromAccountId={AccountId}");
+    }
+
+    private void ReconcileAccount()
+    {
+        NavigationManager.NavigateTo($"/accounts/{AccountId}/reconcile");
+    }
+
+    private async Task ExportData()
+    {
+        await JSRuntime.InvokeVoidAsync("alert", "Export functionality would be implemented here");
+    }
+
+    // Placeholder Transaction class - would be moved to Models folder
+    public class Transaction
+    {
+        public int Id { get; set; }
+        public string Description { get; set; } = string.Empty;
+        public decimal Amount { get; set; }
+        public DateTime Date { get; set; }
+        public string Category { get; set; } = string.Empty;
+        public string Type { get; set; } = string.Empty;
+        public decimal RunningBalance { get; set; }
+    }
+}

@@ -1,0 +1,525 @@
+@page "/budget-alerts"
+@using Pilgrims.PersonalFinances.Models
+@using Pilgrims.PersonalFinances.Models.Enums
+@using Pilgrims.PersonalFinances.Services
+@using Pilgrims.PersonalFinances.Services.Interfaces
+@using System.ComponentModel.DataAnnotations
+@using BudgetModel = Pilgrims.PersonalFinances.Models.Budget
+@inject IBudgetService BudgetService
+@inject INotificationService NotificationService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Budget Alerts</PageTitle>
+
+<!-- Particle Background -->
+<div class="fixed inset-0 overflow-hidden pointer-events-none">
+    <div id="particles-js" class="absolute inset-0"></div>
+</div>
+
+<div class="relative z-10 min-h-screen bg-gradient-to-br from-slate-900/90 via-purple-900/90 to-slate-900/90">
+    <!-- Header -->
+    <div class="bg-white/10 backdrop-blur-md border-b border-white/20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-4">
+                    <button @onclick="NavigateToBudget" 
+                            class="text-white/80 hover:text-white transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+                    <h1 class="text-2xl font-bold text-white">Budget Alerts</h1>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button @onclick="RefreshAlerts" 
+                            class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        <span>Refresh</span>
+                    </button>
+                    <button @onclick="ShowCreateAlertModal" 
+                            class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        <span>Create Alert</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        @if (isLoading)
+        {
+            <!-- Loading State -->
+            <div class="flex items-center justify-center h-64">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+            </div>
+        }
+        else
+        {
+            <!-- Alert Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20 hover:bg-white/15 transition-all duration-300">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-white/70 text-sm">Active Alerts</p>
+                            <p class="text-2xl font-bold text-white">@activeAlerts?.Count(a => a.IsActive)</p>
+                        </div>
+                        <div class="bg-blue-500/20 p-3 rounded-lg">
+                            <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width='2' d="M15 17h5l-5 5v-5zM4.828 7l6.586 6.586a2 2 0 002.828 0l6.586-6.586A2 2 0 0019.414 5H4.828a2 2 0 00-1.414 2z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20 hover:bg-white/15 transition-all duration-300">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-white/70 text-sm">Critical Alerts</p>
+                            <p class="text-2xl font-bold text-red-400">@activeAlerts?.Count(a => a.Severity == AlertSeverity.Critical)</p>
+                        </div>
+                        <div class="bg-red-500/20 p-3 rounded-lg">
+                            <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width='2' d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20 hover:bg-white/15 transition-all duration-300">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-white/70 text-sm">Warning Alerts</p>
+                            <p class="text-2xl font-bold text-yellow-400">@activeAlerts?.Count(a => a.Severity == AlertSeverity.Warning)</p>
+                        </div>
+                        <div class="bg-yellow-500/20 p-3 rounded-lg">
+                            <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width='2' d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20 hover:bg-white/15 transition-all duration-300">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-white/70 text-sm">Info Alerts</p>
+                            <p class="text-2xl font-bold text-blue-400">@activeAlerts?.Count(a => a.Severity == AlertSeverity.Info)</p>
+                        </div>
+                        <div class="bg-blue-500/20 p-3 rounded-lg">
+                            <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width='2' d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alert Filters -->
+            <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20 mb-8">
+                <div class="flex flex-wrap items-center gap-4">
+                    <div class="flex items-center space-x-2">
+                        <label class="text-white/70 text-sm">Filter by Severity:</label>
+                        <select @bind="selectedSeverity" @bind:after="OnSeverityFilterChanged"
+                                class="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            <option value="">All Severities</option>
+                            <option value="Info">Info</option>
+                            <option value="Warning">Warning</option>
+                            <option value="Critical">Critical</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <label class="text-white/70 text-sm">Filter by Status:</label>
+                        <select @bind="selectedStatus" @bind:after="OnStatusFilterChanged"
+                                class="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            <option value="">All Statuses</option>
+                            <option value="true">Active</option>
+                            <option value="false">Inactive</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <label class="text-white/70 text-sm">Filter by Budget:</label>
+                        <select @bind="selectedBudgetId" @bind:after="OnBudgetFilterChanged"
+                                class="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            <option value="">All Budgets</option>
+                            @if (budgets != null)
+                            {
+                                @foreach (var budget in budgets)
+                                {
+                                    <option value="@budget.Id">@budget.Name</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Alerts List -->
+            @if (filteredAlerts != null && filteredAlerts.Any())
+            {
+                <div class="space-y-4">
+                    @foreach (var alert in filteredAlerts.OrderByDescending(a => a.CreatedAt))
+                    {
+                        <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20 hover:bg-white/15 transition-all duration-300">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-3 mb-2">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium @GetSeverityBadgeClass(alert.Severity)">
+                                            @alert.Severity
+                                        </span>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium @(alert.IsActive ? "bg-green-500/20 text-green-300" : "bg-gray-500/20 text-gray-300")">
+                                            @(alert.IsActive ? "Active" : "Inactive")
+                                        </span>
+                                        <span class="text-white/60 text-sm">@alert.CreatedAt.ToString("MMM dd, yyyy HH:mm")</span>
+                                    </div>
+                                    <h3 class="text-lg font-semibold text-white mb-2">@alert.Budget?.Name Alert</h3>
+                                    <p class="text-white/80 mb-3">@alert.Message</p>
+                                    <div class="flex items-center space-x-4 text-sm text-white/60">
+                                        <span>Threshold: @alert.ThresholdPercentage%</span>
+                                        <span>Budget: @alert.Budget?.Name</span>
+                                        @if (alert.Budget != null)
+                                        {
+                                            <span>Utilization: @alert.Budget.UtilizationPercentage.ToString("F1")%</span>
+                                        }
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-2 ml-4">
+                                    @if (alert.IsActive)
+                                    {
+                                        <button @onclick="() => DismissAlert(alert.Id)" 
+                                                class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm transition-colors">
+                                            Dismiss
+                                        </button>
+                                    }
+                                    <button @onclick="() => EditAlert(alert)" 
+                                            class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors">
+                                        Edit
+                                    </button>
+                                    <button @onclick="() => DeleteAlert(alert.Id)" 
+                                            class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition-colors">
+                                        Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="bg-white/10 backdrop-blur-md rounded-xl p-12 border border-white/20 text-center">
+                    <svg class="mx-auto h-12 w-12 text-white/40 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width='2' d="M15 17h5l-5 5v-5zM4.828 7l6.586 6.586a2 2 0 002.828 0l6.586-6.586A2 2 0 0019.414 5H4.828a2 2 0 00-1.414 2z"></path>
+                    </svg>
+                    <h3 class="text-lg font-medium text-white/70 mb-2">No alerts found</h3>
+                    <p class="text-white/50 mb-4">Create budget alerts to monitor your spending and get notified when you approach your limits.</p>
+                    <button @onclick="ShowCreateAlertModal" 
+                            class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg transition-colors">
+                        Create Your First Alert
+                    </button>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+<!-- Create/Edit Alert Modal -->
+@if (showCreateModal)
+{
+    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-semibold text-white">@(editingAlert != null ? "Edit Alert" : "Create Alert")</h2>
+                    <button @onclick="HideCreateModal" class="text-white/60 hover:text-white">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <EditForm Model="alertModel" OnValidSubmit="SaveAlert">
+                    <DataAnnotationsValidator />
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-white/80 mb-2">Budget</label>
+                            <InputSelect @bind-Value="alertModel.BudgetId" class="w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                <option value="">Select a budget</option>
+                                @if (budgets != null)
+                                {
+                                    @foreach (var budget in budgets)
+                                    {
+                                        <option value="@budget.Id">@budget.Name</option>
+                                    }
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="@(() => alertModel.BudgetId)" class="text-red-400 text-sm mt-1" />
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-white/80 mb-2">Threshold Percentage</label>
+                            <InputNumber @bind-Value="alertModel.ThresholdPercentage" class="w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                            <ValidationMessage For="@(() => alertModel.ThresholdPercentage)" class="text-red-400 text-sm mt-1" />
+                            <p class="text-white/60 text-xs mt-1">Alert will trigger when budget utilization reaches this percentage</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-white/80 mb-2">Severity</label>
+                            <InputSelect @bind-Value="alertModel.Severity" class="w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                <option value="@AlertSeverity.Info">Info</option>
+                                <option value="@AlertSeverity.Warning">Warning</option>
+                                <option value="@AlertSeverity.Critical">Critical</option>
+                            </InputSelect>
+                            <ValidationMessage For="@(() => alertModel.Severity)" class="text-red-400 text-sm mt-1" />
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-white/80 mb-2">Custom Message (Optional)</label>
+                            <InputTextArea @bind-Value="alertModel.Message" rows="3" class="w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="Custom alert message..." />
+                            <ValidationMessage For="@(() => alertModel.Message)" class="text-red-400 text-sm mt-1" />
+                        </div>
+
+                        <div class="flex items-center space-x-2">
+                            <InputCheckbox @bind-Value="alertModel.IsActive" class="rounded border-white/20 bg-white/10 text-purple-600 focus:ring-purple-500" />
+                            <label class="text-sm text-white/80">Active</label>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button type="button" @onclick="HideCreateModal" 
+                                class="px-4 py-2 text-white/70 hover:text-white transition-colors">
+                            Cancel
+                        </button>
+                        <button type="submit" 
+                                class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg transition-colors">
+                            @(editingAlert != null ? "Update Alert" : "Create Alert")
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool isLoading = true;
+    private bool showCreateModal = false;
+    private string selectedSeverity = "";
+    private string selectedStatus = "";
+    private string selectedBudgetId = "";
+
+    private List<BudgetAlert>? activeAlerts;
+    private List<BudgetAlert>? filteredAlerts;
+    private IEnumerable<Budget>? budgets;
+    private BudgetAlert? editingAlert;
+    private AlertCreateModel alertModel = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+        await JSRuntime.InvokeVoidAsync("initializeParticles");
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            activeAlerts = (await BudgetService.GetActiveBudgetAlertsAsync()).ToList();
+            budgets = await BudgetService.GetAllBudgetsAsync();
+            ApplyFilters();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading alerts: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ApplyFilters()
+    {
+        filteredAlerts = activeAlerts?.Where(alert =>
+        {
+            if (!string.IsNullOrEmpty(selectedSeverity) && alert.Severity.ToString() != selectedSeverity)
+                return false;
+
+            if (!string.IsNullOrEmpty(selectedStatus))
+            {
+                var isActive = bool.Parse(selectedStatus);
+                if (alert.IsActive != isActive)
+                    return false;
+            }
+
+            if (!string.IsNullOrEmpty(selectedBudgetId) && alert.BudgetId != selectedBudgetId)
+                return false;
+
+            return true;
+        }).ToList();
+
+        StateHasChanged();
+    }
+
+    private void OnSeverityFilterChanged()
+    {
+        ApplyFilters();
+    }
+
+    private void OnStatusFilterChanged()
+    {
+        ApplyFilters();
+    }
+
+    private void OnBudgetFilterChanged()
+    {
+        ApplyFilters();
+    }
+
+    private async Task RefreshAlerts()
+    {
+        await LoadData();
+    }
+
+    private void ShowCreateAlertModal()
+    {
+        editingAlert = null;
+        alertModel = new AlertCreateModel();
+        showCreateModal = true;
+        StateHasChanged();
+    }
+
+    private void EditAlert(BudgetAlert alert)
+    {
+        editingAlert = alert;
+        alertModel = new AlertCreateModel
+        {
+            BudgetId = alert.BudgetId,
+            ThresholdPercentage = alert.ThresholdPercentage,
+            Severity = alert.Severity,
+            Message = alert.Message,
+            IsActive = alert.IsActive
+        };
+        showCreateModal = true;
+        StateHasChanged();
+    }
+
+    private void HideCreateModal()
+    {
+        showCreateModal = false;
+        editingAlert = null;
+        alertModel = new AlertCreateModel();
+        StateHasChanged();
+    }
+
+    private async Task SaveAlert()
+    {
+        try
+        {
+            if (editingAlert != null)
+            {
+                // Update existing alert
+                editingAlert.ThresholdPercentage = alertModel.ThresholdPercentage;
+                editingAlert.Severity = alertModel.Severity;
+                editingAlert.Message = alertModel.Message ?? "";
+                editingAlert.IsActive = alertModel.IsActive;
+
+                await BudgetService.UpdateBudgetAlertAsync(editingAlert);
+            }
+            else
+            {
+                // Create new alert
+                var newAlert = new BudgetAlert
+                {
+                    BudgetId = alertModel.BudgetId,
+                    ThresholdPercentage = alertModel.ThresholdPercentage,
+                    Severity = alertModel.Severity,
+                    Message = alertModel.Message ?? "",
+                    IsActive = alertModel.IsActive,
+                    CreatedAt = DateTime.Now
+                };
+
+                await BudgetService.CreateBudgetAlertAsync(newAlert);
+            }
+
+            HideCreateModal();
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving alert: {ex.Message}");
+        }
+    }
+
+    private async Task DismissAlert(string alertId)
+    {
+        try
+        {
+            await BudgetService.DismissBudgetAlertAsync(alertId);
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error dismissing alert: {ex.Message}");
+        }
+    }
+
+    private async Task DeleteAlert(string alertId)
+    {
+        if (await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this alert?"))
+        {
+            try
+            {
+                await BudgetService.DeleteBudgetAlertAsync(alertId);
+                await LoadData();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error deleting alert: {ex.Message}");
+            }
+        }
+    }
+
+    private string GetSeverityBadgeClass(AlertSeverity severity)
+    {
+        return severity switch
+        {
+            AlertSeverity.Info => "bg-blue-500/20 text-blue-300",
+            AlertSeverity.Warning => "bg-yellow-500/20 text-yellow-300",
+            AlertSeverity.Critical => "bg-red-500/20 text-red-300",
+            _ => "bg-gray-500/20 text-gray-300"
+        };
+    }
+
+    private void NavigateToBudget()
+    {
+        Navigation.NavigateTo("/budget-dashboard");
+    }
+
+    public class AlertCreateModel
+    {
+        [Required(ErrorMessage = "Budget is required")]
+        public string BudgetId { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Threshold percentage is required")]
+        [Range(1, 200, ErrorMessage = "Threshold must be between 1% and 200%")]
+        public decimal ThresholdPercentage { get; set; } = 75;
+
+        [Required(ErrorMessage = "Severity is required")]
+        public AlertSeverity Severity { get; set; } = AlertSeverity.Warning;
+
+        public string? Message { get; set; }
+
+        public bool IsActive { get; set; } = true;
+    }
+}

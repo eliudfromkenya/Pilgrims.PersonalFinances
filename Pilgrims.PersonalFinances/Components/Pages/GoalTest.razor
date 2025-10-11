@@ -1,0 +1,519 @@
+@page "/goal-test"
+@using Pilgrims.PersonalFinances.Models
+@using Pilgrims.PersonalFinances.Services.Interfaces
+@using Pilgrims.PersonalFinances.Data
+@using Microsoft.EntityFrameworkCore
+@using Pilgrims.PersonalFinances.Core.Interfaces
+
+@inject INotificationService NotificationService
+@inject PersonalFinanceContext Context
+@inject IJSRuntime JSRuntime
+@inject ICurrencyService CurrencyService
+
+<PageTitle>Goal Test - Pilgrims Personal Finance</PageTitle>
+
+<!-- Particle Background -->
+<div class="fixed inset-0 overflow-hidden pointer-events-none">
+    <div class="absolute inset-0 bg-gradient-to-br from-purple-50 via-indigo-50 to-blue-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900"></div>
+    <div class="particles-container">
+        @for (int i = 0; i < 25; i++)
+        {
+            <div class="particle" style="animation-delay: @(i * 0.15)s;"></div>
+        }
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="relative z-10 min-h-screen p-6">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="glass-card p-6 rounded-2xl border border-[var(--border-color)] backdrop-blur-lg bg-[var(--card-bg)]">
+            <h1 class="text-4xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                🎯 Goal Model & Notification Integration Test
+            </h1>
+            <p class="text-[var(--text-secondary)] mt-2">Test the Goal model integration with the notification system</p>
+        </div>
+    </div>
+
+    <!-- Test Actions -->
+    <div class="mb-8">
+        <div class="glass-card p-6 rounded-2xl border border-[var(--border-color)] backdrop-blur-lg bg-[var(--card-bg)]">
+            <h2 class="text-2xl font-bold text-[var(--text-primary)] mb-4">🧪 Test Actions</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <button @onclick="CreateTestGoal" 
+                        class="p-4 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-xl hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors">
+                    <div class="text-2xl mb-2">➕</div>
+                    <div class="font-semibold">Create Test Goal</div>
+                    <div class="text-sm opacity-75">Add a sample goal to the database</div>
+                </button>
+                
+                <button @onclick="TestGoalReminder" 
+                        class="p-4 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-xl hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors">
+                    <div class="text-2xl mb-2">🔔</div>
+                    <div class="font-semibold">Test Goal Reminder</div>
+                    <div class="text-sm opacity-75">Create a goal reminder notification</div>
+                </button>
+                
+                <button @onclick="TestGoalDeadline" 
+                        class="p-4 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-xl hover:bg-orange-200 dark:hover:bg-orange-900/50 transition-colors">
+                    <div class="text-2xl mb-2">⏰</div>
+                    <div class="font-semibold">Test Goal Deadline</div>
+                    <div class="text-sm opacity-75">Create a goal deadline notification</div>
+                </button>
+                
+                <button @onclick="TestGoalProgress" 
+                        class="p-4 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-xl hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors">
+                    <div class="text-2xl mb-2">📊</div>
+                    <div class="font-semibold">Test Goal Progress</div>
+                    <div class="text-sm opacity-75">Create a goal progress notification</div>
+                </button>
+                
+                <button @onclick="TestGoalAchieved" 
+                        class="p-4 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded-xl hover:bg-yellow-200 dark:hover:bg-yellow-900/50 transition-colors">
+                    <div class="text-2xl mb-2">🎉</div>
+                    <div class="font-semibold">Test Goal Achieved</div>
+                    <div class="text-sm opacity-75">Create a goal achieved notification</div>
+                </button>
+                
+                <button @onclick="LoadGoals" 
+                        class="p-4 bg-gray-100 dark:bg-gray-900/30 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-900/50 transition-colors">
+                    <div class="text-2xl mb-2">🔄</div>
+                    <div class="font-semibold">Refresh Goals</div>
+                    <div class="text-sm opacity-75">Reload goals from database</div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Current Goals -->
+    <div class="mb-8">
+        <div class="glass-card p-6 rounded-2xl border border-[var(--border-color)] backdrop-blur-lg bg-[var(--card-bg)]">
+            <h2 class="text-2xl font-bold text-[var(--text-primary)] mb-4">📋 Current Goals</h2>
+            @if (goals.Any())
+            {
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    @foreach (var goal in goals)
+                    {
+                        <div class="p-4 bg-[var(--input-bg)] rounded-lg border border-[var(--border-color)]">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-semibold text-[var(--text-primary)]">@goal.Name</h3>
+                                <span class="text-sm text-[var(--text-secondary)]">@goal.Id</span>
+                            </div>
+                            <p class="text-sm text-[var(--text-secondary)] mb-2">@goal.Description</p>
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-[var(--text-primary)]">Target: @(formattedAmounts.TryGetValue(goal.TargetAmount, out var formatted) ? formatted : goal.TargetAmount.ToString("C"))</span>
+                                <span class="text-[var(--text-secondary)]">Due: @goal.TargetDate.ToString("MMM dd, yyyy")</span>
+                            </div>
+                            @if (!string.IsNullOrEmpty(goal.Category))
+                            {
+                                <div class="mt-2 text-xs text-blue-600 dark:text-blue-400">
+                                    Category: @goal.Category
+                                </div>
+                            }
+                            <div class="mt-3 flex space-x-2">
+                                <button @onclick="@(() => TestGoalReminderForGoal(goal.Id))" 
+                                        class="px-3 py-1 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded hover:bg-blue-200 dark:hover:bg-blue-900/50">
+                                    Reminder
+                                </button>
+                                <button @onclick="@(() => TestGoalDeadlineForGoal(goal.Id))" 
+                                        class="px-3 py-1 text-xs bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded hover:bg-orange-200 dark:hover:bg-orange-900/50">
+                                    Deadline
+                                </button>
+                                <button @onclick="@(() => TestGoalProgressForGoal(goal.Id))" 
+                                        class="px-3 py-1 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded hover:bg-purple-200 dark:hover:bg-purple-900/50">
+                                    Progress
+                                </button>
+                                <button @onclick="@(() => TestGoalAchievedForGoal(goal.Id))" 
+                                        class="px-3 py-1 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded hover:bg-green-200 dark:hover:bg-green-900/50">
+                                    Achieved
+                                </button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-8 text-[var(--text-secondary)]">
+                    <div class="text-4xl mb-4">📭</div>
+                    <p>No goals found. Create a test goal to get started!</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Test Results -->
+    <div class="mb-8">
+        <div class="glass-card p-6 rounded-2xl border border-[var(--border-color)] backdrop-blur-lg bg-[var(--card-bg)]">
+            <h2 class="text-2xl font-bold text-[var(--text-primary)] mb-4">📊 Test Results</h2>
+            @if (testResults.Any())
+            {
+                <div class="space-y-3">
+                    @foreach (var result in testResults.OrderByDescending(r => r.Timestamp))
+                    {
+                        <div class="p-3 rounded-lg border @GetResultClass(result.Success)">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-lg">@(result.Success ? "✅" : "❌")</span>
+                                    <span class="font-medium">@result.Action</span>
+                                </div>
+                                <span class="text-sm text-[var(--text-secondary)]">@result.Timestamp.ToString("HH:mm:ss")</span>
+                            </div>
+                            <p class="text-sm mt-1 @(result.Success ? "text-green-700 dark:text-green-300" : "text-red-700 dark:text-red-300")">
+                                @result.Message
+                            </p>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-4 text-[var(--text-secondary)]">
+                    <p>No test results yet. Run some tests to see results here!</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<Goal> goals = new();
+    private List<TestResult> testResults = new();
+    private string? lastCreatedGoalId;
+    private Dictionary<decimal, string> formattedAmounts = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadGoals();
+        await PreformatAmounts();
+        
+        // Run initial tests
+        await RunModelTests();
+    }
+
+    private async Task PreformatAmounts()
+    {
+        var amounts = new HashSet<decimal>();
+        
+        // Collect all amounts that need formatting
+        foreach (var goal in goals)
+        {
+            amounts.Add(goal.TargetAmount);
+        }
+
+        // Format all amounts
+        foreach (var amount in amounts)
+        {
+            formattedAmounts[amount] = await CurrencyService.FormatAmountAsync(amount);
+        }
+    }
+
+    private async Task RunModelTests()
+    {
+        try
+        {
+            // Test Goal Model Properties and Methods
+            var testGoal = new Goal
+            {
+                Id = Guid.NewGuid().ToString(),
+                Name = "Model Test Goal",
+                Description = "Testing Goal model functionality",
+                GoalType = GoalType.EmergencyFund,
+                TargetAmount = 10000m,
+                CurrentAmount = 3000m,
+                StartDate = DateTime.Now.AddMonths(-2),
+                TargetDate = DateTime.Now.AddMonths(4),
+                Priority = 1,
+                Category = "Testing",
+                EnableReminders = true,
+                ReminderFrequencyDays = 30,
+                CreatedAt = DateTime.Now.AddMonths(-2)
+            };
+
+            // Test computed properties
+            AddTestResult("Goal Progress Calculation", true, 
+                $"Progress: {testGoal.ProgressPercentage}% | Remaining: {testGoal.FormattedRemainingAmount} | Days Left: {testGoal.DaysRemaining}");
+
+            // Test progress update
+            var originalAmount = testGoal.CurrentAmount;
+            testGoal.UpdateProgress(2000m);
+            AddTestResult("Goal Progress Update", true, 
+                $"Updated from {originalAmount:C} to {testGoal.CurrentAmount:C} | New Progress: {testGoal.ProgressPercentage}%");
+
+            // Test validation
+            var validation = testGoal.Validate();
+            AddTestResult("Goal Validation", validation.IsValid, 
+                validation.IsValid ? "Goal validation passed" : $"Validation errors: {string.Join(", ", validation.Errors)}");
+
+            // Test reminder logic
+            var reminderDue = testGoal.IsReminderDue();
+            AddTestResult("Reminder Logic", true, 
+                $"Reminder due: {reminderDue} | On track: {testGoal.IsOnTrack}");
+
+            // Test completion
+            testGoal.UpdateProgress(testGoal.RemainingAmount);
+            AddTestResult("Goal Completion", testGoal.IsCompleted, 
+                $"Goal completed: {testGoal.IsCompleted} | Completion date: {testGoal.CompletedDate}");
+
+        }
+        catch (Exception ex)
+        {
+            AddTestResult("Model Tests", false, $"Error in model tests: {ex.Message}");
+        }
+    }
+
+    private async Task LoadGoals()
+    {
+        try
+        {
+            goals = await Context.Goals.ToListAsync();
+            AddTestResult("Load Goals", true, $"Loaded {goals.Count} goals from database");
+        }
+        catch (Exception ex)
+        {
+            AddTestResult("Load Goals", false, $"Error loading goals: {ex.Message}");
+        }
+        StateHasChanged();
+    }
+
+    private async Task CreateTestGoal()
+    {
+        try
+        {
+            var goal = new Goal
+            {
+                Id = Guid.NewGuid().ToString(),
+                Name = $"Test Goal {DateTime.Now:HHmmss}",
+                Description = "This is a test goal created for integration testing",
+                TargetAmount = 1000m,
+                TargetDate = DateTime.Now.AddMonths(6),
+                CreatedAt = DateTime.UtcNow
+            };
+
+            Context.Goals.Add(goal);
+            await Context.SaveChangesAsync();
+            
+            lastCreatedGoalId = goal.Id;
+            await LoadGoals();
+            
+            AddTestResult("Create Test Goal", true, $"Created goal '{goal.Name}' with ID: {goal.Id}");
+        }
+        catch (Exception ex)
+        {
+            AddTestResult("Create Test Goal", false, $"Error creating goal: {ex.Message}");
+        }
+    }
+
+    private async Task TestGoalReminder()
+    {
+        if (string.IsNullOrEmpty(lastCreatedGoalId) && goals.Any())
+        {
+            lastCreatedGoalId = goals.First().Id;
+        }
+
+        if (string.IsNullOrEmpty(lastCreatedGoalId))
+        {
+            AddTestResult("Goal Reminder Test", false, "No goal available for testing. Create a goal first.");
+            return;
+        }
+
+        try
+        {
+            await NotificationService.CreateGoalReminderAsync(lastCreatedGoalId);
+            AddTestResult("Goal Reminder Test", true, $"Created goal reminder notification for goal ID: {lastCreatedGoalId}");
+        }
+        catch (Exception ex)
+        {
+            AddTestResult("Goal Reminder Test", false, $"Error creating goal reminder: {ex.Message}");
+        }
+    }
+
+    private async Task TestGoalDeadline()
+    {
+        if (string.IsNullOrEmpty(lastCreatedGoalId) && goals.Any())
+        {
+            lastCreatedGoalId = goals.First().Id;
+        }
+
+        if (string.IsNullOrEmpty(lastCreatedGoalId))
+        {
+            AddTestResult("Goal Deadline Test", false, "No goal available for testing. Create a goal first.");
+            return;
+        }
+
+        try
+        {
+            await NotificationService.CreateGoalDeadlineNotificationAsync(lastCreatedGoalId);
+            AddTestResult("Goal Deadline Test", true, $"Created goal deadline notification for goal ID: {lastCreatedGoalId}");
+        }
+        catch (Exception ex)
+        {
+            AddTestResult("Goal Deadline Test", false, $"Error creating goal deadline notification: {ex.Message}");
+        }
+    }
+
+    private async Task TestGoalProgress()
+    {
+        if (string.IsNullOrEmpty(lastCreatedGoalId) && goals.Any())
+        {
+            lastCreatedGoalId = goals.First().Id;
+        }
+
+        if (string.IsNullOrEmpty(lastCreatedGoalId))
+        {
+            AddTestResult("Goal Progress Test", false, "No goal available for testing. Create a goal first.");
+            return;
+        }
+
+        try
+        {
+            var progressPercentage = new Random().Next(10, 90);
+            await NotificationService.CreateGoalProgressNotificationAsync(lastCreatedGoalId, progressPercentage);
+            AddTestResult("Goal Progress Test", true, $"Created goal progress notification ({progressPercentage}%) for goal ID: {lastCreatedGoalId}");
+        }
+        catch (Exception ex)
+        {
+            AddTestResult("Goal Progress Test", false, $"Error creating goal progress notification: {ex.Message}");
+        }
+    }
+
+    private async Task TestGoalAchieved()
+    {
+        if (string.IsNullOrEmpty(lastCreatedGoalId) && goals.Any())
+        {
+            lastCreatedGoalId = goals.First().Id;
+        }
+
+        if (string.IsNullOrEmpty(lastCreatedGoalId))
+        {
+            AddTestResult("Goal Achieved Test", false, "No goal available for testing. Create a goal first.");
+            return;
+        }
+
+        try
+        {
+            await NotificationService.CreateGoalAchievedNotificationAsync(lastCreatedGoalId);
+            AddTestResult("Goal Achieved Test", true, $"Created goal achieved notification for goal ID: {lastCreatedGoalId}");
+        }
+        catch (Exception ex)
+        {
+            AddTestResult("Goal Achieved Test", false, $"Error creating goal achieved notification: {ex.Message}");
+        }
+    }
+
+    private async Task TestGoalReminderForGoal(string goalId)
+    {
+        try
+        {
+            await NotificationService.CreateGoalReminderAsync(goalId);
+            AddTestResult("Goal Reminder Test", true, $"Created goal reminder notification for goal ID: {goalId}");
+        }
+        catch (Exception ex)
+        {
+            AddTestResult("Goal Reminder Test", false, $"Error creating goal reminder: {ex.Message}");
+        }
+    }
+
+    private async Task TestGoalDeadlineForGoal(string goalId)
+    {
+        try
+        {
+            await NotificationService.CreateGoalDeadlineNotificationAsync(goalId);
+            AddTestResult("Goal Deadline Test", true, $"Created goal deadline notification for goal ID: {goalId}");
+        }
+        catch (Exception ex)
+        {
+            AddTestResult("Goal Deadline Test", false, $"Error creating goal deadline notification: {ex.Message}");
+        }
+    }
+
+    private async Task TestGoalProgressForGoal(string goalId)
+    {
+        try
+        {
+            var progressPercentage = new Random().Next(10, 90);
+            await NotificationService.CreateGoalProgressNotificationAsync(goalId, progressPercentage);
+            AddTestResult("Goal Progress Test", true, $"Created goal progress notification ({progressPercentage}%) for goal ID: {goalId}");
+        }
+        catch (Exception ex)
+        {
+            AddTestResult("Goal Progress Test", false, $"Error creating goal progress notification: {ex.Message}");
+        }
+    }
+
+    private async Task TestGoalAchievedForGoal(string goalId)
+    {
+        try
+        {
+            await NotificationService.CreateGoalAchievedNotificationAsync(goalId);
+            AddTestResult("Goal Achieved Test", true, $"Created goal achieved notification for goal ID: {goalId}");
+        }
+        catch (Exception ex)
+        {
+            AddTestResult("Goal Achieved Test", false, $"Error creating goal achieved notification: {ex.Message}");
+        }
+    }
+
+    private async Task TestSpecificGoalNotification(string goalId, string type)
+    {
+        try
+        {
+            switch (type.ToLower())
+            {
+                case "reminder":
+                    await NotificationService.CreateGoalReminderAsync(goalId);
+                    break;
+                case "deadline":
+                    await NotificationService.CreateGoalDeadlineNotificationAsync(goalId);
+                    break;
+                case "progress":
+                    var progressPercentage = new Random().Next(10, 90);
+                    await NotificationService.CreateGoalProgressNotificationAsync(goalId, progressPercentage);
+                    break;
+                case "achieved":
+                    await NotificationService.CreateGoalAchievedNotificationAsync(goalId);
+                    break;
+            }
+            
+            AddTestResult($"Goal {type} Test", true, $"Created {type} notification for goal ID: {goalId}");
+        }
+        catch (Exception ex)
+        {
+            AddTestResult($"Goal {type} Test", false, $"Error creating {type} notification: {ex.Message}");
+        }
+    }
+
+    private void AddTestResult(string action, bool success, string message)
+    {
+        testResults.Add(new TestResult
+        {
+            Action = action,
+            Success = success,
+            Message = message,
+            Timestamp = DateTime.Now
+        });
+
+        // Keep only the last 10 results
+        if (testResults.Count > 10)
+        {
+            testResults = testResults.OrderByDescending(r => r.Timestamp).Take(10).ToList();
+        }
+
+        StateHasChanged();
+    }
+
+    private string GetResultClass(bool success)
+    {
+        return success 
+            ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800" 
+            : "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800";
+    }
+
+    public class TestResult
+    {
+        public string Action { get; set; } = string.Empty;
+        public bool Success { get; set; }
+        public string Message { get; set; } = string.Empty;
+        public DateTime Timestamp { get; set; }
+    }
+}

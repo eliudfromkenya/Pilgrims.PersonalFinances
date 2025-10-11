@@ -1,0 +1,234 @@
+@using Pilgrims.PersonalFinances.Core.Localization.Interfaces
+@using System.Globalization
+@inject ILocalizationService LocalizationService
+@inject ICultureManager CultureManager
+@inject IJSRuntime JSRuntime
+
+<div class="language-selector">
+    <div class="dropdown">
+        <button @onclick="ToggleDropdown" 
+                class="dropdown-toggle flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <span class="flag-icon">@GetFlagEmoji(currentCulture)</span>
+            <span>@GetLanguageDisplayName(currentCulture)</span>
+            <svg class="w-4 h-4 transition-transform duration-200 @(isDropdownOpen ? "rotate-180" : "")" 
+                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+        </button>
+
+        @if (isDropdownOpen)
+        {
+            <div class="dropdown-menu absolute top-full left-0 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg z-50 min-w-[200px]">
+                <div class="py-1">
+                    @foreach (var culture in supportedCultures)
+                    {
+                        <button @onclick="() => SelectLanguage(culture)" 
+                                class="dropdown-item w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors duration-200 flex items-center space-x-3 @(culture.Name == currentCulture.Name ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400" : "")">
+                            <span class="flag-icon text-lg">@GetFlagEmoji(culture)</span>
+                            <div class="flex flex-col">
+                                <span class="font-medium">@GetLanguageDisplayName(culture)</span>
+                                <span class="text-xs text-gray-500 dark:text-gray-400">@culture.NativeName</span>
+                            </div>
+                            @if (culture.Name == currentCulture.Name)
+                            {
+                                <svg class="w-4 h-4 ml-auto text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                            }
+                        </button>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private bool isDropdownOpen = false;
+    private CultureInfo currentCulture = new CultureInfo("en");
+    private IEnumerable<CultureInfo> supportedCultures = new List<CultureInfo>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // CultureManager is already initialized in MainLayout, so we just get the current state
+            currentCulture = LocalizationService.GetCurrentCulture();
+            supportedCultures = LocalizationService.GetAvailableCultures();
+
+            // Subscribe to culture changes
+            LocalizationService.CultureChanged += OnCultureChanged;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error initializing language selector: {ex.Message}");
+        }
+    }
+
+    private void ToggleDropdown()
+    {
+        isDropdownOpen = !isDropdownOpen;
+    }
+
+    private async Task SelectLanguage(CultureInfo culture)
+    {
+        try
+        {
+            isDropdownOpen = false;
+            
+            if (culture.Name != currentCulture.Name)
+            {
+                // Save culture preference first
+                await CultureManager.SaveCultureAsync(culture);
+                
+                // Set the culture in the localization service
+                await LocalizationService.SetCultureAsync(culture);
+                
+                // Update current culture and refresh UI
+                currentCulture = culture;
+                StateHasChanged();
+                
+                // Refresh the page to apply the new culture after a short delay to ensure save completes
+                await Task.Delay(100);
+                await JSRuntime.InvokeVoidAsync("location.reload");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error selecting language: {ex.Message}");
+        }
+    }
+
+    private void OnCultureChanged(object? sender, CultureInfo newCulture)
+    {
+        currentCulture = newCulture;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private string GetFlagEmoji(CultureInfo culture)
+    {
+        return culture.Name.ToLower() switch
+        {
+            "en" => "🇺🇸", // English - US flag
+            "sw" => "🇰🇪", // Swahili - Kenya flag
+            "fr" => "🇫🇷", // French - France flag
+            "de" => "🇩🇪", // German - Germany flag
+            "es" => "🇪🇸", // Spanish - Spain flag
+            _ => "🌐"      // Default globe icon
+        };
+    }
+
+    private string GetLanguageDisplayName(CultureInfo culture)
+    {
+        return culture.Name.ToLower() switch
+        {
+            "en" => LocalizationService.GetString("Language_English"),
+            "sw" => LocalizationService.GetString("Language_Swahili"),
+            "fr" => LocalizationService.GetString("Language_French"),
+            "de" => LocalizationService.GetString("Language_German"),
+            "es" => LocalizationService.GetString("Language_Spanish"),
+            _ => culture.DisplayName
+        };
+    }
+
+    // Close dropdown when clicking outside
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("addClickOutsideListener", "language-selector");
+        }
+    }
+
+    public void Dispose()
+    {
+        if (LocalizationService != null)
+        {
+            LocalizationService.CultureChanged -= OnCultureChanged;
+        }
+    }
+}
+
+<style>
+    .language-selector {
+        position: relative;
+        display: inline-block;
+    }
+
+    .dropdown {
+        position: relative;
+    }
+
+    .dropdown-toggle {
+        min-width: 140px;
+        justify-content: space-between;
+    }
+
+    .dropdown-menu {
+        animation: fadeIn 0.15s ease-out;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .dropdown-item {
+        transition: all 0.15s ease-in-out;
+    }
+
+    .dropdown-item:first-child {
+        border-top-left-radius: 0.5rem;
+        border-top-right-radius: 0.5rem;
+    }
+
+    .dropdown-item:last-child {
+        border-bottom-left-radius: 0.5rem;
+        border-bottom-right-radius: 0.5rem;
+    }
+
+    .flag-icon {
+        font-size: 1.2em;
+        line-height: 1;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Dark mode adjustments */
+    @@media (prefers-color-scheme: dark) {
+        .dropdown-menu {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+    }
+
+    /* Mobile responsiveness */
+    @@media (max-width: 640px) {
+        .dropdown-toggle {
+            min-width: 120px;
+            padding: 0.5rem;
+        }
+        
+        .dropdown-menu {
+            min-width: 180px;
+        }
+    }
+</style>
+
+<script>
+    window.addClickOutsideListener = (elementClass) => {
+        document.addEventListener('click', function(event) {
+            const dropdown = document.querySelector('.' + elementClass);
+            if (dropdown && !dropdown.contains(event.target)) {
+                // Close dropdown by triggering a custom event
+                const closeEvent = new CustomEvent('closeDropdown');
+                dropdown.dispatchEvent(closeEvent);
+            }
+        });
+    };
+</script>

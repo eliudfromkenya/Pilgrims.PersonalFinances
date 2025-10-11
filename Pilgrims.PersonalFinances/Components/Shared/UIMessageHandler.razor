@@ -1,0 +1,196 @@
+@using Microsoft.JSInterop
+@using Pilgrims.PersonalFinances.Core.Messaging.Interfaces
+@using Pilgrims.PersonalFinances.Core.Messaging.Messages
+@inject IJSRuntime JSRuntime
+@inject IMessagingService MessagingService
+@implements IDisposable
+
+@* This component handles UI messages and executes JavaScript operations *@
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        // Register to UI messages
+        MessagingService.Register<ShowAlertMessage>(this, (recipient, message) => HandleAlertMessage(message));
+        MessagingService.Register<ShowConfirmationMessage>(this, (recipient, message) => HandleConfirmationMessage(message));
+        MessagingService.Register<DownloadFileMessage>(this, (recipient, message) => HandleDownloadFileMessage(message));
+        MessagingService.Register<PrintMessage>(this, (recipient, message) => HandlePrintMessage(message));
+        MessagingService.Register<InitializeJavaScriptMessage>(this, (recipient, message) => HandleInitializeJavaScriptMessage(message));
+        MessagingService.Register<UpdateJavaScriptMessage>(this, (recipient, message) => HandleUpdateJavaScriptMessage(message));
+        MessagingService.Register<LocalStorageMessage>(this, (recipient, message) => HandleLocalStorageMessage(message));
+        MessagingService.Register<ToggleDarkModeMessage>(this, (recipient, message) => HandleToggleDarkModeMessage(message));
+        MessagingService.Register<ConsoleLogMessage>(this, (recipient, message) => HandleConsoleLogMessage(message));
+
+        await base.OnInitializedAsync();
+    }
+
+    private async Task HandleAlertMessage(ShowAlertMessage message)
+    {
+        await JSRuntime.InvokeVoidAsync("alert", message.Message);
+    }
+
+    private async Task HandleConfirmationMessage(ShowConfirmationMessage message)
+    {
+        var result = await JSRuntime.InvokeAsync<bool>("confirm", message.Message);
+        message.OnResult?.Invoke(result);
+    }
+
+    private async Task HandleDownloadFileMessage(DownloadFileMessage message)
+    {
+        var base64Data = Convert.ToBase64String(message.FileData);
+        await JSRuntime.InvokeVoidAsync("downloadFile", message.FileName, base64Data);
+    }
+
+    private async Task HandlePrintMessage(PrintMessage message)
+    {
+        if (message.PrintEntirePage)
+        {
+            await JSRuntime.InvokeVoidAsync("window.print");
+        }
+        else if (!string.IsNullOrEmpty(message.ElementId))
+        {
+            await JSRuntime.InvokeVoidAsync("printElement", message.ElementId);
+        }
+    }
+
+    private async Task HandleInitializeJavaScriptMessage(InitializeJavaScriptMessage message)
+    {
+        try
+        {
+            switch (message.ComponentType.ToLower())
+            {
+                case "particles":
+                    await JSRuntime.InvokeVoidAsync("initializeParticles");
+                    break;
+                case "piechart":
+                    await JSRuntime.InvokeVoidAsync("initializePieChart", message.ElementId, message.Data);
+                    break;
+                case "linechart":
+                    await JSRuntime.InvokeVoidAsync("initializeLineChart", message.ElementId, message.Data);
+                    break;
+                case "payoffchart":
+                    await JSRuntime.InvokeVoidAsync("initializePayoffChart", message.ElementId, message.Data);
+                    break;
+                case "performancechart":
+                    await JSRuntime.InvokeVoidAsync("initializePerformanceChart", message.ElementId, message.Data);
+                    break;
+                case "variancechart":
+                    await JSRuntime.InvokeVoidAsync("initializeVarianceChart", message.ElementId, message.Data);
+                    break;
+                default:
+                    await JSRuntime.InvokeVoidAsync($"initialize{message.ComponentType}", message.ElementId, message.Data);
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", $"Error initializing {message.ComponentType}:", ex.Message);
+        }
+    }
+
+    private async Task HandleUpdateJavaScriptMessage(UpdateJavaScriptMessage message)
+    {
+        try
+        {
+            switch (message.ComponentType.ToLower())
+            {
+                case "performancechart":
+                    await JSRuntime.InvokeVoidAsync("updatePerformanceChart", message.ElementId, message.Data);
+                    break;
+                case "variancechart":
+                    await JSRuntime.InvokeVoidAsync("updateVarianceChart", message.ElementId, message.Data);
+                    break;
+                default:
+                    await JSRuntime.InvokeVoidAsync($"update{message.ComponentType}", message.ElementId, message.Data);
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", $"Error updating {message.ComponentType}:", ex.Message);
+        }
+    }
+
+    private async Task HandleLocalStorageMessage(LocalStorageMessage message)
+    {
+        try
+        {
+            switch (message.Action)
+            {
+                case LocalStorageMessage.Operation.Set:
+                    await JSRuntime.InvokeVoidAsync("localStorage.setItem", message.Key, message.Value);
+                    break;
+                case LocalStorageMessage.Operation.Get:
+                    var value = await JSRuntime.InvokeAsync<string?>("localStorage.getItem", message.Key);
+                    message.OnResult?.Invoke(value);
+                    break;
+                case LocalStorageMessage.Operation.Remove:
+                    await JSRuntime.InvokeVoidAsync("localStorage.removeItem", message.Key);
+                    break;
+                case LocalStorageMessage.Operation.Clear:
+                    await JSRuntime.InvokeVoidAsync("localStorage.clear");
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", $"Error with localStorage operation:", ex.Message);
+        }
+    }
+
+    private async Task HandleToggleDarkModeMessage(ToggleDarkModeMessage message)
+    {
+        try
+        {
+            const string appContainer = "app";
+            if (message.IsDarkMode)
+            {
+                await JSRuntime.InvokeVoidAsync("eval", $"document.getElementById('{appContainer}')?.classList.add('dark')");
+                await JSRuntime.InvokeVoidAsync("eval", "document.documentElement.classList.add('dark')");
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("eval", $"document.getElementById('{appContainer}')?.classList.remove('dark')");
+                await JSRuntime.InvokeVoidAsync("eval", "document.documentElement.classList.remove('dark')");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", "Error toggling dark mode:", ex.Message);
+        }
+    }
+
+    private async Task HandleConsoleLogMessage(ConsoleLogMessage message)
+    {
+        try
+        {
+            var method = message.Level.ToString().ToLower();
+            if (message.Args?.Length > 0)
+            {
+                await JSRuntime.InvokeVoidAsync($"console.{method}", message.Message, message.Args);
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync($"console.{method}", message.Message);
+            }
+        }
+        catch
+        {
+            // Ignore console logging errors
+        }
+    }
+
+    public void Dispose()
+    {
+        // Unregister from messaging service
+        MessagingService.Unregister<ShowAlertMessage>(this);
+        MessagingService.Unregister<ShowConfirmationMessage>(this);
+        MessagingService.Unregister<DownloadFileMessage>(this);
+        MessagingService.Unregister<PrintMessage>(this);
+        MessagingService.Unregister<InitializeJavaScriptMessage>(this);
+        MessagingService.Unregister<UpdateJavaScriptMessage>(this);
+        MessagingService.Unregister<LocalStorageMessage>(this);
+        MessagingService.Unregister<ToggleDarkModeMessage>(this);
+        MessagingService.Unregister<ConsoleLogMessage>(this);
+    }
+}

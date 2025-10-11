@@ -1,49 +1,59 @@
 @using Pilgrims.PersonalFinances.Components.Shared
+@using Pilgrims.PersonalFinances.Components.Layout
+@using Pilgrims.PersonalFinances.Services
 @inherits LayoutComponentBase
+@inject IThemeService ThemeService
+@inject IJSRuntime JSRuntime
+@implements IDisposable
 
-<div class="page min-h-screen" style="background: var(--primary-bg);">
+<div class="page min-h-screen bg-blue-50 dark:bg-slate-900 transition-colors duration-300" id="app-container">
+    <!-- Custom Title Bar -->
+    <TitleBar />
+    
+    <!-- Theme Toggle Button -->
+    <button class="fixed top-4 right-4 z-50 p-3 rounded-full bg-white dark:bg-slate-800 shadow-lg border border-gray-200 dark:border-slate-700 hover:shadow-xl transition-all duration-300 hover:scale-105"
+            @onclick="ToggleDarkMode"
+            title="Toggle Dark Mode">
+        @if (isDarkMode)
+        {
+            <!-- Sun Icon for Light Mode -->
+            <svg class="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"></path>
+            </svg>
+        }
+        else
+        {
+            <!-- Moon Icon for Dark Mode -->
+            <svg class="w-5 h-5 text-slate-700" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
+            </svg>
+        }
+    </button>
+    
     <!-- Mobile Menu Button -->
-    <button class="md:hidden fixed top-4 left-4 z-50 p-2 rounded-lg transition-all duration-200 hover:scale-105 hover:shadow-lg" 
-            style="background: var(--card-bg); border: 1px solid var(--border-color);"
+    <button class="md:hidden fixed top-16 left-4 z-40 p-2 rounded-lg bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl" 
             @onclick="ToggleMobileMenu">
-        <svg class="w-6 h-6" style="color: var(--text-primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-6 h-6 text-blue-900 dark:text-blue-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
         </svg>
     </button>
 
     <!-- Sidebar -->
-    <div class="fixed left-0 top-0 h-full w-64 z-40 transform transition-transform duration-300 ease-in-out @(isMobileMenuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0")">
+    <div class="fixed left-0 top-12 h-full w-64 z-40 transform transition-transform duration-300 ease-in-out @(isMobileMenuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0")"
+         style="height: calc(100vh - 3rem);">
         <NavMenu />
     </div>
 
     <!-- Mobile Overlay -->
+    @* Temporarily commented out to test if this is causing the black circle
     @if (isMobileMenuOpen)
     {
-        <div class="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden" @onclick="CloseMobileMenu"></div>
+        <div class="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden" @onclick="CloseMobileMenu" style="top: 3rem;"></div>
     }
+    *@
 
     <!-- Main Content -->
-    <main class="ml-0 md:ml-64 min-h-screen transition-all duration-300">
-        <!-- Top Bar -->
-        <div class="shadow-sm px-6 py-4 flex justify-between items-center pl-16 md:pl-6" 
-             style="background: var(--card-bg); border-bottom: 1px solid var(--border-color);">
-            <h1 class="text-xl md:text-xl text-lg font-semibold" style="color: var(--text-primary);">
-                Personal Finance Management
-            </h1>
-            <div class="flex items-center space-x-2 md:space-x-4">
-                <ThemeSelector />
-                <button class="text-sm px-4 py-2 rounded-lg transition-all duration-300"
-                        style="background: var(--tertiary-bg); color: var(--text-primary); border: 1px solid var(--border-color);">
-                    👤 Profile
-                </button>
-                <a href="https://learn.microsoft.com/aspnet/core/" target="_blank" 
-                   class="text-sm font-medium transition-colors duration-300 px-3 py-2 rounded-lg hover:bg-opacity-10"
-                   style="color: var(--accent-color);">
-                    📚 Docs
-                </a>
-            </div>
-        </div>
-
+    <main class="ml-0 md:ml-64 min-h-screen transition-all duration-300 bg-blue-50 dark:bg-slate-900" style="padding-top: 3rem;">
         <!-- Content Area -->
         <article class="p-6">
             @Body
@@ -53,6 +63,49 @@
 
 @code {
     private bool isMobileMenuOpen = false;
+    private bool isDarkMode = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Subscribe to theme changes
+        ThemeService.ThemeChanged += OnThemeChanged;
+        
+        // Get initial theme
+        var savedTheme = await ThemeService.GetSavedThemeAsync();
+        isDarkMode = savedTheme.Contains("dark");
+        
+        // Apply initial theme
+        await ApplyTheme();
+    }
+
+    private async void OnThemeChanged(string theme)
+    {
+        isDarkMode = theme.Contains("dark");
+        await ApplyTheme();
+        StateHasChanged();
+    }
+
+    private async Task ToggleDarkMode()
+    {
+        await ThemeService.ToggleDarkModeAsync();
+        isDarkMode = !isDarkMode;
+        await ApplyTheme();
+    }
+
+    private async Task ApplyTheme()
+    {
+        var appContainer = "app-container";
+        if (isDarkMode)
+        {
+            await JSRuntime.InvokeVoidAsync("eval", $"document.getElementById('{appContainer}')?.classList.add('dark')");
+            await JSRuntime.InvokeVoidAsync("eval", "document.documentElement.classList.add('dark')");
+        }
+        else
+        {
+            await JSRuntime.InvokeVoidAsync("eval", $"document.getElementById('{appContainer}')?.classList.remove('dark')");
+            await JSRuntime.InvokeVoidAsync("eval", "document.documentElement.classList.remove('dark')");
+        }
+    }
 
     private void ToggleMobileMenu()
     {
@@ -62,5 +115,10 @@
     private void CloseMobileMenu()
     {
         isMobileMenuOpen = false;
+    }
+
+    public void Dispose()
+    {
+        ThemeService.ThemeChanged -= OnThemeChanged;
     }
 }

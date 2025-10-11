@@ -1,0 +1,538 @@
+@page "/notifications"
+@using Pilgrims.PersonalFinances.Models
+@using Pilgrims.PersonalFinances.Models.Enums
+@using Pilgrims.PersonalFinances.Services.Interfaces
+@using Pilgrims.PersonalFinances.Core.Messaging.Interfaces
+@using Pilgrims.PersonalFinances.Core.Messaging.Extensions
+
+@inject INotificationService NotificationService
+@inject NavigationManager Navigation
+@inject IMessagingService MessagingService
+@inject ILocalizationService LocalizationService
+
+<PageTitle>@LocalizationService.GetString("Notifications") - @LocalizationService.GetString("PersonalFinance")</PageTitle>
+
+<!-- Particle Background -->
+<div class="fixed inset-0 overflow-hidden pointer-events-none">
+    <div class="absolute inset-0 bg-gradient-to-br from-purple-50 via-indigo-50 to-blue-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900"></div>
+    <div class="particles-container">
+        @for (int i = 0; i < 25; i++)
+        {
+            <div class="particle" style="animation-delay: @(i * 0.15)s;"></div>
+        }
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="relative z-10 min-h-screen p-6">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="glass-card p-6 rounded-2xl border border-[var(--border-color)] backdrop-blur-lg bg-[var(--card-bg)]">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-4xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                        🔔 @LocalizationService.GetString("Notifications")
+                    </h1>
+                    <p class="text-[var(--text-secondary)] mt-2">@LocalizationService.GetString("StayUpdatedWithTransactions")</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    @if (unreadCount > 0)
+                    {
+                        <button @onclick="MarkAllAsRead" 
+                                class="px-4 py-2 text-sm bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors">
+                            @LocalizationService.GetString("MarkAllRead")
+                        </button>
+                    }
+                    <button @onclick="RefreshNotifications" disabled="@isLoading"
+                            class="px-4 py-2 text-sm bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50">
+                        @if (isLoading)
+                        {
+                            <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        }
+                        else
+                        {
+                            <span>@LocalizationService.GetString("Refresh")</span>
+                        }
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-[var(--text-secondary)]">@LocalizationService.GetString("Total")</p>
+                    <p class="text-2xl font-bold text-[var(--text-primary)]">@notifications.Count</p>
+                </div>
+                <div class="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+                    <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM9 7H4l5-5v5z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-[var(--text-secondary)]">@LocalizationService.GetString("Unread")</p>
+                    <p class="text-2xl font-bold text-orange-600 dark:text-orange-400">@unreadCount</p>
+                </div>
+                <div class="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-full">
+                    <svg class="w-6 h-6 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-[var(--text-secondary)]">@LocalizationService.GetString("HighPriority")</p>
+                    <p class="text-2xl font-bold text-red-600 dark:text-red-400">@highPriorityCount</p>
+                </div>
+                <div class="p-3 bg-red-100 dark:bg-red-900/30 rounded-full">
+                    <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-[var(--text-secondary)]">@LocalizationService.GetString("Today")</p>
+                    <p class="text-2xl font-bold text-green-600 dark:text-green-400">@todayCount</p>
+                </div>
+                <div class="p-3 bg-green-100 dark:bg-green-900/30 rounded-full">
+                    <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="mb-6">
+        <div class="glass-card p-4 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
+            <div class="flex flex-wrap items-center gap-4">
+                <div class="flex items-center space-x-2">
+                    <label class="text-sm font-medium text-[var(--text-primary)]">@LocalizationService.GetString("Filter"):</label>
+                    <select @bind="selectedFilter" @bind:after="ApplyFilter"
+                            class="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        <option value="all">@LocalizationService.GetString("AllNotifications")</option>
+                        <option value="unread">@LocalizationService.GetString("UnreadOnly")</option>
+                        <option value="high">@LocalizationService.GetString("HighPriority")</option>
+                        <option value="reminder">@LocalizationService.GetString("Reminders")</option>
+                        <option value="overdue">@LocalizationService.GetString("OverdueAlerts")</option>
+                        <option value="approval">@LocalizationService.GetString("ApprovalRequests")</option>
+                    </select>
+                </div>
+                
+                <div class="flex items-center space-x-2">
+                    <label class="text-sm font-medium text-[var(--text-primary)]">@LocalizationService.GetString("Sort"):</label>
+                    <select @bind="selectedSort" @bind:after="ApplySort"
+                            class="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        <option value="date_desc">@LocalizationService.GetString("NewestFirst")</option>
+                        <option value="date_asc">@LocalizationService.GetString("OldestFirst")</option>
+                        <option value="priority">@LocalizationService.GetString("Priority")</option>
+                        <option value="type">@LocalizationService.GetString("Type")</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications List -->
+    <div class="space-y-4">
+        @if (filteredNotifications.Any())
+        {
+            @foreach (var notification in filteredNotifications)
+            {
+                <div class="glass-card rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 overflow-hidden
+                           @(notification.IsRead ? "opacity-75" : "") hover:shadow-lg transition-all duration-300">
+                    <div class="p-6">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-start space-x-4 flex-1">
+                                <!-- Notification Icon -->
+                                <div class="flex-shrink-0 p-2 rounded-full @GetNotificationIconBg(notification.NotificationType)">
+                                    @GetNotificationIcon(notification.NotificationType)
+                                </div>
+                                
+                                <!-- Notification Content -->
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center space-x-2 mb-1">
+                                        <h3 class="text-lg font-semibold text-[var(--text-primary)] @(notification.IsRead ? "" : "font-bold")">
+                                            @notification.Title
+                                        </h3>
+                                        @if (!notification.IsRead)
+                                        {
+                                            <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
+                                        }
+                                        <span class="px-2 py-1 text-xs rounded-full @GetPriorityBadgeClass(notification.Priority)">
+                                            @notification.Priority
+                                        </span>
+                                        <span class="px-2 py-1 text-xs rounded-full @GetTypeBadgeClass(notification.NotificationType)">
+                                            @GetTypeDisplayName(notification.NotificationType)
+                                        </span>
+                                    </div>
+                                    
+                                    <p class="text-[var(--text-secondary)] mb-2">@notification.Message</p>
+                                    
+                                    <div class="flex items-center space-x-4 text-sm text-[var(--text-secondary)]">
+                                        <span>@GetRelativeTime(notification.ScheduledDate)</span>
+                                        @if (notification.ScheduledTransaction != null)
+                                        {
+                                            <span>•</span>
+                                            <span>@notification.ScheduledTransaction.Name</span>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Action Buttons -->
+                            <div class="flex items-center space-x-2 ml-4">
+                                @if (!notification.IsRead)
+                                {
+                                    <button @onclick="() => MarkAsRead(notification.Id)"
+                                            class="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+                                            title="Mark as read">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                    </button>
+                                }
+                                
+                                @if (!notification.IsDismissed)
+                                {
+                                    <button @onclick="() => DismissNotification(notification.Id)"
+                                            class="p-2 text-gray-500 hover:text-yellow-600 hover:bg-yellow-100 dark:hover:bg-yellow-900/30 rounded-lg transition-colors"
+                                            title="Dismiss">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L8.464 8.464M9.878 9.878l-1.414-1.414M14.12 14.12l1.414 1.414M14.12 14.12L15.536 15.536M14.12 14.12l1.414 1.414"></path>
+                                        </svg>
+                                    </button>
+                                }
+                                
+                                <button @onclick="() => DeleteNotification(notification.Id)"
+                                        class="p-2 text-gray-500 hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                                        title="Delete">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                </button>
+                                
+                                @if (notification.NotificationType == Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.SystemAlert && notification.ScheduledTransaction != null)
+                                {
+                                    <button @onclick="() => NavigateToTransaction(notification.ScheduledTransaction.Id)"
+                                            class="px-3 py-1 text-sm bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors">
+                                        Review
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="glass-card p-12 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 text-center">
+                <div class="text-6xl mb-4">🔕</div>
+                <h3 class="text-xl font-semibold text-[var(--text-primary)] mb-2">No Notifications</h3>
+                <p class="text-[var(--text-secondary)]">
+                    @if (selectedFilter == "all")
+                    {
+                        <span>You're all caught up! No notifications to show.</span>
+                    }
+                    else
+                    {
+                        <span>No notifications match your current filter.</span>
+                    }
+                </p>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private List<TransactionNotification> notifications = new();
+    private List<TransactionNotification> filteredNotifications = new();
+    private bool isLoading = false;
+    private string selectedFilter = "all";
+    private string selectedSort = "date_desc";
+    
+    private int unreadCount = 0;
+    private int highPriorityCount = 0;
+    private int todayCount = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadNotifications();
+    }
+
+    private async Task LoadNotifications()
+    {
+        isLoading = true;
+        try
+        {
+            notifications = await NotificationService.GetAllNotificationsAsync();
+            CalculateStatistics();
+            ApplyFiltersAndSort();
+        }
+        catch (Exception ex)
+        {
+            MessagingService.ShowErrorToast($"Error loading notifications: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void CalculateStatistics()
+    {
+        unreadCount = notifications.Count(n => !n.IsRead && !n.IsDismissed);
+        highPriorityCount = notifications.Count(n => n.Priority == Pilgrims.PersonalFinances.Models.Enums.NotificationPriority.High && !n.IsRead && !n.IsDismissed);
+        todayCount = notifications.Count(n => n.ScheduledDate.Date == DateTime.Today);
+    }
+
+    private void ApplyFiltersAndSort()
+    {
+        var filtered = selectedFilter switch
+        {
+            "unread" => notifications.Where(n => !n.IsRead && !n.IsDismissed),
+            "high" => notifications.Where(n => n.Priority == Pilgrims.PersonalFinances.Models.Enums.NotificationPriority.High && !n.IsRead && !n.IsDismissed),
+            "reminder" => notifications.Where(n => n.NotificationType == Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.BillReminder),
+            "overdue" => notifications.Where(n => n.NotificationType == Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.BudgetAlert),
+            "approval" => notifications.Where(n => n.NotificationType == Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.SystemAlert),
+            _ => notifications.AsEnumerable()
+        };
+
+        filtered = selectedSort switch
+        {
+            "date_asc" => filtered.OrderBy(n => n.ScheduledDate),
+            "priority" => filtered.OrderByDescending(n => n.Priority).ThenByDescending(n => n.ScheduledDate),
+            "type" => filtered.OrderBy(n => n.NotificationType).ThenByDescending(n => n.ScheduledDate),
+            _ => filtered.OrderByDescending(n => n.ScheduledDate)
+        };
+
+        filteredNotifications = filtered.ToList();
+    }
+
+    private async Task ApplyFilter()
+    {
+        ApplyFiltersAndSort();
+        await Task.CompletedTask;
+    }
+
+    private async Task ApplySort()
+    {
+        ApplyFiltersAndSort();
+        await Task.CompletedTask;
+    }
+
+    private async Task RefreshNotifications()
+    {
+        await LoadNotifications();
+        MessagingService.ShowSuccessToast("Notifications refreshed");
+    }
+
+    private async Task MarkAsRead(string? notificationId)
+    {
+        try
+        {
+            await NotificationService.MarkAsReadAsync(notificationId);
+            var notification = notifications.FirstOrDefault(n => n.Id == notificationId);
+            if (notification != null)
+            {
+                notification.IsRead = true;
+                CalculateStatistics();
+                ApplyFiltersAndSort();
+            }
+        }
+        catch (Exception ex)
+        {
+            MessagingService.ShowErrorToast($"Error marking notification as read: {ex.Message}");
+        }
+    }
+
+    private async Task MarkAllAsRead()
+    {
+        try
+        {
+            await NotificationService.MarkAllAsReadAsync();
+            foreach (var notification in notifications)
+            {
+                notification.IsRead = true;
+            }
+            CalculateStatistics();
+            ApplyFiltersAndSort();
+            MessagingService.ShowSuccessToast("All notifications marked as read");
+        }
+        catch (Exception ex)
+        {
+            MessagingService.ShowErrorToast($"Error marking all notifications as read: {ex.Message}");
+        }
+    }
+
+    private async Task DismissNotification(string? notificationId)
+    {
+        try
+        {
+            await NotificationService.DismissNotificationAsync(notificationId);
+            var notification = notifications.FirstOrDefault(n => n.Id == notificationId);
+            if (notification != null)
+            {
+                notification.IsDismissed = true;
+                CalculateStatistics();
+                ApplyFiltersAndSort();
+            }
+        }
+        catch (Exception ex)
+        {
+            MessagingService.ShowErrorToast($"Error dismissing notification: {ex.Message}");
+        }
+    }
+
+    private async Task DeleteNotification(string? notificationId)
+    {
+        try
+        {
+            await NotificationService.DeleteNotificationAsync(notificationId);
+            notifications.RemoveAll(n => n.Id == notificationId);
+            CalculateStatistics();
+            ApplyFiltersAndSort();
+            MessagingService.ShowSuccessToast("Notification deleted");
+        }
+        catch (Exception ex)
+        {
+            MessagingService.ShowErrorToast($"Error deleting notification: {ex.Message}");
+        }
+    }
+
+    private void NavigateToTransaction(string? scheduledTransactionId)
+    {
+        Navigation.NavigateTo($"/recurring-transactions/edit/{scheduledTransactionId}");
+    }
+
+    private string GetNotificationIcon(Pilgrims.PersonalFinances.Models.Enums.AppNotificationType type)
+    {
+        return type switch
+        {
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.BillReminder => "fas fa-bell",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.BudgetAlert => "fas fa-exclamation-triangle",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.DebtPayment => "fas fa-credit-card",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.IncomeExpectation => "fas fa-dollar-sign",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.ReconciliationReminder => "fas fa-balance-scale",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.SystemAlert => "fas fa-cog",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.InsurancePremiumDue => "fas fa-shield-alt",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.InsuranceClaimUpdate => "fas fa-file-medical",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.InsurancePolicyExpiry => "fas fa-calendar-times",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.ObligationPaymentDue => "fas fa-hand-holding-usd",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.ObligationArrears => "fas fa-exclamation-circle",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.ObligationBenefitAvailable => "fas fa-gift",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.GroupContributionReminder => "fas fa-users",
+            _ => "fas fa-info-circle"
+        };
+    }
+
+    private string GetNotificationIconBg(Pilgrims.PersonalFinances.Models.Enums.AppNotificationType type)
+    {
+        return type switch
+        {
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.BillReminder => "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.BudgetAlert => "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.DebtPayment => "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.IncomeExpectation => "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.ReconciliationReminder => "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.SystemAlert => "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.InsurancePremiumDue => "bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.InsuranceClaimUpdate => "bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.InsurancePolicyExpiry => "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.ObligationPaymentDue => "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.ObligationArrears => "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.ObligationBenefitAvailable => "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.GroupContributionReminder => "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400",
+            _ => "bg-gray-100 dark:bg-gray-900/30 text-gray-600 dark:text-gray-400"
+        };
+    }
+
+    private string GetPriorityBadgeClass(Pilgrims.PersonalFinances.Models.Enums.NotificationPriority priority)
+    {
+        return priority switch
+        {
+            Pilgrims.PersonalFinances.Models.Enums.NotificationPriority.Critical => "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+            Pilgrims.PersonalFinances.Models.Enums.NotificationPriority.High => "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
+            Pilgrims.PersonalFinances.Models.Enums.NotificationPriority.Low => "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+            _ => "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400"
+        };
+    }
+
+    private string GetTypeBadgeClass(Pilgrims.PersonalFinances.Models.Enums.AppNotificationType type)
+    {
+        return type switch
+        {
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.BillReminder => "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.BudgetAlert => "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.DebtPayment => "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.IncomeExpectation => "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.ReconciliationReminder => "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.SystemAlert => "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.InsurancePremiumDue => "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.InsuranceClaimUpdate => "bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.InsurancePolicyExpiry => "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.ObligationPaymentDue => "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.ObligationArrears => "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.ObligationBenefitAvailable => "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.GroupContributionReminder => "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300",
+            _ => "bg-gray-100 dark:bg-gray-900/30 text-gray-700 dark:text-gray-300"
+        };
+    }
+
+    private string GetTypeDisplayName(Pilgrims.PersonalFinances.Models.Enums.AppNotificationType type)
+    {
+        return type switch
+        {
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.BillReminder => "Bill Reminder",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.BudgetAlert => "Budget Alert",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.DebtPayment => "Debt Payment",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.IncomeExpectation => "Income Expectation",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.ReconciliationReminder => "Reconciliation Reminder",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.SystemAlert => "System Alert",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.InsurancePremiumDue => "Insurance Premium Due",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.InsuranceClaimUpdate => "Insurance Claim Update",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.InsurancePolicyExpiry => "Insurance Policy Expiry",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.ObligationPaymentDue => "Obligation Payment Due",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.ObligationArrears => "Obligation Arrears",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.ObligationBenefitAvailable => "Obligation Benefit Available",
+            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.GroupContributionReminder => "Group Contribution Reminder",
+            _ => "Unknown"
+        };
+    }
+
+    private string GetRelativeTime(DateTime date)
+    {
+        var timeSpan = DateTime.Now - date;
+        
+        if (timeSpan.TotalMinutes < 1)
+            return "Just now";
+        if (timeSpan.TotalMinutes < 60)
+            return $"{(int)timeSpan.TotalMinutes}m ago";
+        if (timeSpan.TotalHours < 24)
+            return $"{(int)timeSpan.TotalHours}h ago";
+        if (timeSpan.TotalDays < 7)
+            return $"{(int)timeSpan.TotalDays}d ago";
+        
+        return date.ToString("MMM dd, yyyy");
+    }
+}

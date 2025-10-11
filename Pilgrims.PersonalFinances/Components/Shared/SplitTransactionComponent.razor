@@ -1,0 +1,358 @@
+@using Pilgrims.PersonalFinances.Models
+@using Pilgrims.PersonalFinances.Models.DTOs
+@using Pilgrims.PersonalFinances.Models.Enums
+@using Pilgrims.PersonalFinances.Services
+@using Pilgrims.PersonalFinances.Services.Interfaces
+
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
+    <div class="flex items-center justify-between mb-6">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+            <span class="text-2xl mr-2">🔄</span>
+            Split Transaction
+        </h3>
+        <div class="flex items-center space-x-2">
+            <span class="text-sm text-gray-500 dark:text-gray-400">
+                Total: <span class="font-semibold text-green-600 dark:text-green-400">@TotalAmount.ToString("C")</span>
+            </span>
+            <span class="text-sm text-gray-500 dark:text-gray-400">
+                Remaining: <span class="font-semibold @(RemainingAmount == 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")">
+                    @RemainingAmount.ToString("C")
+                </span>
+            </span>
+        </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="mb-6">
+        <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
+            <span>Split Progress</span>
+            <span>@((AllocatedAmount / TotalAmount * 100).ToString("F1"))%</span>
+        </div>
+        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+            <div class="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-500"
+                 style="width: @((AllocatedAmount / TotalAmount * 100).ToString("F1"))%"></div>
+        </div>
+    </div>
+
+    <!-- Split Items -->
+    <div class="space-y-4 mb-6">
+        @for (int i = 0; i < SplitItems.Count; i++)
+        {
+            var index = i; // Capture for lambda
+            var item = SplitItems[index];
+            
+            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600 transition-all duration-300 hover:shadow-md">
+                <div class="flex items-center space-x-4">
+                    <!-- Category Selection -->
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
+                        <select @bind="item.CategoryId" 
+                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+                            <option value="">Select Category</option>
+                            @if (Categories != null)
+                            {
+                                @foreach (var category in Categories)
+                                {
+                                    <option value="@category.Id">@category.Name</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Amount Input -->
+                    <div class="w-32">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Amount</label>
+                        <input type="number" 
+                               step="0.01" 
+                               @bind="item.Amount" 
+                               @oninput="@((e) => UpdateSplitAmount(index, e.Value?.ToString()))"
+                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                               placeholder="0.00" />
+                    </div>
+
+                    <!-- Percentage Display -->
+                    <div class="w-16 text-center">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">%</label>
+                        <div class="text-sm font-semibold text-gray-600 dark:text-gray-400 py-2">
+                            @((item.Amount / TotalAmount * 100).ToString("F1"))%
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+                        <input type="text" 
+                               @bind="item.Description" 
+                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                               placeholder="Optional description" />
+                    </div>
+
+                    <!-- Remove Button -->
+                    <button type="button" 
+                            @onclick="() => RemoveSplitItem(index)"
+                            class="p-2 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200"
+                            title="Remove split item">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Add Split Item Button -->
+    <div class="flex justify-between items-center mb-6">
+        <button type="button" 
+                @onclick="AddSplitItem"
+                class="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 hover:shadow-md">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            Add Split Item
+        </button>
+
+        <button type="button" 
+                @onclick="AutoDistribute"
+                class="flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all duration-200 hover:shadow-md">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+            </svg>
+            Auto Distribute
+        </button>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="flex flex-wrap gap-2 mb-6">
+        <button type="button" 
+                @onclick="() => DistributeEvenly()"
+                class="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200">
+            Split Evenly
+        </button>
+        <button type="button" 
+                @onclick="() => DistributeByPercentage(50, 30, 20)"
+                class="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200">
+            50/30/20 Split
+        </button>
+        <button type="button" 
+                @onclick="() => DistributeByPercentage(70, 30)"
+                class="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200">
+            70/30 Split
+        </button>
+        <button type="button" 
+                @onclick="ClearAllSplits"
+                class="px-3 py-1 text-sm bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-full hover:bg-red-200 dark:hover:bg-red-900/40 transition-all duration-200">
+            Clear All
+        </button>
+    </div>
+
+    <!-- Validation Messages -->
+    @if (ValidationMessages.Any())
+    {
+        <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
+            <div class="flex items-center mb-2">
+                <svg class="w-5 h-5 text-red-600 dark:text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <h4 class="text-sm font-medium text-red-800 dark:text-red-300">Validation Errors</h4>
+            </div>
+            <ul class="text-sm text-red-700 dark:text-red-400 space-y-1">
+                @foreach (var message in ValidationMessages)
+                {
+                    <li>• @message</li>
+                }
+            </ul>
+        </div>
+    }
+
+    <!-- Summary -->
+    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+        <div class="flex justify-between items-center text-sm">
+            <span class="text-blue-800 dark:text-blue-300">Split Summary:</span>
+            <div class="flex space-x-4">
+                <span class="text-blue-700 dark:text-blue-400">Items: @SplitItems.Count</span>
+                <span class="text-blue-700 dark:text-blue-400">Allocated: @AllocatedAmount.ToString("C")</span>
+                <span class="text-blue-700 dark:text-blue-400">Balance: @(RemainingAmount == 0 ? "✓ Balanced" : RemainingAmount.ToString("C"))</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public decimal TotalAmount { get; set; }
+    [Parameter] public List<SplitTransactionItem> SplitItems { get; set; } = new();
+    [Parameter] public List<Category> Categories { get; set; } = new();
+    [Parameter] public EventCallback<List<SplitTransactionItem>> OnSplitItemsChanged { get; set; }
+
+    private decimal AllocatedAmount => SplitItems.Sum(x => x.Amount);
+    private decimal RemainingAmount => TotalAmount - AllocatedAmount;
+    private List<string> ValidationMessages = new();
+
+    protected override void OnParametersSet()
+    {
+        ValidateSplits();
+    }
+
+    private void AddSplitItem()
+    {
+        SplitItems.Add(new SplitTransactionItem
+        {
+            Id = Guid.NewGuid(),
+            Amount = RemainingAmount > 0 ? RemainingAmount : 0,
+            Description = ""
+        });
+        
+        NotifyChanged();
+        ValidateSplits();
+    }
+
+    private void RemoveSplitItem(int index)
+    {
+        if (index >= 0 && index < SplitItems.Count)
+        {
+            SplitItems.RemoveAt(index);
+            NotifyChanged();
+            ValidateSplits();
+        }
+    }
+
+    private void UpdateSplitAmount(int index, string? value)
+    {
+        if (index >= 0 && index < SplitItems.Count && decimal.TryParse(value, out var amount))
+        {
+            SplitItems[index].Amount = Math.Max(0, amount);
+            NotifyChanged();
+            ValidateSplits();
+        }
+    }
+
+    private void AutoDistribute()
+    {
+        if (SplitItems.Count == 0) return;
+
+        var remaining = RemainingAmount;
+        var itemsWithoutAmount = SplitItems.Where(x => x.Amount == 0).ToList();
+        
+        if (itemsWithoutAmount.Any())
+        {
+            var amountPerItem = remaining / itemsWithoutAmount.Count;
+            foreach (var item in itemsWithoutAmount)
+            {
+                item.Amount = Math.Round(amountPerItem, 2);
+            }
+        }
+
+        NotifyChanged();
+        ValidateSplits();
+    }
+
+    private void DistributeEvenly()
+    {
+        if (SplitItems.Count == 0) return;
+
+        var amountPerItem = Math.Round(TotalAmount / SplitItems.Count, 2);
+        var remainder = TotalAmount - (amountPerItem * SplitItems.Count);
+
+        for (int i = 0; i < SplitItems.Count; i++)
+        {
+            SplitItems[i].Amount = amountPerItem;
+            if (i == 0) SplitItems[i].Amount += remainder; // Add remainder to first item
+        }
+
+        NotifyChanged();
+        ValidateSplits();
+    }
+
+    private void DistributeByPercentage(params int[] percentages)
+    {
+        if (SplitItems.Count == 0 || percentages.Length == 0) return;
+
+        // Ensure we have enough split items
+        while (SplitItems.Count < percentages.Length)
+        {
+            AddSplitItem();
+        }
+
+        var totalPercentage = percentages.Sum();
+        var remainingAmount = TotalAmount;
+
+        for (int i = 0; i < Math.Min(percentages.Length, SplitItems.Count); i++)
+        {
+            var percentage = percentages[i] / 100.0m;
+            var amount = Math.Round(TotalAmount * percentage, 2);
+            
+            if (i == percentages.Length - 1) // Last item gets the remainder
+            {
+                SplitItems[i].Amount = remainingAmount;
+            }
+            else
+            {
+                SplitItems[i].Amount = amount;
+                remainingAmount -= amount;
+            }
+        }
+
+        NotifyChanged();
+        ValidateSplits();
+    }
+
+    private void ClearAllSplits()
+    {
+        foreach (var item in SplitItems)
+        {
+            item.Amount = 0;
+        }
+        
+        NotifyChanged();
+        ValidateSplits();
+    }
+
+    private void ValidateSplits()
+    {
+        ValidationMessages.Clear();
+
+        if (SplitItems.Count == 0)
+        {
+            ValidationMessages.Add("At least one split item is required");
+            return;
+        }
+
+        if (AllocatedAmount > TotalAmount)
+        {
+            ValidationMessages.Add($"Total split amount ({AllocatedAmount:C}) exceeds transaction amount ({TotalAmount:C})");
+        }
+
+        if (AllocatedAmount < TotalAmount)
+        {
+            ValidationMessages.Add($"Split amount ({AllocatedAmount:C}) is less than transaction amount ({TotalAmount:C})");
+        }
+
+        foreach (var item in SplitItems.Where(x => string.IsNullOrWhiteSpace(x.CategoryId)))
+        {
+            ValidationMessages.Add("All split items must have a category selected");
+        }
+
+        foreach (var item in SplitItems.Where(x => x.Amount <= 0))
+        {
+            ValidationMessages.Add("All split items must have an amount greater than zero");
+        }
+
+        var duplicateCategories = SplitItems
+            .Where(x => !string.IsNullOrWhiteSpace(x.CategoryId))
+            .GroupBy(x => x.CategoryId)
+            .Where(g => g.Count() > 1)
+            .Select(g => g.Key);
+
+        if (duplicateCategories.Any())
+        {
+            ValidationMessages.Add("Duplicate categories are not allowed in split transactions");
+        }
+    }
+
+    private async Task NotifyChanged()
+    {
+        await OnSplitItemsChanged.InvokeAsync(SplitItems);
+    }
+
+    public bool IsValid => !ValidationMessages.Any() && AllocatedAmount == TotalAmount;
+}

@@ -1,0 +1,265 @@
+@using Pilgrims.PersonalFinances.Models.DTOs
+@using Pilgrims.PersonalFinances.Services
+@using Pilgrims.PersonalFinances.Core.Interfaces
+@inject IJSRuntime JSRuntime
+@inject ICurrencyService CurrencyService
+
+<div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10" id="balance-sheet-report">
+    <div class="flex items-center justify-between mb-6">
+        <h3 class="text-xl font-semibold text-gray-800 dark:text-white flex items-center">
+            <span class="mr-2">🏦</span> Balance Sheet
+            <span class="ml-4 text-sm text-gray-500">As of @Report.AsOfDate.ToString("MMM dd, yyyy")</span>
+        </h3>
+        <ExportButton ReportType="BalanceSheet" 
+                      ReportData="Report" 
+                      ElementId="balance-sheet-report" 
+                      FileName="@($"BalanceSheet_{Report.AsOfDate:yyyy-MM-dd}")" />
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div class="bg-gradient-to-r from-green-400 to-green-600 p-4 rounded-xl text-white">
+            <div class="text-sm opacity-90">Total Assets</div>
+            <div class="text-2xl font-bold">@(formattedAmounts.TryGetValue(Report.TotalAssets, out var formattedTotalAssets) ? formattedTotalAssets : Report.TotalAssets.ToString("C"))</div>
+        </div>
+        <div class="bg-gradient-to-r from-red-400 to-red-600 p-4 rounded-xl text-white">
+            <div class="text-sm opacity-90">Total Liabilities</div>
+            <div class="text-2xl font-bold">@(formattedAmounts.TryGetValue(Report.TotalLiabilities, out var formattedTotalLiabilities) ? formattedTotalLiabilities : Report.TotalLiabilities.ToString("C"))</div>
+        </div>
+        <div class="bg-gradient-to-r from-blue-400 to-blue-600 p-4 rounded-xl text-white">
+            <div class="text-sm opacity-90">Net Worth</div>
+            <div class="text-2xl font-bold">@(formattedAmounts.TryGetValue(Report.NetWorth, out var formattedNetWorth) ? formattedNetWorth : Report.NetWorth.ToString("C"))</div>
+        </div>
+    </div>
+
+    <!-- Asset Allocation Pie Chart -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <div>
+            <h4 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Asset Allocation</h4>
+            @if (Report.Assets?.Any() == true)
+            {
+                <PieChart Data="@GetAssetChartData()" 
+                          OnSegmentClick="@OnAssetClick" 
+                          ShowLegend="true" />
+            }
+            else
+            {
+                <div class="text-center text-gray-500 py-8">
+                    <div class="text-4xl mb-2">📊</div>
+                    <div>No asset data available</div>
+                </div>
+            }
+        </div>
+
+        <!-- Liability Breakdown -->
+        <div>
+            <h4 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Liability Breakdown</h4>
+            <div class="space-y-3">
+                @if (Report.Liabilities?.Any() == true)
+                {
+                    @foreach (var liability in Report.Liabilities.OrderByDescending(l => l.Amount))
+                    {
+                        var percentage = Report.TotalLiabilities > 0 ? (liability.Amount / Report.TotalLiabilities) * 100 : 0;
+                        <div class="flex items-center justify-between p-3 bg-white/50 dark:bg-gray-700/50 rounded-lg">
+                            <div class="flex items-center flex-1">
+                                <span class="text-red-600 mr-3">💳</span>
+                                <span class="text-gray-700 dark:text-gray-300 flex-1">@liability.Name</span>
+                                <div class="w-20 bg-gray-200 dark:bg-gray-600 rounded-full h-2 mx-3">
+                                    <div class="bg-gradient-to-r from-red-400 to-red-600 h-2 rounded-full transition-all duration-1000" 
+                                         style="width: @(percentage)%"></div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-semibold text-red-600">@(formattedAmounts.TryGetValue(liability.Amount, out var formattedLiabilityAmount) ? formattedLiabilityAmount : liability.Amount.ToString("C"))</div>
+                                <div class="text-xs text-gray-500">@percentage.ToString("F1")%</div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-center text-gray-500 py-8">
+                        <div class="text-4xl mb-2">🎉</div>
+                        <div>No liabilities recorded</div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Asset Breakdown -->
+    <div class="mb-8">
+        <h4 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Asset Details</h4>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            @if (Report.Assets?.Any() == true)
+            {
+                @foreach (var asset in Report.Assets.OrderByDescending(a => a.Amount))
+                {
+                    var percentage = Report.TotalAssets > 0 ? (asset.Amount / Report.TotalAssets) * 100 : 0;
+                    <div class="bg-white/50 dark:bg-gray-700/50 p-4 rounded-lg">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-medium text-gray-800 dark:text-white">@asset.Name</span>
+                            <span class="text-green-600 font-bold">@(formattedAmounts.TryGetValue(asset.Amount, out var formattedAssetAmount) ? formattedAssetAmount : asset.Amount.ToString("C"))</span>
+                        </div>
+                        <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2 mb-2">
+                            <div class="bg-gradient-to-r from-green-400 to-green-600 h-2 rounded-full transition-all duration-1000" 
+                                 style="width: @(percentage)%"></div>
+                        </div>
+                        <div class="text-xs text-gray-500">@percentage.ToString("F1")% of total assets</div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+
+    <!-- Net Worth Visualization -->
+    <div class="bg-gradient-to-r from-indigo-100 to-purple-100 dark:from-indigo-900/20 dark:to-purple-900/20 p-6 rounded-xl">
+        <h4 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Net Worth Composition</h4>
+        <div class="flex items-center space-x-4">
+            <!-- Assets Bar -->
+            <div class="flex-1">
+                <div class="flex justify-between text-sm text-gray-600 dark:text-gray-300 mb-1">
+                    <span>Assets</span>
+                    <span>@(formattedAmounts.TryGetValue(Report.TotalAssets, out var formattedAssetsTotal) ? formattedAssetsTotal : Report.TotalAssets.ToString("C"))</span>
+                </div>
+                <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-4">
+                    <div class="bg-gradient-to-r from-green-400 to-green-600 h-4 rounded-full transition-all duration-1000" 
+                         style="width: 100%"></div>
+                </div>
+            </div>
+            
+            <div class="text-2xl font-bold text-gray-400">-</div>
+            
+            <!-- Liabilities Bar -->
+            <div class="flex-1">
+                <div class="flex justify-between text-sm text-gray-600 dark:text-gray-300 mb-1">
+                    <span>Liabilities</span>
+                    <span>@(formattedAmounts.TryGetValue(Report.TotalLiabilities, out var formattedLiabilitiesTotal) ? formattedLiabilitiesTotal : Report.TotalLiabilities.ToString("C"))</span>
+                </div>
+                <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-4">
+                    @{
+                        var liabilityPercentage = Report.TotalAssets > 0 ? (double)(Report.TotalLiabilities / Report.TotalAssets) * 100 : 0;
+                    }
+                    <div class="bg-gradient-to-r from-red-400 to-red-600 h-4 rounded-full transition-all duration-1000" 
+                         style="width: @(liabilityPercentage)%"></div>
+                </div>
+            </div>
+            
+            <div class="text-2xl font-bold text-gray-400">=</div>
+            
+            <!-- Net Worth Result -->
+            <div class="flex-1">
+                <div class="flex justify-between text-sm text-gray-600 dark:text-gray-300 mb-1">
+                    <span>Net Worth</span>
+                    <span>@(formattedAmounts.TryGetValue(Report.NetWorth, out var formattedNetWorthTotal) ? formattedNetWorthTotal : Report.NetWorth.ToString("C"))</span>
+                </div>
+                <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-4">
+                    @{
+                        var netWorthPercentage = Report.TotalAssets > 0 ? (double)(Report.NetWorth / Report.TotalAssets) * 100 : 0;
+                    }
+                    <div class="bg-gradient-to-r from-blue-400 to-blue-600 h-4 rounded-full transition-all duration-1000" 
+                         style="width: @(netWorthPercentage)%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Financial Ratios -->
+    @if (Report.TotalAssets > 0)
+    {
+        <div class="mt-8">
+            <h4 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Financial Ratios</h4>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                @{
+                    var debtToAssetRatio = (double)(Report.TotalLiabilities / Report.TotalAssets) * 100;
+                    var equityRatio = (double)(Report.NetWorth / Report.TotalAssets) * 100;
+                    var liquidityRatio = Report.Assets?.Where(a => a.Name.Contains("Cash") || a.Name.Contains("Savings") || a.Name.Contains("Checking")).Sum(a => a.Amount) ?? 0;
+                    var liquidityPercentage = (double)(liquidityRatio / Report.TotalAssets) * 100;
+                }
+                
+                <div class="bg-white/50 dark:bg-gray-700/50 p-4 rounded-lg text-center">
+                    <div class="text-2xl font-bold text-red-600">@debtToAssetRatio.ToString("F1")%</div>
+                    <div class="text-sm text-gray-600 dark:text-gray-300">Debt-to-Asset Ratio</div>
+                    <div class="text-xs text-gray-500 mt-1">@(debtToAssetRatio < 30 ? "Excellent" : debtToAssetRatio < 50 ? "Good" : "High")</div>
+                </div>
+                
+                <div class="bg-white/50 dark:bg-gray-700/50 p-4 rounded-lg text-center">
+                    <div class="text-2xl font-bold text-blue-600">@equityRatio.ToString("F1")%</div>
+                    <div class="text-sm text-gray-600 dark:text-gray-300">Equity Ratio</div>
+                    <div class="text-xs text-gray-500 mt-1">@(equityRatio > 70 ? "Excellent" : equityRatio > 50 ? "Good" : "Low")</div>
+                </div>
+                
+                <div class="bg-white/50 dark:bg-gray-700/50 p-4 rounded-lg text-center">
+                    <div class="text-2xl font-bold text-green-600">@liquidityPercentage.ToString("F1")%</div>
+                    <div class="text-sm text-gray-600 dark:text-gray-300">Liquidity Ratio</div>
+                    <div class="text-xs text-gray-500 mt-1">@(liquidityPercentage > 20 ? "Excellent" : liquidityPercentage > 10 ? "Good" : "Low")</div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public BalanceSheetDto Report { get; set; } = new();
+    
+    private Dictionary<decimal, string> formattedAmounts = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await PreformatAmounts();
+    }
+
+    private async Task PreformatAmounts()
+    {
+        formattedAmounts.Clear();
+        
+        var amountsToFormat = new List<decimal>
+        {
+            Report.TotalAssets,
+            Report.TotalLiabilities,
+            Report.NetWorth
+        };
+
+        // Add asset amounts
+        if (Report.Assets?.Any() == true)
+        {
+            amountsToFormat.AddRange(Report.Assets.Select(a => a.Amount));
+        }
+
+        // Add liability amounts
+        if (Report.Liabilities?.Any() == true)
+        {
+            amountsToFormat.AddRange(Report.Liabilities.Select(l => l.Amount));
+        }
+
+        foreach (var amount in amountsToFormat.Distinct())
+        {
+            formattedAmounts[amount] = await CurrencyService.FormatAmountAsync(amount);
+        }
+    }
+
+    private List<PieChart.ChartDataItem> GetAssetChartData()
+    {
+        if (Report.Assets?.Any() != true)
+            return new List<PieChart.ChartDataItem>();
+
+        return Report.Assets.OrderByDescending(a => a.Amount).Take(10).Select(asset => new PieChart.ChartDataItem
+        {
+            Label = asset.Name,
+            Value = asset.Amount
+        }).ToList();
+    }
+
+    private string GetAssetColor(string assetName)
+    {
+        var colors = new[] { "#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ef4444", "#06b6d4", "#84cc16", "#f97316" };
+        var index = Math.Abs(assetName.GetHashCode()) % colors.Length;
+        return colors[index];
+    }
+
+    private void OnAssetClick(PieChart.ChartDataItem item)
+    {
+        // Handle asset click - could navigate to detailed view
+        Console.WriteLine($"Clicked on asset: {item.Label}");
+    }
+}

@@ -1,0 +1,570 @@
+@page "/accounts/{AccountId:int}/edit"
+@using Pilgrims.PersonalFinances.Models
+@using Pilgrims.PersonalFinances.Models.Enums
+@using Pilgrims.PersonalFinances.Services
+@using System.ComponentModel.DataAnnotations
+@using Pilgrims.PersonalFinances.Core.Messaging.Interfaces
+@inject IAccountService AccountService
+@inject NavigationManager NavigationManager
+@inject IMessagingService MessagingService
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Edit Account - Personal Finance</PageTitle>
+
+<div class="min-h-screen relative overflow-hidden" style="background: var(--primary-bg);">
+    <!-- Animated Background -->
+    <div class="absolute inset-0 overflow-hidden">
+        <div class="particles"></div>
+        <div class="absolute inset-0" style="background: linear-gradient(135deg, var(--accent-color)/5 0%, var(--secondary-color)/5 100%);"></div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="relative z-10 container mx-auto px-4 py-8">
+        @if (isLoading)
+        {
+            <div class="flex justify-center items-center py-20">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2" style="border-color: var(--accent-color);"></div>
+            </div>
+        }
+        else if (account == null)
+        {
+            <div class="text-center py-20">
+                <div class="text-6xl mb-4">❌</div>
+                <h3 class="text-2xl font-bold mb-2" style="color: var(--text-primary);">Account Not Found</h3>
+                <p class="mb-6" style="color: var(--text-secondary);">
+                    The account you're trying to edit doesn't exist or has been deleted.
+                </p>
+                <button @onclick="GoBack" 
+                        class="px-6 py-3 rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-lg font-semibold"
+                        style="background: var(--accent-color); color: white;">
+                    Go Back to Accounts
+                </button>
+            </div>
+        }
+        else
+        {
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center gap-3 mb-4">
+                    <div class="w-16 h-16 rounded-full flex items-center justify-center text-3xl transition-transform duration-300 hover:scale-110"
+                         style="background-color: @account.ColorCode; color: white;">
+                        @GetAccountTypeIcon(account.AccountType)
+                    </div>
+                    <h1 class="text-4xl font-bold" style="color: var(--text-primary);">
+                        Edit Account
+                    </h1>
+                </div>
+                <p class="text-lg" style="color: var(--text-secondary);">
+                    Update your account details and settings
+                </p>
+            </div>
+
+            <!-- Form Container -->
+            <div class="max-w-2xl mx-auto">
+                <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-8 transition-all duration-300 hover:shadow-3xl"
+                     style="background: var(--card-bg); border-color: var(--border-color);">
+                    
+                    <EditForm Model="@editModel" OnValidSubmit="@HandleValidSubmit" OnInvalidSubmit="@HandleInvalidSubmit">
+                        <DataAnnotationsValidator />
+                        
+                        <!-- Account Name -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-semibold mb-2" style="color: var(--text-primary);">
+                                Account Name *
+                            </label>
+                            <InputText @bind-Value="editModel.Name" 
+                                       class="w-full px-4 py-3 rounded-lg border transition-all duration-300 focus:scale-105 focus:shadow-lg"
+                                       style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);"
+                                       placeholder="e.g., Chase Checking, Emergency Savings" />
+                            <ValidationMessage For="@(() => editModel.Name)" class="text-red-500 text-sm mt-1" />
+                        </div>
+
+                        <!-- Account Type -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-semibold mb-2" style="color: var(--text-primary);">
+                                Account Type *
+                            </label>
+                            <InputSelect @bind-Value="editModel.AccountType" 
+                                         class="w-full px-4 py-3 rounded-lg border transition-all duration-300 focus:scale-105 focus:shadow-lg"
+                                         style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);">
+                                @foreach (var type in Enum.GetValues<AccountType>())
+                                {
+                                    <option value="@type">@GetAccountTypeIcon(type) @GetAccountTypeDisplay(type)</option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="@(() => editModel.AccountType)" class="text-red-500 text-sm mt-1" />
+                        </div>
+
+                        <!-- Currency -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-semibold mb-2" style="color: var(--text-primary);">
+                                Currency *
+                            </label>
+                            <InputSelect @bind-Value="editModel.Currency" 
+                                         class="w-full px-4 py-3 rounded-lg border transition-all duration-300 focus:scale-105 focus:shadow-lg"
+                                         style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);">
+                                <option value="USD">🇺🇸 USD - US Dollar</option>
+                                <option value="EUR">🇪🇺 EUR - Euro</option>
+                                <option value="GBP">🇬🇧 GBP - British Pound</option>
+                                <option value="CAD">🇨🇦 CAD - Canadian Dollar</option>
+                                <option value="AUD">🇦🇺 AUD - Australian Dollar</option>
+                                <option value="JPY">🇯🇵 JPY - Japanese Yen</option>
+                            </InputSelect>
+                            <ValidationMessage For="@(() => editModel.Currency)" class="text-red-500 text-sm mt-1" />
+                        </div>
+
+                        <!-- Initial Balance (Conditional) -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-semibold mb-2" style="color: var(--text-primary);">
+                                Initial Balance *
+                            </label>
+                            @if (hasTransactions)
+                            {
+                                <div class="w-full px-4 py-3 rounded-lg border" 
+                                     style="background: var(--disabled-bg); border-color: var(--border-color); color: var(--text-secondary);">
+                                    @editModel.InitialBalance.ToString("C")
+                                </div>
+                                <p class="text-xs mt-1 flex items-center gap-1" style="color: var(--warning-color);">
+                                    <span>⚠️</span>
+                                    Cannot edit initial balance after transactions have been recorded
+                                </p>
+                            }
+                            else
+                            {
+                                <InputNumber @bind-Value="editModel.InitialBalance" 
+                                             class="w-full px-4 py-3 rounded-lg border transition-all duration-300 focus:scale-105 focus:shadow-lg"
+                                             style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);"
+                                             placeholder="0.00" 
+                                             step="0.01" />
+                                <ValidationMessage For="@(() => editModel.InitialBalance)" class="text-red-500 text-sm mt-1" />
+                                <p class="text-xs mt-1" style="color: var(--text-secondary);">
+                                    Initial balance can only be changed if no transactions exist
+                                </p>
+                            }
+                        </div>
+
+                        <!-- Current Balance (Read-only) -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-semibold mb-2" style="color: var(--text-primary);">
+                                Current Balance
+                            </label>
+                            <div class="w-full px-4 py-3 rounded-lg border" 
+                                 style="background: var(--disabled-bg); border-color: var(--border-color); color: var(--text-secondary);">
+                                @account.CurrentBalance.ToString("C")
+                            </div>
+                            <p class="text-xs mt-1" style="color: var(--text-secondary);">
+                                Current balance is calculated automatically based on transactions
+                            </p>
+                        </div>
+
+                        <!-- Account Status -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-semibold mb-2" style="color: var(--text-primary);">
+                                Account Status *
+                            </label>
+                            <InputSelect @bind-Value="editModel.Status" 
+                                         class="w-full px-4 py-3 rounded-lg border transition-all duration-300 focus:scale-105 focus:shadow-lg"
+                                         style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);">
+                                @foreach (var status in Enum.GetValues<AccountStatus>())
+                                {
+                                    <option value="@status">@GetStatusIcon(status) @status</option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="@(() => editModel.Status)" class="text-red-500 text-sm mt-1" />
+                        </div>
+
+                        <!-- Color Selection -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-semibold mb-2" style="color: var(--text-primary);">
+                                Account Color
+                            </label>
+                            <div class="flex flex-wrap gap-3">
+                                @foreach (var color in predefinedColors)
+                                {
+                                    <button type="button" 
+                                            @onclick="() => SelectColor(color)"
+                                            class="w-12 h-12 rounded-full border-4 transition-all duration-300 hover:scale-110 @(editModel.ColorCode == color ? "ring-4 ring-offset-2" : "")"
+                                            style="background-color: @color; border-color: @(editModel.ColorCode == color ? "var(--accent-color)" : "var(--border-color)"); ring-color: var(--accent-color);">
+                                    </button>
+                                }
+                            </div>
+                            <div class="mt-3">
+                                <InputText @bind-Value="editModel.ColorCode" 
+                                           class="w-32 px-3 py-2 rounded-lg border text-sm"
+                                           style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);"
+                                           placeholder="#3B82F6" />
+                            </div>
+                        </div>
+
+                        <!-- Account-Specific Fields -->
+                        @if (editModel.AccountType == AccountType.Credit || editModel.AccountType == AccountType.CreditCard)
+                        {
+                            <div class="mb-6">
+                                <label class="block text-sm font-semibold mb-2" style="color: var(--text-primary);">
+                                    Credit Limit
+                                </label>
+                                <InputNumber @bind-Value="editModel.CreditLimit" 
+                                             class="w-full px-4 py-3 rounded-lg border transition-all duration-300 focus:scale-105 focus:shadow-lg"
+                                             style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);"
+                                             placeholder="0.00" 
+                                             step="0.01" />
+                            </div>
+                        }
+
+                        @if (editModel.AccountType == AccountType.Savings)
+                        {
+                            <div class="mb-6">
+                                <label class="block text-sm font-semibold mb-2" style="color: var(--text-primary);">
+                                    Interest Rate (%)
+                                </label>
+                                <InputNumber @bind-Value="editModel.InterestRate" 
+                                             class="w-full px-4 py-3 rounded-lg border transition-all duration-300 focus:scale-105 focus:shadow-lg"
+                                             style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);"
+                                             placeholder="0.00" 
+                                             step="0.01" />
+                            </div>
+                        }
+
+                        @if (editModel.AccountType == AccountType.Investment)
+                        {
+                            <div class="mb-6">
+                                <label class="block text-sm font-semibold mb-2" style="color: var(--text-primary);">
+                                    Broker Name
+                                </label>
+                                <InputText @bind-Value="editModel.BrokerName" 
+                                           class="w-full px-4 py-3 rounded-lg border transition-all duration-300 focus:scale-105 focus:shadow-lg"
+                                           style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);"
+                                           placeholder="e.g., Fidelity, Charles Schwab" />
+                            </div>
+                        }
+
+                        <!-- Optional Fields -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div>
+                                <label class="block text-sm font-semibold mb-2" style="color: var(--text-primary);">
+                                    Bank Name
+                                </label>
+                                <InputText @bind-Value="editModel.BankName" 
+                                           class="w-full px-4 py-3 rounded-lg border transition-all duration-300 focus:scale-105 focus:shadow-lg"
+                                           style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);"
+                                           placeholder="e.g., Chase, Wells Fargo" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-2" style="color: var(--text-primary);">
+                                    Account Number
+                                </label>
+                                <InputText @bind-Value="editModel.AccountNumber" 
+                                           class="w-full px-4 py-3 rounded-lg border transition-all duration-300 focus:scale-105 focus:shadow-lg"
+                                           style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);"
+                                           placeholder="****1234" />
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="flex gap-4 pt-6 border-t" style="border-color: var(--border-color);">
+                            <button type="button" 
+                                    @onclick="Cancel"
+                                    class="flex-1 py-3 px-6 rounded-lg font-semibold transition-all duration-300 hover:scale-105"
+                                    style="background: var(--card-bg); color: var(--text-primary); border: 2px solid var(--border-color);">
+                                Cancel
+                            </button>
+                            @if (hasTransactions && editModel.Status == AccountStatus.Active)
+                            {
+                                <button type="button" 
+                                        @onclick="ArchiveAccount"
+                                        class="py-3 px-6 rounded-lg font-semibold transition-all duration-300 hover:scale-105"
+                                        style="background: var(--warning-color); color: white;">
+                                    Archive Account
+                                </button>
+                            }
+                            <button type="submit" 
+                                    disabled="@isSubmitting"
+                                    class="flex-1 py-3 px-6 rounded-lg font-semibold transition-all duration-300 hover:scale-105 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                                    style="background: var(--accent-color); color: white;">
+                                @if (isSubmitting)
+                                {
+                                    <span class="flex items-center justify-center gap-2">
+                                        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                        Updating...
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span>Update Account</span>
+                                }
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Particles CSS -->
+<style>
+    .particles {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .particles::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background-image: 
+            radial-gradient(2px 2px at 20px 30px, rgba(255,255,255,0.1), transparent),
+            radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.1), transparent),
+            radial-gradient(1px 1px at 90px 40px, rgba(255,255,255,0.1), transparent),
+            radial-gradient(1px 1px at 130px 80px, rgba(255,255,255,0.1), transparent);
+        background-repeat: repeat;
+        background-size: 200px 200px;
+        animation: particles 20s linear infinite;
+    }
+
+    @@keyframes particles {
+        0% { transform: translate(0, 0); }
+        100% { transform: translate(-200px, -200px); }
+    }
+
+    .glass-card {
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    }
+</style>
+
+@code {
+    [Parameter] public string? AccountId { get; set; }
+    
+    private Account? account;
+    private EditAccountModel editModel = new();
+    private bool isLoading = true;
+    private bool isSubmitting = false;
+    private bool hasTransactions = false;
+    
+    private readonly string[] predefinedColors = {
+        "#3B82F6", "#EF4444", "#10B981", "#F59E0B", "#8B5CF6",
+        "#EC4899", "#06B6D4", "#84CC16", "#F97316", "#6366F1"
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAccount();
+    }
+
+    private async Task LoadAccount()
+    {
+        try
+        {
+            isLoading = true;
+            account = await AccountService.GetAccountByIdAsync(AccountId);
+            
+            if (account != null)
+            {
+                // Check if account has transactions
+                hasTransactions = await AccountService.HasTransactionsAsync(AccountId);
+                
+                // Map account to edit model
+                editModel = new EditAccountModel
+                {
+                    Name = account.Name,
+                    AccountType = account.AccountType,
+                    Currency = account.Currency,
+                    InitialBalance = account.InitialBalance,
+                    ColorCode = account.ColorCode,
+                    Status = account.Status,
+                    BankName = account.BankName,
+                    AccountNumber = account.AccountNumber,
+                    CreditLimit = account.CreditLimit,
+                    InterestRate = account.InterestRate,
+                    BrokerName = account.BrokerName
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            await MessagingService.ShowAlertAsync("Error loading account: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void SelectColor(string color)
+    {
+        editModel.ColorCode = color;
+    }
+
+    private string GetAccountTypeIcon(AccountType accountType)
+    {
+        return accountType switch
+        {
+            AccountType.Checking => "🏦",
+            AccountType.Savings => "💰",
+            AccountType.Cash => "💵",
+            AccountType.CreditCard => "💳",
+            AccountType.Investment => "📈",
+            AccountType.Loan => "🏠",
+            AccountType.Credit => "💳",
+            AccountType.Other => "📋",
+            _ => "📋"
+        };
+    }
+
+    private string GetAccountTypeDisplay(AccountType accountType)
+    {
+        return accountType switch
+        {
+            AccountType.Checking => "Checking Account",
+            AccountType.Savings => "Savings Account",
+            AccountType.Cash => "Cash Account",
+            AccountType.CreditCard => "Credit Card",
+            AccountType.Investment => "Investment Account",
+            AccountType.Loan => "Loan Account",
+            AccountType.Credit => "Credit Account",
+            AccountType.Other => "Other",
+            _ => "Unknown"
+        };
+    }
+
+    private string GetStatusIcon(AccountStatus status)
+    {
+        return status switch
+        {
+            AccountStatus.Active => "✅",
+            AccountStatus.Inactive => "⏸️",
+            AccountStatus.Closed => "❌",
+            _ => "❓"
+        };
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (account == null) return;
+
+        isSubmitting = true;
+        try
+        {
+            // Update account properties
+            account.Name = editModel.Name;
+            account.AccountType = editModel.AccountType;
+            account.Currency = editModel.Currency;
+            account.ColorCode = editModel.ColorCode;
+            account.Status = editModel.Status;
+            account.BankName = editModel.BankName;
+            account.AccountNumber = editModel.AccountNumber;
+            account.CreditLimit = editModel.CreditLimit;
+            account.InterestRate = editModel.InterestRate;
+            account.BrokerName = editModel.BrokerName;
+
+            // Only update initial balance if no transactions exist
+            if (!hasTransactions)
+            {
+                account.InitialBalance = editModel.InitialBalance;
+                account.CurrentBalance = editModel.InitialBalance; // Reset current balance to initial
+            }
+
+            await AccountService.UpdateAccountAsync(account);
+            
+            // Show success message and navigate back
+            await MessagingService.ShowAlertAsync("Account updated successfully!");
+            NavigationManager.NavigateTo("/accounts");
+        }
+        catch (Exception ex)
+        {
+            await MessagingService.ShowAlertAsync($"Error updating account: {ex.Message}");
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private async Task HandleInvalidSubmit()
+    {
+        await MessagingService.ShowAlertAsync("Please fix the validation errors before submitting.");
+    }
+
+    private async Task ArchiveAccount()
+    {
+        if (account == null) return;
+
+        var confirmed = await MessagingService.ShowConfirmationAsync(
+            "Are you sure you want to archive this account? This will set its status to Inactive.");
+        
+        if (confirmed)
+        {
+            try
+            {
+                account.Status = AccountStatus.Inactive;
+                await AccountService.UpdateAccountAsync(account);
+                
+                await JSRuntime.InvokeVoidAsync("alert", "Account archived successfully!");
+                NavigationManager.NavigateTo("/accounts");
+            }
+            catch (Exception ex)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", $"Error archiving account: {ex.Message}");
+            }
+        }
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/accounts");
+    }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/accounts");
+    }
+
+    public class EditAccountModel
+    {
+        [Required(ErrorMessage = "Account name is required")]
+        [StringLength(100, ErrorMessage = "Account name cannot exceed 100 characters")]
+        public string Name { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Account type is required")]
+        public AccountType AccountType { get; set; }
+
+        [Required(ErrorMessage = "Currency is required")]
+        [StringLength(3, MinimumLength = 3, ErrorMessage = "Currency must be a 3-letter ISO code")]
+        public string Currency { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Initial balance is required")]
+        [Range(-999999999.99, 999999999.99, ErrorMessage = "Initial balance must be a valid amount")]
+        public decimal InitialBalance { get; set; }
+
+        [Required(ErrorMessage = "Color code is required")]
+        [RegularExpression(@"^#[0-9A-Fa-f]{6}$", ErrorMessage = "Color code must be a valid hex color (e.g., #3B82F6)")]
+        public string ColorCode { get; set; } = string.Empty;
+
+        public AccountStatus Status { get; set; } = AccountStatus.Active;
+
+        [StringLength(100, ErrorMessage = "Bank name cannot exceed 100 characters")]
+        public string? BankName { get; set; }
+
+        [StringLength(50, ErrorMessage = "Account number cannot exceed 50 characters")]
+        public string? AccountNumber { get; set; }
+
+        [Range(0, 999999999.99, ErrorMessage = "Credit limit must be a positive amount")]
+        public decimal? CreditLimit { get; set; }
+
+        [Range(0, 100, ErrorMessage = "Interest rate must be between 0 and 100")]
+        public decimal? InterestRate { get; set; }
+
+        [StringLength(100, ErrorMessage = "Broker name cannot exceed 100 characters")]
+        public string? BrokerName { get; set; }
+    }
+}

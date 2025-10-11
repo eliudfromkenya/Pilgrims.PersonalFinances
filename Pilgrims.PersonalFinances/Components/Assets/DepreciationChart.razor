@@ -1,0 +1,229 @@
+@using Pilgrims.PersonalFinances.Models
+@using System.Globalization
+
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
+    <div class="flex items-center justify-between mb-6">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+            Depreciation Schedule
+        </h3>
+        <div class="flex items-center space-x-2">
+            <span class="text-sm text-gray-500 dark:text-gray-400">
+                Method: @Asset.DepreciationMethod
+            </span>
+            <div class="w-3 h-3 rounded-full bg-blue-500"></div>
+        </div>
+    </div>
+
+    @if (depreciationSchedule?.Any() == true)
+    {
+        <!-- Chart Container -->
+        <div class="relative h-80 mb-6">
+            <!-- Y-axis labels -->
+            <div class="absolute left-0 top-0 h-full flex flex-col justify-between text-xs text-gray-500 dark:text-gray-400 pr-2">
+                @for (int i = 0; i <= 5; i++)
+                {
+                    var value = maxValue - (maxValue * i / 5);
+                    <span>@value.ToString("C0", CultureInfo.CurrentCulture)</span>
+                }
+            </div>
+
+            <!-- Chart Area -->
+            <div class="ml-16 h-full relative border-l border-b border-gray-300 dark:border-gray-600">
+                <!-- Grid lines -->
+                @for (int i = 0; i <= 5; i++)
+                {
+                    var topPosition = (i * 100 / 5);
+                    <div class="absolute w-full border-t border-gray-200 dark:border-gray-700 opacity-50" 
+                         style="top: @(topPosition)%"></div>
+                }
+
+                <!-- Depreciation Line -->
+                <svg class="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                    <defs>
+                        <linearGradient id="depreciationGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:0.3" />
+                            <stop offset="100%" style="stop-color:#3B82F6;stop-opacity:0.1" />
+                        </linearGradient>
+                    </defs>
+                    
+                    <!-- Area under the curve -->
+                    <polygon points="@GetAreaPoints()" fill="url(#depreciationGradient)" />
+                    
+                    <!-- Depreciation line -->
+                    <polyline points="@GetLinePoints()" 
+                              fill="none" 
+                              stroke="#3B82F6" 
+                              stroke-width="0.5" 
+                              stroke-linecap="round" 
+                              stroke-linejoin="round" />
+                    
+                    <!-- Data points -->
+                    @for (int i = 0; i < depreciationSchedule.Count; i++)
+                    {
+                        var point = GetDataPoint(i);
+                        <circle cx="@point.X" cy="@point.Y" r="0.8" fill="#3B82F6" stroke="white" stroke-width="0.3">
+                            <title>Year @(i + 1): @depreciationSchedule[i].EndingValue.ToString("C", CultureInfo.CurrentCulture)</title>
+                        </circle>
+                    }
+                </svg>
+
+                <!-- Hover tooltips (simplified) -->
+                @for (int i = 0; i < Math.Min(depreciationSchedule.Count, 10); i++)
+                {
+                    var point = GetDataPoint(i);
+                    var item = depreciationSchedule[i];
+                    <div class="absolute w-2 h-2 -ml-1 -mt-1 cursor-pointer group" 
+                         style="left: @(point.X)%; top: @(point.Y)%">
+                        <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                            Year @(i + 1): @item.EndingValue.ToString("C", CultureInfo.CurrentCulture)
+                            <div class="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900 dark:border-t-gray-100"></div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- X-axis labels -->
+            <div class="ml-16 mt-2 flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                @for (int i = 0; i < Math.Min(depreciationSchedule.Count, 11); i += Math.Max(1, depreciationSchedule.Count / 10))
+                {
+                    <span>Year @(i + 1)</span>
+                }
+            </div>
+        </div>
+
+        <!-- Summary Statistics -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <div class="text-center">
+                <p class="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                    @Asset.FormattedPurchasePrice
+                </p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                    Purchase Price
+                </p>
+            </div>
+            <div class="text-center">
+                <p class="text-2xl font-bold text-green-600 dark:text-green-400">
+                    @Asset.FormattedCurrentValue
+                </p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                    Current Value
+                </p>
+            </div>
+            <div class="text-center">
+                <p class="text-2xl font-bold text-red-600 dark:text-red-400">
+                    @Asset.FormattedTotalDepreciation
+                </p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                    Total Depreciation
+                </p>
+            </div>
+            <div class="text-center">
+                <p class="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                    @Asset.SalvageValue?.ToString("C", CultureInfo.CurrentCulture)
+                </p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                    Salvage Value
+                </p>
+            </div>
+        </div>
+
+        <!-- Depreciation Details -->
+        <div class="mt-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div>
+                    <span class="font-medium text-gray-700 dark:text-gray-300">Annual Depreciation:</span>
+                    <span class="ml-2 text-gray-900 dark:text-white">
+                        @Asset.AnnualDepreciationAmount.ToString("C", CultureInfo.CurrentCulture)
+                    </span>
+                </div>
+                <div>
+                    <span class="font-medium text-gray-700 dark:text-gray-300">Useful Life:</span>
+                    <span class="ml-2 text-gray-900 dark:text-white">
+                        @Asset.UsefulLifeYears years
+                    </span>
+                </div>
+                <div>
+                    <span class="font-medium text-gray-700 dark:text-gray-300">Depreciation Rate:</span>
+                    <span class="ml-2 text-gray-900 dark:text-white">
+                        @Asset.DepreciationRate?.ToString("P1", CultureInfo.CurrentCulture)
+                    </span>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- No Data State -->
+        <div class="text-center py-12">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">
+                No depreciation data available
+            </h3>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Unable to generate depreciation schedule for this asset.
+            </p>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public Asset Asset { get; set; } = null!;
+    [Parameter] public bool ShowDetails { get; set; } = true;
+
+    private List<DepreciationScheduleItem>? depreciationSchedule;
+    private decimal maxValue;
+
+    protected override void OnParametersSet()
+    {
+        if (Asset != null)
+        {
+            depreciationSchedule = Asset.GetDepreciationSchedule();
+            maxValue = depreciationSchedule?.Any() == true 
+                ? Math.Max(Asset.PurchasePrice ?? 0m, depreciationSchedule.Max(x => x.EndingValue))
+                : Asset.PurchasePrice ?? 0m;
+        }
+    }
+
+    private string GetLinePoints()
+    {
+        if (depreciationSchedule?.Any() != true) return "";
+
+        var points = new List<string>();
+        for (int i = 0; i < depreciationSchedule.Count; i++)
+        {
+            var point = GetDataPoint(i);
+            points.Add($"{point.X},{point.Y}");
+        }
+        return string.Join(" ", points);
+    }
+
+    private string GetAreaPoints()
+    {
+        if (depreciationSchedule?.Any() != true) return "";
+
+        var points = new List<string> { "0,100" }; // Start at bottom left
+        
+        for (int i = 0; i < depreciationSchedule.Count; i++)
+        {
+            var point = GetDataPoint(i);
+            points.Add($"{point.X},{point.Y}");
+        }
+        
+        points.Add("100,100"); // End at bottom right
+        return string.Join(" ", points);
+    }
+
+    private (double X, double Y) GetDataPoint(int index)
+    {
+        if (depreciationSchedule?.Any() != true || index >= depreciationSchedule.Count)
+            return (0, 100);
+
+        var item = depreciationSchedule[index];
+        var x = (double)index / Math.Max(1, depreciationSchedule.Count - 1) * 100;
+        var y = maxValue > 0 ? (double)(1 - item.EndingValue / maxValue) * 100 : 100;
+        
+        return (x, Math.Max(0, Math.Min(100, y)));
+    }
+}

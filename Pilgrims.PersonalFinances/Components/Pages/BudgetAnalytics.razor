@@ -1,0 +1,620 @@
+@page "/budget/analytics"
+@using Pilgrims.PersonalFinances.Models
+@using Pilgrims.PersonalFinances.Models.Enums
+@using Pilgrims.PersonalFinances.Services.Interfaces
+@inject IBudgetService BudgetService
+@inject ITransactionService TransactionService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Budget Analytics</PageTitle>
+
+<!-- Particle Background -->
+<div class="fixed inset-0 overflow-hidden pointer-events-none">
+    <div id="particles-js" class="absolute inset-0"></div>
+</div>
+
+<div class="relative z-10 min-h-screen bg-gradient-to-br from-slate-900/90 via-purple-900/90 to-slate-900/90">
+    <!-- Header -->
+    <div class="bg-white/10 backdrop-blur-md border-b border-white/20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-4">
+                    <button @onclick="NavigateToBudget" 
+                            class="text-white/80 hover:text-white transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+                    <h1 class="text-2xl font-bold text-white">Budget Analytics</h1>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <select @bind="selectedPeriod" @bind:after="OnPeriodChangedHandler" 
+                            class="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        <option value="3">Last 3 Months</option>
+                        <option value="6">Last 6 Months</option>
+                        <option value="12">Last 12 Months</option>
+                        <option value="24">Last 24 Months</option>
+                    </select>
+                    <button @onclick="RefreshAnalytics" 
+                            class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width='2' d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        <span>Refresh</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        @if (isLoading)
+        {
+            <!-- Loading State -->
+            <div class="flex items-center justify-center h-64">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+            </div>
+        }
+        else
+        {
+            <!-- Analytics Overview Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20 hover:bg-white/15 transition-all duration-300">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-white/70 text-sm">Total Budgets</p>
+                            <p class="text-2xl font-bold text-white">@analyticsData?.TotalBudgets</p>
+                        </div>
+                        <div class="bg-blue-500/20 p-3 rounded-lg">
+                            <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20 hover:bg-white/15 transition-all duration-300">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-white/70 text-sm">Avg. Utilization</p>
+                            <p class="text-2xl font-bold text-white">@(analyticsData?.AverageUtilization.ToString("F1"))%</p>
+                        </div>
+                        <div class="bg-green-500/20 p-3 rounded-lg">
+                            <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20 hover:bg-white/15 transition-all duration-300">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-white/70 text-sm">Over Budget</p>
+                            <p class="text-2xl font-bold text-white">@analyticsData?.OverBudgetCount</p>
+                        </div>
+                        <div class="bg-red-500/20 p-3 rounded-lg">
+                            <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20 hover:bg-white/15 transition-all duration-300">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-white/70 text-sm">Total Variance</p>
+                            <p class="text-2xl font-bold @(analyticsData?.TotalVariance >= 0 ? "text-green-400" : "text-red-400")">
+                                @(analyticsData?.TotalVariance >= 0 ? "+" : "")@analyticsData?.TotalVariance.ToString("C")
+                            </p>
+                        </div>
+                        <div class="@(analyticsData?.TotalVariance >= 0 ? "bg-green-500/20" : "bg-red-500/20") p-3 rounded-lg">
+                            <svg class="w-6 h-6 @(analyticsData?.TotalVariance >= 0 ? "text-green-400" : "text-red-400")" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <!-- Budget Performance Chart -->
+                <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
+                    <h3 class="text-xl font-semibold text-white mb-4">Budget Performance Trend</h3>
+                    <div class="h-64 flex items-center justify-center">
+                        <canvas id="performanceChart" class="max-w-full max-h-full"></canvas>
+                    </div>
+                </div>
+
+                <!-- Variance Analysis Chart -->
+                <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
+                    <h3 class="text-xl font-semibold text-white mb-4">Variance Analysis</h3>
+                    <div class="h-64 flex items-center justify-center">
+                        <canvas id="varianceChart" class="max-w-full max-h-full"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Budget Type Performance -->
+            <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20 mb-8">
+                <h3 class="text-xl font-semibold text-white mb-6">Performance by Budget Type</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    @if (budgetTypePerformance != null)
+                    {
+                        @foreach (var performance in budgetTypePerformance)
+                        {
+                            <div class="bg-white/5 rounded-lg p-4 border border-white/10">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h4 class="text-white font-medium">@performance.BudgetType</h4>
+                                    <span class="text-sm text-white/70">@performance.Count budgets</span>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-white/70">Avg. Utilization</span>
+                                        <span class="text-white">@performance.AverageUtilization.ToString("F1")%</span>
+                                    </div>
+                                    <div class="w-full bg-white/10 rounded-full h-2">
+                                        <div class="bg-gradient-to-r from-purple-500 to-blue-500 h-2 rounded-full transition-all duration-500"
+                                             style="width: @Math.Min(performance.AverageUtilization, 100)%"></div>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-white/70">Total Variance</span>
+                                        <span class="@(performance.TotalVariance >= 0 ? "text-green-400" : "text-red-400")">
+                                            @(performance.TotalVariance >= 0 ? "+" : "")@performance.TotalVariance.ToString("C")
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+
+            <!-- Detailed Budget Analysis -->
+            <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-semibold text-white">Detailed Budget Analysis</h3>
+                    <div class="flex items-center space-x-2">
+                        <select @bind="selectedBudgetType" @bind:after="OnBudgetTypeFilterChangedHandler"
+                                class="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            <option value="">All Types</option>
+                            <option value="Category">Category</option>
+                            <option value="Account">Account</option>
+                            <option value="Tag">Tag</option>
+                            <option value="TimePeriod">Time Period</option>
+                        </select>
+                    </div>
+                </div>
+
+                @if (detailedAnalysis != null && detailedAnalysis.Any())
+                {
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b border-white/20">
+                                    <th class="text-left py-3 px-4 text-white/70 font-medium">Budget Name</th>
+                                    <th class="text-left py-3 px-4 text-white/70 font-medium">Type</th>
+                                    <th class="text-right py-3 px-4 text-white/70 font-medium">Budgeted</th>
+                                    <th class="text-right py-3 px-4 text-white/70 font-medium">Spent</th>
+                                    <th class="text-right py-3 px-4 text-white/70 font-medium">Variance</th>
+                                    <th class="text-right py-3 px-4 text-white/70 font-medium">Utilization</th>
+                                    <th class="text-center py-3 px-4 text-white/70 font-medium">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var budget in detailedAnalysis)
+                                {
+                                    <tr class="border-b border-white/10 hover:bg-white/5 transition-colors">
+                                        <td class="py-3 px-4">
+                                            <div class="text-white font-medium">@budget.Name</div>
+                                            <div class="text-white/60 text-sm">@budget.Description</div>
+                                        </td>
+                                        <td class="py-3 px-4">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-500/20 text-purple-300">
+                                                @budget.BudgetType
+                                            </span>
+                                        </td>
+                                        <td class="py-3 px-4 text-right text-white">@budget.LimitAmount.ToString("C")</td>
+                                        <td class="py-3 px-4 text-right text-white">@budget.SpentAmount.ToString("C")</td>
+                                        <td class="py-3 px-4 text-right @(budget.Variance >= 0 ? "text-green-400" : "text-red-400")">
+                                            @(budget.Variance >= 0 ? "+" : "")@budget.Variance.ToString("C")
+                                        </td>
+                                        <td class="py-3 px-4 text-right">
+                                            <div class="flex items-center justify-end space-x-2">
+                                                <span class="text-white text-sm">@budget.UtilizationPercentage.ToString("F1")%</span>
+                                                <div class="w-16 bg-white/10 rounded-full h-2">
+                                                    <div class="@(budget.UtilizationPercentage > 100 ? "bg-red-500" : budget.UtilizationPercentage > 75 ? "bg-yellow-500" : "bg-green-500") h-2 rounded-full transition-all duration-500"
+                                                         style="width: @Math.Min(budget.UtilizationPercentage, 100)%"></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 px-4 text-center">
+                                            @if (budget.UtilizationPercentage > 100)
+                                            {
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500/20 text-red-300">
+                                                    Over Budget
+                                                </span>
+                                            }
+                                            else if (budget.UtilizationPercentage > 90)
+                                            {
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-300">
+                                                    Near Limit
+                                                </span>
+                                            }
+                                            else if (budget.UtilizationPercentage < 25)
+                                            {
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/20 text-blue-300">
+                                                    Under-utilized
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/20 text-green-300">
+                                                    On Track
+                                                </span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-12">
+                        <svg class="mx-auto h-12 w-12 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                        <h3 class="mt-2 text-sm font-medium text-white/70">No budget data available</h3>
+                        <p class="mt-1 text-sm text-white/50">Create some budgets to see detailed analysis.</p>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private bool isLoading = true;
+    private int selectedPeriod = 6;
+    private string selectedBudgetType = "";
+    
+    private BudgetAnalyticsData? analyticsData;
+    private List<BudgetTypePerformance>? budgetTypePerformance;
+    private List<BudgetAnalysisDetail>? detailedAnalysis;
+    private List<MonthlyBudgetData>? monthlyData;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAnalyticsData();
+        await InitializeCharts();
+    }
+
+    private async Task LoadAnalyticsData()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            var endDate = DateTime.Now;
+            var startDate = endDate.AddMonths(-selectedPeriod);
+
+            // Load analytics data
+            analyticsData = await BudgetService.GetBudgetAnalyticsAsync(startDate, endDate);
+            
+            // Load budget type performance
+            budgetTypePerformance = await GetBudgetTypePerformance(startDate, endDate);
+            
+            // Load detailed analysis
+            detailedAnalysis = await GetDetailedBudgetAnalysis();
+            
+            // Load monthly data for charts
+            monthlyData = await GetMonthlyBudgetData(startDate, endDate);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading analytics data: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task<List<BudgetTypePerformance>> GetBudgetTypePerformance(DateTime startDate, DateTime endDate)
+    {
+        var budgets = await BudgetService.GetAllBudgetsAsync();
+        var performance = new List<BudgetTypePerformance>();
+
+        var groupedBudgets = budgets.GroupBy(b => b.BudgetType.ToString());
+        
+        foreach (var group in groupedBudgets)
+        {
+            var budgetList = group.ToList();
+            var avgUtilization = budgetList.Average(b => b.UtilizationPercentage);
+            var totalVariance = budgetList.Sum(b => b.LimitAmount - b.SpentAmount);
+
+            performance.Add(new BudgetTypePerformance
+            {
+                BudgetType = group.Key,
+                Count = budgetList.Count,
+                AverageUtilization = avgUtilization,
+                TotalVariance = totalVariance
+            });
+        }
+
+        return performance;
+    }
+
+    private async Task<List<BudgetAnalysisDetail>> GetDetailedBudgetAnalysis()
+    {
+        var budgets = await BudgetService.GetBudgetsWithTrackingAsync();
+        var analysis = new List<BudgetAnalysisDetail>();
+
+        foreach (var budget in budgets)
+        {
+            if (string.IsNullOrEmpty(selectedBudgetType) || budget.BudgetType.ToString() == selectedBudgetType)
+            {
+                analysis.Add(new BudgetAnalysisDetail
+                {
+                    Name = budget.Name,
+                    Description = budget.Description ?? "",
+                    BudgetType = budget.BudgetType.ToString(),
+                    LimitAmount = budget.LimitAmount,
+                    SpentAmount = budget.SpentAmount,
+                    Variance = budget.LimitAmount - budget.SpentAmount,
+                    UtilizationPercentage = budget.UtilizationPercentage
+                });
+            }
+        }
+
+        return analysis.OrderByDescending(a => a.UtilizationPercentage).ToList();
+    }
+
+    private async Task<List<MonthlyBudgetData>> GetMonthlyBudgetData(DateTime startDate, DateTime endDate)
+    {
+        var monthlyData = new List<MonthlyBudgetData>();
+        var current = new DateTime(startDate.Year, startDate.Month, 1);
+
+        while (current <= endDate)
+        {
+            var monthEnd = current.AddMonths(1).AddDays(-1);
+            var budgets = await BudgetService.GetAllBudgetsAsync();
+            
+            var totalBudgeted = budgets.Sum(b => b.LimitAmount);
+            var totalSpent = budgets.Sum(b => b.SpentAmount);
+
+            monthlyData.Add(new MonthlyBudgetData
+            {
+                Month = current.ToString("MMM yyyy"),
+                TotalBudgeted = totalBudgeted,
+                TotalSpent = totalSpent,
+                Variance = totalBudgeted - totalSpent
+            });
+
+            current = current.AddMonths(1);
+        }
+
+        return monthlyData;
+    }
+
+    private void NavigateToBudget()
+    {
+        Navigation.NavigateTo("/budget-dashboard");
+    }
+
+    private async Task OnPeriodChangedHandler()
+    {
+        await LoadAnalyticsData();
+    }
+
+    private async Task OnBudgetTypeFilterChangedHandler()
+    {
+        await LoadAnalyticsData();
+    }
+
+    private async Task OnPeriodChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int period))
+        {
+            selectedPeriod = period;
+            await LoadAnalyticsData();
+            await UpdateCharts();
+        }
+    }
+
+    private async Task OnBudgetTypeFilterChanged(ChangeEventArgs e)
+    {
+        selectedBudgetType = e.Value?.ToString() ?? "";
+        detailedAnalysis = await GetDetailedBudgetAnalysis();
+        StateHasChanged();
+    }
+
+    private async Task RefreshAnalytics()
+    {
+        await LoadAnalyticsData();
+        await UpdateCharts();
+    }
+
+    private async Task InitializeCharts()
+    {
+        await JSRuntime.InvokeVoidAsync("initializeParticles");
+        await Task.Delay(500); // Wait for particles to initialize
+        await UpdateCharts();
+    }
+
+    private async Task UpdateCharts()
+    {
+        if (monthlyData != null && monthlyData.Any())
+        {
+            // Performance Chart
+            var performanceLabels = monthlyData.Select(m => m.Month).ToArray();
+            var budgetedData = monthlyData.Select(m => (double)m.TotalBudgeted).ToArray();
+            var spentData = monthlyData.Select(m => (double)m.TotalSpent).ToArray();
+
+            await JSRuntime.InvokeVoidAsync("updatePerformanceChart", performanceLabels, budgetedData, spentData);
+
+            // Variance Chart
+            var varianceData = monthlyData.Select(m => (double)m.Variance).ToArray();
+            await JSRuntime.InvokeVoidAsync("updateVarianceChart", performanceLabels, varianceData);
+        }
+    }
+
+    // Data Models
+    public class BudgetTypePerformance
+    {
+        public string BudgetType { get; set; } = "";
+        public int Count { get; set; }
+        public decimal AverageUtilization { get; set; }
+        public decimal TotalVariance { get; set; }
+    }
+
+    public class BudgetAnalysisDetail
+    {
+        public string Name { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string BudgetType { get; set; } = "";
+        public decimal LimitAmount { get; set; }
+        public decimal SpentAmount { get; set; }
+        public decimal Variance { get; set; }
+        public decimal UtilizationPercentage { get; set; }
+    }
+
+    public class MonthlyBudgetData
+    {
+        public string Month { get; set; } = "";
+        public decimal TotalBudgeted { get; set; }
+        public decimal TotalSpent { get; set; }
+        public decimal Variance { get; set; }
+    }
+}
+
+<script>
+    window.updatePerformanceChart = (labels, budgetedData, spentData) => {
+        const ctx = document.getElementById('performanceChart');
+        if (!ctx) return;
+
+        if (window.performanceChart) {
+            window.performanceChart.destroy();
+        }
+
+        window.performanceChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Budgeted',
+                    data: budgetedData,
+                    borderColor: 'rgb(147, 51, 234)',
+                    backgroundColor: 'rgba(147, 51, 234, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }, {
+                    label: 'Spent',
+                    data: spentData,
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: 'white'
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            color: 'rgba(255, 255, 255, 0.7)'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    },
+                    y: {
+                        ticks: {
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            callback: function(value) {
+                                return '$' + value.toLocaleString();
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    }
+                }
+            }
+        });
+    };
+
+    window.updateVarianceChart = (labels, varianceData) => {
+        const ctx = document.getElementById('varianceChart');
+        if (!ctx) return;
+
+        if (window.varianceChart) {
+            window.varianceChart.destroy();
+        }
+
+        window.varianceChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Variance',
+                    data: varianceData,
+                    backgroundColor: varianceData.map(value => 
+                        value >= 0 ? 'rgba(34, 197, 94, 0.8)' : 'rgba(239, 68, 68, 0.8)'
+                    ),
+                    borderColor: varianceData.map(value => 
+                        value >= 0 ? 'rgb(34, 197, 94)' : 'rgb(239, 68, 68)'
+                    ),
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: 'white'
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            color: 'rgba(255, 255, 255, 0.7)'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    },
+                    y: {
+                        ticks: {
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            callback: function(value) {
+                                return '$' + value.toLocaleString();
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    }
+                }
+            }
+        });
+    };
+</script>

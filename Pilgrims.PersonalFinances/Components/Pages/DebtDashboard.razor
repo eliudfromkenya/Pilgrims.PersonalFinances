@@ -1,0 +1,470 @@
+@page "/debt-dashboard"
+@using Pilgrims.PersonalFinances.Models
+@using Pilgrims.PersonalFinances.Models.Enums
+@using Pilgrims.PersonalFinances.Services.Interfaces
+@inject IDebtService DebtService
+@inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
+
+<PageTitle>Debt Dashboard - Pilgrims Personal Finance</PageTitle>
+
+<!-- Particle Background -->
+<div class="fixed inset-0 overflow-hidden pointer-events-none">
+    <div class="absolute inset-0 bg-gradient-to-br from-red-50 via-orange-50 to-yellow-50 dark:from-gray-900 dark:via-red-900 dark:to-orange-900"></div>
+    <div class="particles-container">
+        @for (int i = 0; i < 25; i++)
+        {
+            <div class="particle" style="animation-delay: @(i * 0.15)s;"></div>
+        }
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="relative z-10 min-h-screen p-6">
+    <!-- Header Section -->
+    <div class="mb-8">
+        <div class="glass-card p-6 rounded-2xl border border-[var(--border-color)] backdrop-blur-lg bg-[var(--card-bg)]">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h1 class="text-4xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent animate-fade-in">
+                        💳 Debt Dashboard
+                    </h1>
+                    <p class="text-gray-600 dark:text-gray-300 mt-2 animate-slide-up">Comprehensive debt tracking and payoff strategies</p>
+                </div>
+                <div class="flex space-x-3">
+                    <button @onclick="NavigateToCreateDebt" class="px-6 py-3 bg-gradient-to-r from-red-500 to-orange-600 text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-300 animate-bounce-in">
+                        <i class="fas fa-plus mr-2"></i>Add Debt
+                    </button>
+                    <button @onclick="NavigateToPayoffCalculator" class="px-6 py-3 bg-gradient-to-r from-green-500 to-teal-600 text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-300">
+                        <i class="fas fa-calculator mr-2"></i>Payoff Calculator
+                    </button>
+                    <button @onclick="RefreshDashboard" class="px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-300">
+                        <i class="fas fa-sync-alt mr-2"></i>Refresh
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Real-time Debt Overview Cards -->
+            @if (isLoading)
+            {
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+                    @for (int i = 0; i < 4; i++)
+                    {
+                        <div class="bg-gradient-to-r from-gray-300 to-gray-400 p-4 rounded-xl animate-pulse">
+                            <div class="h-4 bg-gray-200 rounded mb-2"></div>
+                            <div class="h-8 bg-gray-200 rounded mb-2"></div>
+                            <div class="h-3 bg-gray-200 rounded"></div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+                    <div class="bg-gradient-to-r from-red-400 to-red-600 p-4 rounded-xl text-white transform hover:scale-105 transition-all duration-300 animate-slide-up" style="animation-delay: 0.1s;">
+                        <div class="text-sm opacity-90">Total Debt</div>
+                        <div class="text-2xl font-bold">@totalDebtBalance.ToString("C")</div>
+                        <div class="text-xs opacity-75 mt-1">📊 @activeDebts.Count() active debts</div>
+                    </div>
+                    <div class="bg-gradient-to-r from-orange-400 to-orange-600 p-4 rounded-xl text-white transform hover:scale-105 transition-all duration-300 animate-slide-up" style="animation-delay: 0.2s;">
+                        <div class="text-sm opacity-90">Monthly Payments</div>
+                        <div class="text-2xl font-bold">@monthlyPayments.ToString("C")</div>
+                        <div class="text-xs opacity-75 mt-1">💰 Required minimum</div>
+                    </div>
+                    <div class="bg-gradient-to-r from-yellow-400 to-yellow-600 p-4 rounded-xl text-white transform hover:scale-105 transition-all duration-300 animate-slide-up" style="animation-delay: 0.3s;">
+                        <div class="text-sm opacity-90">Interest Paid (YTD)</div>
+                        <div class="text-2xl font-bold">@yearToDateInterest.ToString("C")</div>
+                        <div class="text-xs opacity-75 mt-1">📈 This year</div>
+                    </div>
+                    <div class="bg-gradient-to-r from-green-400 to-green-600 p-4 rounded-xl text-white transform hover:scale-105 transition-all duration-300 animate-slide-up" style="animation-delay: 0.4s;">
+                        <div class="text-sm opacity-90">Overdue Debts</div>
+                        <div class="text-2xl font-bold">@overdueDebts.Count()</div>
+                        <div class="text-xs opacity-75 mt-1">@(overdueDebts.Any() ? "⚠️ Needs attention" : "✅ All current")</div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Debt Analytics and Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Debt Breakdown by Type -->
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 animate-slide-up" style="animation-delay: 0.5s;">
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
+                <span class="mr-2">📊</span> Debt Breakdown by Type
+            </h3>
+            @if (!isLoading && debtByType.Any())
+            {
+                <div class="space-y-4">
+                    @foreach (var debtType in debtByType)
+                    {
+                        var percentage = totalDebtBalance > 0 ? (debtType.Value / totalDebtBalance) * 100 : 0;
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="w-4 h-4 rounded-full mr-3 @GetDebtTypeColor(debtType.Key)"></div>
+                                <span class="text-gray-700 dark:text-gray-300">@debtType.Key.ToString()</span>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-semibold text-gray-800 dark:text-white">@debtType.Value.ToString("C")</div>
+                                <div class="text-sm text-gray-500">@percentage.ToString("F1")%</div>
+                            </div>
+                        </div>
+                        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                            <div class="@GetDebtTypeColor(debtType.Key) h-2 rounded-full transition-all duration-1000 ease-out" style="width: @percentage.ToString("F1")%"></div>
+                        </div>
+                    }
+                </div>
+            }
+            else if (isLoading)
+            {
+                <div class="space-y-4">
+                    @for (int i = 0; i < 3; i++)
+                    {
+                        <div class="animate-pulse">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="h-4 bg-gray-300 rounded w-24"></div>
+                                <div class="h-4 bg-gray-300 rounded w-16"></div>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-gray-300 h-2 rounded-full w-1/2"></div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                    <i class="fas fa-chart-pie text-4xl mb-4"></i>
+                    <p>No debt data available</p>
+                </div>
+            }
+        </div>
+
+        <!-- Debt Prioritization -->
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 animate-slide-up" style="animation-delay: 0.6s;">
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
+                <span class="mr-2">🎯</span> Debt Prioritization
+            </h3>
+            <div class="flex space-x-2 mb-4">
+                <button @onclick="() => SetPrioritizationMethod(DebtPrioritizationMethod.Snowball)" 
+                        class="px-3 py-2 rounded-lg text-sm transition-all duration-300 @(prioritizationMethod == DebtPrioritizationMethod.Snowball ? "bg-blue-500 text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300")">
+                    Snowball
+                </button>
+                <button @onclick="() => SetPrioritizationMethod(DebtPrioritizationMethod.Avalanche)" 
+                        class="px-3 py-2 rounded-lg text-sm transition-all duration-300 @(prioritizationMethod == DebtPrioritizationMethod.Avalanche ? "bg-blue-500 text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300")">
+                    Avalanche
+                </button>
+                <button @onclick="() => SetPrioritizationMethod(DebtPrioritizationMethod.Custom)" 
+                        class="px-3 py-2 rounded-lg text-sm transition-all duration-300 @(prioritizationMethod == DebtPrioritizationMethod.Custom ? "bg-blue-500 text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300")">
+                    Custom
+                </button>
+            </div>
+            @if (!isLoading && prioritizedDebts.Any())
+            {
+                <div class="space-y-3 max-h-64 overflow-y-auto">
+                    @foreach (var (debt, index) in prioritizedDebts.Select((d, i) => (d, i + 1)))
+                    {
+                        <div class="flex items-center justify-between p-3 bg-white/20 dark:bg-gray-800/20 rounded-lg">
+                            <div class="flex items-center">
+                                <div class="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3">
+                                    @index
+                                </div>
+                                <div>
+                                    <div class="font-medium text-gray-800 dark:text-white">@debt.Name</div>
+                                    <div class="text-sm text-gray-500">
+                                        @debt.Creditor?.Name | @debt.InterestRate?.ToString("F2")% APR
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-semibold text-gray-800 dark:text-white">@debt.CurrentBalance.ToString("C")</div>
+                                <div class="text-sm text-gray-500">Min: @debt.MinimumPayment?.ToString("C")</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else if (isLoading)
+            {
+                <div class="space-y-3">
+                    @for (int i = 0; i < 3; i++)
+                    {
+                        <div class="animate-pulse p-3 bg-gray-200 dark:bg-gray-700 rounded-lg">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <div class="w-6 h-6 bg-gray-300 rounded-full mr-3"></div>
+                                    <div>
+                                        <div class="h-4 bg-gray-300 rounded w-24 mb-1"></div>
+                                        <div class="h-3 bg-gray-300 rounded w-16"></div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="h-4 bg-gray-300 rounded w-16 mb-1"></div>
+                                    <div class="h-3 bg-gray-300 rounded w-12"></div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                    <i class="fas fa-list-ol text-4xl mb-4"></i>
+                    <p>No debts to prioritize</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Recent Activity and Quick Actions -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <!-- Recent Payments -->
+        <div class="lg:col-span-2 glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 animate-slide-up" style="animation-delay: 0.7s;">
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
+                <span class="mr-2">💰</span> Recent Payments
+            </h3>
+            @if (!isLoading && recentPayments.Any())
+            {
+                <div class="space-y-3 max-h-64 overflow-y-auto">
+                    @foreach (var payment in recentPayments)
+                    {
+                        <div class="flex items-center justify-between p-3 bg-white/20 dark:bg-gray-800/20 rounded-lg hover:bg-white/30 dark:hover:bg-gray-800/30 transition-all duration-300">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-gradient-to-r from-green-400 to-green-600 rounded-full flex items-center justify-center text-white mr-3">
+                                    <i class="fas fa-dollar-sign"></i>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-gray-800 dark:text-white">@payment.Debt?.Name</div>
+                                    <div class="text-sm text-gray-500">@payment.PaymentDate.ToString("MMM dd, yyyy")</div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-semibold text-green-600 dark:text-green-400">@payment.Amount.ToString("C")</div>
+                                <div class="text-xs text-gray-500">Principal: @payment.PrincipalAmount?.ToString("C")</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else if (isLoading)
+            {
+                <div class="space-y-3">
+                    @for (int i = 0; i < 3; i++)
+                    {
+                        <div class="animate-pulse p-3 bg-gray-200 dark:bg-gray-700 rounded-lg">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 bg-gray-300 rounded-full mr-3"></div>
+                                    <div>
+                                        <div class="h-4 bg-gray-300 rounded w-24 mb-1"></div>
+                                        <div class="h-3 bg-gray-300 rounded w-16"></div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="h-4 bg-gray-300 rounded w-16 mb-1"></div>
+                                    <div class="h-3 bg-gray-300 rounded w-12"></div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                    <i class="fas fa-receipt text-4xl mb-4"></i>
+                    <p>No recent payments</p>
+                </div>
+            }
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 animate-slide-up" style="animation-delay: 0.8s;">
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
+                <span class="mr-2">⚡</span> Quick Actions
+            </h3>
+            <div class="space-y-3">
+                <button @onclick="NavigateToDebtList" class="w-full p-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all duration-300 flex items-center">
+                    <i class="fas fa-list mr-3"></i>
+                    <span>View All Debts</span>
+                </button>
+                <button @onclick="NavigateToCreditorManagement" class="w-full p-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all duration-300 flex items-center">
+                    <i class="fas fa-building mr-3"></i>
+                    <span>Manage Creditors</span>
+                </button>
+                <button @onclick="NavigateToPayoffCalculator" class="w-full p-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all duration-300 flex items-center">
+                    <i class="fas fa-calculator mr-3"></i>
+                    <span>Payoff Calculator</span>
+                </button>
+                <button @onclick="() => ShowUpcomingPayments = !ShowUpcomingPayments" class="w-full p-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all duration-300 flex items-center">
+                    <i class="fas fa-calendar-alt mr-3"></i>
+                    <span>Upcoming Payments</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upcoming Payments (Collapsible) -->
+    @if (ShowUpcomingPayments)
+    {
+        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 animate-slide-up mb-8">
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
+                <span class="mr-2">📅</span> Upcoming Payments (Next 30 Days)
+            </h3>
+            @if (!isLoading && upcomingDebts.Any())
+            {
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    @foreach (var debt in upcomingDebts)
+                    {
+                        var daysUntilDue = (debt.NextPaymentDue - DateTime.Today)?.Days;
+                        var urgencyClass = daysUntilDue <= 3 ? "from-red-500 to-red-600" : daysUntilDue <= 7 ? "from-orange-500 to-orange-600" : "from-blue-500 to-blue-600";
+                        
+                        <div class="p-4 bg-gradient-to-r @urgencyClass text-white rounded-lg">
+                            <div class="font-medium">@debt.Name</div>
+                            <div class="text-sm opacity-90">@debt.Creditor?.Name</div>
+                            <div class="mt-2">
+                                <div class="text-lg font-bold">@(debt.MinimumPayment?.ToString("C") ?? "N/A")</div>
+                                <div class="text-xs opacity-75">Due in @daysUntilDue days (@(debt.NextPaymentDue?.ToString("MMM dd") ?? "N/A"))</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else if (isLoading)
+            {
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    @for (int i = 0; i < 3; i++)
+                    {
+                        <div class="animate-pulse p-4 bg-gray-200 dark:bg-gray-700 rounded-lg">
+                            <div class="h-4 bg-gray-300 rounded mb-2"></div>
+                            <div class="h-3 bg-gray-300 rounded mb-2"></div>
+                            <div class="h-6 bg-gray-300 rounded mb-1"></div>
+                            <div class="h-3 bg-gray-300 rounded"></div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                    <i class="fas fa-calendar-check text-4xl mb-4"></i>
+                    <p>No upcoming payments in the next 30 days</p>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private bool isLoading = true;
+    private bool ShowUpcomingPayments = false;
+
+    // Data properties
+    private IEnumerable<Debt> activeDebts = new List<Debt>();
+    private IEnumerable<Debt> overdueDebts = new List<Debt>();
+    private IEnumerable<Debt> upcomingDebts = new List<Debt>();
+    private IEnumerable<Debt> prioritizedDebts = new List<Debt>();
+    private IEnumerable<DebtPayment> recentPayments = new List<DebtPayment>();
+    private Dictionary<DebtType, decimal> debtByType = new Dictionary<DebtType, decimal>();
+
+    // Summary properties
+    private decimal totalDebtBalance = 0;
+    private decimal monthlyPayments = 0;
+    private decimal yearToDateInterest = 0;
+
+    // UI state
+    private DebtPrioritizationMethod prioritizationMethod = DebtPrioritizationMethod.Avalanche;
+
+    private enum DebtPrioritizationMethod
+    {
+        Snowball,
+        Avalanche,
+        Custom
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDashboardData();
+        await JSRuntime.InvokeVoidAsync("initializeParticles");
+    }
+
+    private async Task LoadDashboardData()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            // Load all debt data
+            activeDebts = await DebtService.GetActiveDebtsAsync();
+            overdueDebts = await DebtService.GetOverdueDebtsAsync();
+            upcomingDebts = await DebtService.GetDebtsDueInDaysAsync(30);
+            recentPayments = (await DebtService.GetPaymentsByDateRangeAsync(DateTime.Today.AddDays(-30), DateTime.Today)).Take(10);
+            debtByType = await DebtService.GetDebtBalancesByTypeAsync();
+
+            // Calculate summary data
+            totalDebtBalance = await DebtService.GetTotalDebtBalanceAsync();
+            monthlyPayments = await DebtService.GetMonthlyPaymentObligationsAsync();
+            yearToDateInterest = await DebtService.GetTotalInterestPaidAsync(null);
+
+            // Load prioritized debts based on current method
+            await LoadPrioritizedDebts();
+        }
+        catch (Exception ex)
+        {
+            // Handle error - could show notification
+            Console.WriteLine($"Error loading debt dashboard: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadPrioritizedDebts()
+    {
+        prioritizedDebts = prioritizationMethod switch
+        {
+            DebtPrioritizationMethod.Snowball => await DebtService.GetDebtsBySnowballMethodAsync(),
+            DebtPrioritizationMethod.Avalanche => await DebtService.GetDebtsByAvalancheMethodAsync(),
+            DebtPrioritizationMethod.Custom => await DebtService.GetDebtsByCustomPriorityAsync(),
+            _ => await DebtService.GetDebtsByAvalancheMethodAsync()
+        };
+    }
+
+    private async Task SetPrioritizationMethod(DebtPrioritizationMethod method)
+    {
+        prioritizationMethod = method;
+        await LoadPrioritizedDebts();
+        StateHasChanged();
+    }
+
+    private string GetDebtTypeColor(DebtType debtType)
+    {
+        return debtType switch
+        {
+            DebtType.CreditCard => "bg-red-500",
+            DebtType.PersonalLoan => "bg-orange-500",
+            DebtType.Mortgage => "bg-blue-500",
+            DebtType.AutoLoan => "bg-green-500",
+            DebtType.StudentLoan => "bg-purple-500",
+            DebtType.BusinessLoan => "bg-yellow-500",
+            DebtType.Other => "bg-gray-500",
+            _ => "bg-gray-500"
+        };
+    }
+
+    private async Task RefreshDashboard()
+    {
+        await LoadDashboardData();
+    }
+
+    // Navigation methods
+    private void NavigateToCreateDebt() => Navigation.NavigateTo("/debt-create");
+    private void NavigateToDebtList() => Navigation.NavigateTo("/debt-list");
+    private void NavigateToCreditorManagement() => Navigation.NavigateTo("/creditor-management");
+    private void NavigateToPayoffCalculator() => Navigation.NavigateTo("/payoff-calculator");
+}

@@ -1,0 +1,391 @@
+@page "/income-categories"
+@using Pilgrims.PersonalFinances.Models
+@using Pilgrims.PersonalFinances.Services.Interfaces
+@inject IIncomeService IncomeService
+@inject NavigationManager Navigation
+@inject INotificationService NotificationService
+
+<PageTitle>Income Categories</PageTitle>
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/income-dashboard">Income</a></li>
+                    <li class="breadcrumb-item active">Categories</li>
+                </ol>
+            </nav>
+            <h1 class="h3 mb-0">Income Categories</h1>
+            <p class="text-muted">Organize your income sources by categories for better tracking and reporting</p>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-primary" @onclick="ShowCreateModal">
+                <i class="fas fa-plus me-2"></i>Add Category
+            </button>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Categories Grid -->
+        <div class="row">
+            @foreach (var category in categories)
+            {
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center" style="background-color: @category.Color; color: white;">
+                            <div class="d-flex align-items-center">
+                                @if (!string.IsNullOrEmpty(category.Icon))
+                                {
+                                    <i class="@category.Icon me-2"></i>
+                                }
+                                <h6 class="mb-0">@category.Name</h6>
+                            </div>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-light" type="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#" @onclick="() => ShowEditModal(category)" @onclick:preventDefault="true">
+                                        <i class="fas fa-edit me-2"></i>Edit
+                                    </a></li>
+                                    <li><a class="dropdown-item text-danger" href="#" @onclick="() => ShowDeleteConfirmation(category)" @onclick:preventDefault="true">
+                                        <i class="fas fa-trash me-2"></i>Delete
+                                    </a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            @if (!string.IsNullOrEmpty(category.Description))
+                            {
+                                <p class="card-text text-muted">@category.Description</p>
+                            }
+                            
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    @GetIncomeCount(category.Id) income(s)
+                                </small>
+                                <span class="badge @(category.IsActive ? "bg-success" : "bg-secondary")">
+                                    @(category.IsActive ? "Active" : "Inactive")
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <button class="btn btn-outline-primary btn-sm" @onclick="() => ViewCategoryIncomes(category.Id)">
+                                <i class="fas fa-eye me-2"></i>View Incomes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @if (!categories.Any())
+            {
+                <div class="col-12">
+                    <div class="text-center py-5">
+                        <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No Categories Found</h5>
+                        <p class="text-muted">Create your first income category to get started</p>
+                        <button class="btn btn-primary" @onclick="ShowCreateModal">
+                            <i class="fas fa-plus me-2"></i>Add First Category
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<!-- Create/Edit Modal -->
+<div class="modal fade @(showModal ? "show" : "")" style="display: @(showModal ? "block" : "none")" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">@(isEditMode ? "Edit Category" : "Add New Category")</h5>
+                <button type="button" class="btn-close" @onclick="HideModal"></button>
+            </div>
+            <EditForm Model="currentCategory" OnValidSubmit="SaveCategory">
+                <DataAnnotationsValidator />
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Category Name <span class="text-danger">*</span></label>
+                        <InputText @bind-Value="currentCategory.Name" class="form-control" placeholder="e.g., Employment, Investments, Side Business" />
+                        <ValidationMessage For="@(() => currentCategory.Name)" class="text-danger" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <InputTextArea @bind-Value="currentCategory.Description" class="form-control" rows="3" placeholder="Optional description for this category..." />
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Color</label>
+                            <div class="d-flex align-items-center">
+                                <input type="color" @bind="currentCategory.Color" class="form-control form-control-color me-2" style="width: 50px; height: 38px;">
+                                <InputText @bind-Value="currentCategory.Color" class="form-control" placeholder="#007bff" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Icon (Font Awesome)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    @if (!string.IsNullOrEmpty(currentCategory.Icon))
+                                    {
+                                        <i class="@currentCategory.Icon"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="fas fa-folder"></i>
+                                    }
+                                </span>
+                                <InputText @bind-Value="currentCategory.Icon" class="form-control" placeholder="fas fa-briefcase" />
+                            </div>
+                            <small class="text-muted">e.g., fas fa-briefcase, fas fa-chart-line</small>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <InputCheckbox @bind-Value="currentCategory.IsActive" class="form-check-input" id="isActive" />
+                            <label class="form-check-label" for="isActive">
+                                Active Category
+                            </label>
+                            <small class="form-text text-muted d-block">Inactive categories won't appear in income creation forms</small>
+                        </div>
+                    </div>
+
+                    <!-- Preview -->
+                    <div class="mb-3">
+                        <label class="form-label">Preview</label>
+                        <div class="card">
+                            <div class="card-header d-flex align-items-center" style="background-color: @currentCategory.Color; color: white;">
+                                @if (!string.IsNullOrEmpty(currentCategory.Icon))
+                                {
+                                    <i class="@currentCategory.Icon me-2"></i>
+                                }
+                                <span>@(string.IsNullOrEmpty(currentCategory.Name) ? "Category Name" : currentCategory.Name)</span>
+                            </div>
+                            @if (!string.IsNullOrEmpty(currentCategory.Description))
+                            {
+                                <div class="card-body">
+                                    <small class="text-muted">@currentCategory.Description</small>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="HideModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" disabled="@isSaving">
+                        @if (isSaving)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        }
+                        <i class="fas fa-save me-2"></i>
+                        @(isEditMode ? "Update" : "Create") Category
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade @(showDeleteModal ? "show" : "")" style="display: @(showDeleteModal ? "block" : "none")" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" @onclick="HideDeleteModal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the category "<strong>@categoryToDelete?.Name</strong>"?</p>
+                @if (GetIncomeCount(categoryToDelete?.Id ?? "") > 0)
+                {
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        This category has @GetIncomeCount(categoryToDelete?.Id ?? "") associated income(s). 
+                        Deleting this category will remove the category association from those incomes.
+                    </div>
+                }
+                <p class="text-muted">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" @onclick="HideDeleteModal">Cancel</button>
+                <button type="button" class="btn btn-danger" @onclick="DeleteCategory" disabled="@isDeleting">
+                    @if (isDeleting)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                    }
+                    <i class="fas fa-trash me-2"></i>Delete Category
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (showModal || showDeleteModal)
+{
+    <div class="modal-backdrop fade show"></div>
+}
+
+@code {
+    private bool isLoading = true;
+    private bool isSaving = false;
+    private bool isDeleting = false;
+    private bool showModal = false;
+    private bool showDeleteModal = false;
+    private bool isEditMode = false;
+
+    private List<IncomeCategory> categories = new();
+    private IncomeCategory currentCategory = new();
+    private IncomeCategory? categoryToDelete;
+    private Dictionary<string, int> incomeCounts = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            isLoading = true;
+            categories = (await IncomeService.GetAllIncomeCategoriesAsync()).ToList();
+            
+            // Load income counts for each category
+            foreach (var category in categories)
+            {
+                var count = await IncomeService.GetIncomeCountByCategoryAsync(category.Id);
+                incomeCounts[category.Id] = count;
+            }
+        }
+        catch (Exception ex)
+        {
+            await NotificationService.ShowErrorAsync("Error loading categories", ex.Message);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void ShowCreateModal()
+    {
+        currentCategory = new IncomeCategory
+        {
+            IsActive = true,
+            Color = "#007bff",
+            Icon = "fas fa-folder"
+        };
+        isEditMode = false;
+        showModal = true;
+    }
+
+    private void ShowEditModal(IncomeCategory category)
+    {
+        currentCategory = new IncomeCategory
+        {
+            Id = category.Id,
+            Name = category.Name,
+            Description = category.Description,
+            Color = category.Color,
+            Icon = category.Icon,
+            IsActive = category.IsActive
+        };
+        isEditMode = true;
+        showModal = true;
+    }
+
+    private void HideModal()
+    {
+        showModal = false;
+        currentCategory = new();
+    }
+
+    private void ShowDeleteConfirmation(IncomeCategory category)
+    {
+        categoryToDelete = category;
+        showDeleteModal = true;
+    }
+
+    private void HideDeleteModal()
+    {
+        showDeleteModal = false;
+        categoryToDelete = null;
+    }
+
+    private async Task SaveCategory()
+    {
+        try
+        {
+            isSaving = true;
+
+            if (isEditMode)
+            {
+                await IncomeService.UpdateIncomeCategoryAsync(currentCategory);
+                await NotificationService.ShowSuccessAsync("Category updated successfully");
+            }
+            else
+            {
+                await IncomeService.CreateIncomeCategoryAsync(currentCategory);
+                await NotificationService.ShowSuccessAsync("Category created successfully");
+            }
+
+            HideModal();
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            await NotificationService.ShowErrorAsync($"Error {(isEditMode ? "updating" : "creating")} category", ex.Message);
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private async Task DeleteCategory()
+    {
+        if (categoryToDelete == null) return;
+
+        try
+        {
+            isDeleting = true;
+            await IncomeService.DeleteIncomeCategoryAsync(categoryToDelete.Id);
+            await NotificationService.ShowSuccessAsync("Category deleted successfully");
+            
+            HideDeleteModal();
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            await NotificationService.ShowErrorAsync("Error deleting category", ex.Message);
+        }
+        finally
+        {
+            isDeleting = false;
+        }
+    }
+
+    private int GetIncomeCount(string categoryId)
+    {
+        return incomeCounts.TryGetValue(categoryId, out var count) ? count : 0;
+    }
+
+    private void ViewCategoryIncomes(string categoryId)
+    {
+        Navigation.NavigateTo($"/income-list?category={categoryId}");
+    }
+}

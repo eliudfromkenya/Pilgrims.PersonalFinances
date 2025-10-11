@@ -1,0 +1,637 @@
+@page "/reconciliation/reports"
+@page "/reconciliation/reports/{SessionId}"
+@using Pilgrims.PersonalFinances.Models
+@using Pilgrims.PersonalFinances.Models.Enums
+@using Pilgrims.PersonalFinances.Services
+@using Pilgrims.PersonalFinances.Services.Interfaces
+@inject IReconciliationService ReconciliationService
+@inject IAccountService AccountService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<PageTitle>@(string.IsNullOrEmpty(SessionId) ? "Reconciliation Reports" : $"Reconciliation Report - {session?.SessionName}")</PageTitle>
+
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 p-6">
+    <!-- Header Section -->
+    <div class="mb-8 animate-fade-in">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+            <div class="mb-4 lg:mb-0">
+                <nav class="flex items-center space-x-2 text-sm text-slate-600 dark:text-slate-400 mb-2">
+                    <a href="/reconciliation" class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Reconciliation</a>
+                    <i class="fas fa-chevron-right text-xs"></i>
+                    <span class="text-slate-900 dark:text-white">Reports</span>
+                </nav>
+                <h1 class="text-4xl font-bold text-slate-900 dark:text-white mb-2">
+                    <i class="fas fa-chart-bar text-blue-600 dark:text-blue-400 mr-3"></i>
+                    @(string.IsNullOrEmpty(SessionId) ? "Reconciliation Reports" : "Session Report")
+                </h1>
+                @if (!string.IsNullOrEmpty(SessionId) && session != null)
+                {
+                    <p class="text-lg text-slate-600 dark:text-slate-300">
+                        @session.SessionName • @GetAccountName(session.AccountId) • @session.ReconciliationDate.ToString("MMM dd, yyyy")
+                    </p>
+                }
+                else
+                {
+                    <p class="text-lg text-slate-600 dark:text-slate-300">
+                        Comprehensive reconciliation analytics and reporting
+                    </p>
+                }
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3">
+                @if (!string.IsNullOrEmpty(SessionId))
+                {
+                    <button @onclick="ExportToPDF" 
+                            class="btn-secondary group transform hover:scale-105 transition-all duration-200">
+                        <i class="fas fa-file-pdf mr-2 group-hover:scale-110 transition-transform duration-200"></i>
+                        Export PDF
+                    </button>
+                    <button @onclick="ExportToExcel" 
+                            class="btn-secondary group transform hover:scale-105 transition-all duration-200">
+                        <i class="fas fa-file-excel mr-2 group-hover:scale-110 transition-transform duration-200"></i>
+                        Export Excel
+                    </button>
+                }
+                <button @onclick="GoBack" 
+                        class="btn-outline group transform hover:scale-105 transition-all duration-200">
+                    <i class="fas fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform duration-200"></i>
+                    Back
+                </button>
+            </div>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="flex items-center justify-center h-64">
+            <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600"></div>
+        </div>
+    }
+    else if (string.IsNullOrEmpty(SessionId))
+    {
+        <!-- Overall Reports Dashboard -->
+        <div class="space-y-8">
+            <!-- Summary Statistics -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-slide-up">
+                <div class="card p-6 text-center transform hover:scale-105 transition-all duration-300">
+                    <div class="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">
+                        @totalSessions
+                    </div>
+                    <div class="text-sm text-slate-600 dark:text-slate-400">Total Sessions</div>
+                    <div class="text-xs text-slate-500 dark:text-slate-500 mt-1">
+                        @completedSessions completed
+                    </div>
+                </div>
+                <div class="card p-6 text-center transform hover:scale-105 transition-all duration-300">
+                    <div class="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">
+                        @totalReconciledItems
+                    </div>
+                    <div class="text-sm text-slate-600 dark:text-slate-400">Items Reconciled</div>
+                    <div class="text-xs text-slate-500 dark:text-slate-500 mt-1">
+                        @unreconciledItems pending
+                    </div>
+                </div>
+                <div class="card p-6 text-center transform hover:scale-105 transition-all duration-300">
+                    <div class="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-2">
+                        @totalAdjustments.ToString("C")
+                    </div>
+                    <div class="text-sm text-slate-600 dark:text-slate-400">Total Adjustments</div>
+                    <div class="text-xs text-slate-500 dark:text-slate-500 mt-1">
+                        @adjustmentCount entries
+                    </div>
+                </div>
+                <div class="card p-6 text-center transform hover:scale-105 transition-all duration-300">
+                    <div class="text-3xl font-bold @(averageReconciliationTime > 0 ? "text-orange-600 dark:text-orange-400" : "text-slate-400") mb-2">
+                        @(averageReconciliationTime > 0 ? $"{averageReconciliationTime:F1}d" : "N/A")
+                    </div>
+                    <div class="text-sm text-slate-600 dark:text-slate-400">Avg. Time to Complete</div>
+                    <div class="text-xs text-slate-500 dark:text-slate-500 mt-1">
+                        days per session
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-slide-up" style="animation-delay: 200ms">
+                <!-- Reconciliation Trends Chart -->
+                <div class="card p-6">
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-4">
+                        <i class="fas fa-chart-line text-blue-600 dark:text-blue-400 mr-2"></i>
+                        Reconciliation Trends
+                    </h3>
+                    <div class="h-64 flex items-center justify-center bg-slate-50 dark:bg-slate-800 rounded-lg">
+                        <div class="text-center">
+                            <i class="fas fa-chart-line text-4xl text-slate-300 dark:text-slate-600 mb-2"></i>
+                            <p class="text-slate-500 dark:text-slate-400">Chart will be implemented with Chart.js</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status Distribution -->
+                <div class="card p-6">
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-4">
+                        <i class="fas fa-chart-pie text-green-600 dark:text-green-400 mr-2"></i>
+                        Status Distribution
+                    </h3>
+                    <div class="space-y-4">
+                        @foreach (var statusGroup in statusDistribution)
+                        {
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-4 h-4 rounded-full @GetStatusColor(statusGroup.Key)"></div>
+                                    <span class="text-slate-700 dark:text-slate-300">@statusGroup.Key</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-slate-900 dark:text-white font-medium">@statusGroup.Value</span>
+                                    <span class="text-xs text-slate-500 dark:text-slate-400">
+                                        (@(totalSessions > 0 ? (statusGroup.Value * 100 / totalSessions).ToString("F1") : "0")%)
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                                <div class="@GetStatusColor(statusGroup.Key) h-2 rounded-full transition-all duration-500" 
+                                     style="width: @(totalSessions > 0 ? (statusGroup.Value * 100 / totalSessions) : 0)%"></div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Sessions -->
+            <div class="card animate-slide-up" style="animation-delay: 400ms">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+                            <i class="fas fa-clock text-purple-600 dark:text-purple-400 mr-2"></i>
+                            Recent Sessions
+                        </h3>
+                        <a href="/reconciliation/history" class="text-blue-600 dark:text-blue-400 hover:underline text-sm">
+                            View All →
+                        </a>
+                    </div>
+
+                    @if (recentSessions.Any())
+                    {
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="border-b border-slate-200 dark:border-slate-700">
+                                        <th class="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Session</th>
+                                        <th class="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Account</th>
+                                        <th class="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Date</th>
+                                        <th class="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Difference</th>
+                                        <th class="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Status</th>
+                                        <th class="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var recentSession in recentSessions)
+                                    {
+                                        <tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors duration-200">
+                                            <td class="py-4 px-4">
+                                                <div class="font-medium text-slate-900 dark:text-white">@recentSession.SessionName</div>
+                                            </td>
+                                            <td class="py-4 px-4">
+                                                <div class="text-slate-900 dark:text-white">@GetAccountName(recentSession.AccountId)</div>
+                                            </td>
+                                            <td class="py-4 px-4">
+                                                <div class="text-slate-900 dark:text-white">@recentSession.ReconciliationDate.ToString("MMM dd, yyyy")</div>
+                                            </td>
+                                            <td class="py-4 px-4">
+                                                <span class="font-medium @(recentSession.Difference == 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")">
+                                                    @recentSession.Difference.ToString("C")
+                                                </span>
+                                            </td>
+                                            <td class="py-4 px-4">
+                                                <span class="px-2 py-1 rounded-full text-xs font-medium @recentSession.StatusCssClass">
+                                                    @recentSession.StatusDisplayName
+                                                </span>
+                                            </td>
+                                            <td class="py-4 px-4">
+                                                <button @onclick="() => ViewSessionReport(recentSession.Id)" 
+                                                        class="btn-sm btn-primary hover:scale-105 transition-transform duration-200">
+                                                    <i class="fas fa-eye mr-1"></i>
+                                                    View Report
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-8">
+                            <div class="text-4xl text-slate-300 dark:text-slate-600 mb-2">
+                                <i class="fas fa-inbox"></i>
+                            </div>
+                            <p class="text-slate-600 dark:text-slate-400">No recent sessions found</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+    else if (session != null)
+    {
+        <!-- Individual Session Report -->
+        <div class="space-y-8">
+            <!-- Session Summary -->
+            <div class="card animate-slide-up">
+                <div class="p-6">
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-6">
+                        <i class="fas fa-info-circle text-blue-600 dark:text-blue-400 mr-2"></i>
+                        Session Summary
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="text-center">
+                            <div class="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">
+                                @session.StatementEndingBalance.ToString("C")
+                            </div>
+                            <div class="text-sm text-slate-600 dark:text-slate-400">Statement Balance</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">
+                                @session.BookEndingBalance.ToString("C")
+                            </div>
+                            <div class="text-sm text-slate-600 dark:text-slate-400">Book Balance</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-3xl font-bold @(session.Difference == 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400") mb-2">
+                                @session.Difference.ToString("C")
+                            </div>
+                            <div class="text-sm text-slate-600 dark:text-slate-400">Difference</div>
+                        </div>
+                        <div class="text-center">
+                            <span class="px-4 py-2 rounded-full text-lg font-medium @session.StatusCssClass">
+                                @session.StatusDisplayName
+                            </span>
+                            <div class="text-sm text-slate-600 dark:text-slate-400 mt-1">Status</div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+                            <div>
+                                <div class="text-2xl font-bold text-slate-900 dark:text-white">@sessionItems.Count</div>
+                                <div class="text-sm text-slate-600 dark:text-slate-400">Total Items</div>
+                            </div>
+                            <div>
+                                <div class="text-2xl font-bold text-green-600 dark:text-green-400">@sessionItems.Count(i => i.IsCleared)</div>
+                                <div class="text-sm text-slate-600 dark:text-slate-400">Cleared Items</div>
+                            </div>
+                            <div>
+                                <div class="text-2xl font-bold text-orange-600 dark:text-orange-400">@sessionItems.Count(i => !i.IsCleared)</div>
+                                <div class="text-sm text-slate-600 dark:text-slate-400">Pending Items</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Items Breakdown -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-slide-up" style="animation-delay: 200ms">
+                <!-- Items by Type -->
+                <div class="card p-6">
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-4">
+                        <i class="fas fa-chart-pie text-green-600 dark:text-green-400 mr-2"></i>
+                        Items by Type
+                    </h3>
+                    <div class="space-y-4">
+                        @foreach (var typeGroup in itemsByType)
+                        {
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-4 h-4 rounded-full @GetItemTypeColor(typeGroup.Key)"></div>
+                                    <span class="text-slate-700 dark:text-slate-300">@typeGroup.Key</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-slate-900 dark:text-white font-medium">@typeGroup.Value</span>
+                                    <span class="text-xs text-slate-500 dark:text-slate-400">
+                                        (@(sessionItems.Count > 0 ? (typeGroup.Value * 100 / sessionItems.Count).ToString("F1") : "0")%)
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                                <div class="@GetItemTypeColor(typeGroup.Key) h-2 rounded-full transition-all duration-500" 
+                                     style="width: @(sessionItems.Count > 0 ? (typeGroup.Value * 100 / sessionItems.Count) : 0)%"></div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Items by Status -->
+                <div class="card p-6">
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-4">
+                        <i class="fas fa-chart-donut text-purple-600 dark:text-purple-400 mr-2"></i>
+                        Items by Status
+                    </h3>
+                    <div class="space-y-4">
+                        @foreach (var statusGroup in itemsByStatus)
+                        {
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-4 h-4 rounded-full @GetItemStatusColor(statusGroup.Key)"></div>
+                                    <span class="text-slate-700 dark:text-slate-300">@statusGroup.Key</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-slate-900 dark:text-white font-medium">@statusGroup.Value</span>
+                                    <span class="text-xs text-slate-500 dark:text-slate-400">
+                                        (@(sessionItems.Count > 0 ? (statusGroup.Value * 100 / sessionItems.Count).ToString("F1") : "0")%)
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                                <div class="@GetItemStatusColor(statusGroup.Key) h-2 rounded-full transition-all duration-500" 
+                                     style="width: @(sessionItems.Count > 0 ? (statusGroup.Value * 100 / sessionItems.Count) : 0)%"></div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Items List -->
+            <div class="card animate-slide-up" style="animation-delay: 400ms">
+                <div class="p-6">
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-6">
+                        <i class="fas fa-list text-blue-600 dark:text-blue-400 mr-2"></i>
+                        Reconciliation Items Detail
+                    </h3>
+
+                    @if (sessionItems.Any())
+                    {
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="border-b border-slate-200 dark:border-slate-700">
+                                        <th class="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Date</th>
+                                        <th class="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Description</th>
+                                        <th class="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Amount</th>
+                                        <th class="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Type</th>
+                                        <th class="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Status</th>
+                                        <th class="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Cleared</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in sessionItems.OrderBy(i => i.TransactionDate))
+                                    {
+                                        <tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors duration-200">
+                                            <td class="py-4 px-4">
+                                                <div class="text-slate-900 dark:text-white">@item.TransactionDate.ToString("MMM dd, yyyy")</div>
+                                            </td>
+                                            <td class="py-4 px-4">
+                                                <div class="font-medium text-slate-900 dark:text-white">@item.Description</div>
+                                                @if (!string.IsNullOrEmpty(item.Reference))
+                                                {
+                                                    <div class="text-sm text-slate-500 dark:text-slate-400">Ref: @item.Reference</div>
+                                                }
+                                            </td>
+                                            <td class="py-4 px-4">
+                                                <span class="font-medium @item.AmountCssClass">
+                                                    @item.FormattedAmount
+                                                </span>
+                                            </td>
+                                            <td class="py-4 px-4">
+                                                <span class="px-2 py-1 rounded-full text-xs font-medium @item.ItemTypeCssClass">
+                                                    @item.ItemTypeDisplayName
+                                                </span>
+                                            </td>
+                                            <td class="py-4 px-4">
+                                                <span class="px-2 py-1 rounded-full text-xs font-medium @item.StatusCssClass">
+                                                    @item.StatusDisplayName
+                                                </span>
+                                            </td>
+                                            <td class="py-4 px-4">
+                                                @if (item.IsCleared)
+                                                {
+                                                    <div class="flex items-center text-green-600 dark:text-green-400">
+                                                        <i class="fas fa-check-circle mr-2"></i>
+                                                        <span class="text-sm">@item.ClearedDate?.ToString("MMM dd")</span>
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <div class="flex items-center text-slate-400 dark:text-slate-500">
+                                                        <i class="fas fa-clock mr-2"></i>
+                                                        <span class="text-sm">Pending</span>
+                                                    </div>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-8">
+                            <div class="text-4xl text-slate-300 dark:text-slate-600 mb-2">
+                                <i class="fas fa-inbox"></i>
+                            </div>
+                            <p class="text-slate-600 dark:text-slate-400">No items found for this session</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string? SessionId { get; set; }
+
+    private bool isLoading = true;
+    private ReconciliationSession? session;
+    private List<ReconciliationItem> sessionItems = new();
+    private List<ReconciliationSession> allSessions = new();
+    private List<Account> accounts = new();
+
+    // Overall statistics
+    private int totalSessions => allSessions.Count;
+    private int completedSessions => allSessions.Count(s => s.Status == ReconciliationStatus.Completed);
+    private int totalReconciledItems => allSessions.SelectMany(s => s.ReconciliationItems ?? new List<ReconciliationItem>()).Count(i => i.IsCleared);
+    private int unreconciledItems => allSessions.SelectMany(s => s.ReconciliationItems ?? new List<ReconciliationItem>()).Count(i => !i.IsCleared);
+    private decimal totalAdjustments => allSessions.SelectMany(s => s.ReconciliationItems ?? new List<ReconciliationItem>()).Where(i => i.ItemType == ReconciliationItemType.Adjustment).Sum(i => Math.Abs(i.Amount));
+    private int adjustmentCount => allSessions.SelectMany(s => s.ReconciliationItems ?? new List<ReconciliationItem>()).Count(i => i.ItemType == ReconciliationItemType.Adjustment);
+    private double averageReconciliationTime => GetAverageReconciliationTime();
+
+    private List<ReconciliationSession> recentSessions => allSessions.OrderByDescending(s => s.ReconciliationDate).Take(5).ToList();
+    private Dictionary<string, int> statusDistribution => GetStatusDistribution();
+    private Dictionary<string, int> itemsByType => GetItemsByType();
+    private Dictionary<string, int> itemsByStatus => GetItemsByStatus();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            isLoading = true;
+
+            // Load accounts
+            accounts = (await AccountService.GetAccountsAsync()).ToList();
+
+            // Load all sessions for overall statistics
+            allSessions = (await ReconciliationService.GetReconciliationHistoryAsync()).ToList();
+
+            // Load specific session if SessionId is provided
+            if (!string.IsNullOrEmpty(SessionId))
+            {
+                session = await ReconciliationService.GetReconciliationSessionAsync(SessionId);
+                if (session != null)
+                {
+                    sessionItems = (await ReconciliationService.GetReconciliationItemsAsync(SessionId)).ToList();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading data: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private string GetAccountName(string accountId)
+    {
+        return accounts.FirstOrDefault(a => a.Id == accountId)?.Name ?? "Unknown Account";
+    }
+
+    private double GetAverageReconciliationTime()
+    {
+        var completedSessionsWithDates = allSessions
+            .Where(s => s.Status == ReconciliationStatus.Completed && s.ReconciledDate.HasValue)
+            .ToList();
+
+        if (!completedSessionsWithDates.Any())
+            return 0;
+
+        var totalDays = completedSessionsWithDates
+            .Sum(s => (s.ReconciledDate!.Value - s.ReconciliationDate).TotalDays);
+
+        return totalDays / completedSessionsWithDates.Count;
+    }
+
+    private Dictionary<string, int> GetStatusDistribution()
+    {
+        return allSessions
+            .GroupBy(s => s.StatusDisplayName)
+            .ToDictionary(g => g.Key, g => g.Count());
+    }
+
+    private Dictionary<string, int> GetItemsByType()
+    {
+        if (string.IsNullOrEmpty(SessionId))
+            return new Dictionary<string, int>();
+
+        return sessionItems
+            .GroupBy(i => i.ItemTypeDisplayName)
+            .ToDictionary(g => g.Key, g => g.Count());
+    }
+
+    private Dictionary<string, int> GetItemsByStatus()
+    {
+        if (string.IsNullOrEmpty(SessionId))
+            return new Dictionary<string, int>();
+
+        return sessionItems
+            .GroupBy(i => i.StatusDisplayName)
+            .ToDictionary(g => g.Key, g => g.Count());
+    }
+
+    private string GetStatusColor(string status)
+    {
+        return status.ToLower() switch
+        {
+            "completed" => "bg-green-500",
+            "in progress" => "bg-blue-500",
+            "cancelled" => "bg-red-500",
+            "requires review" => "bg-orange-500",
+            _ => "bg-slate-500"
+        };
+    }
+
+    private string GetItemTypeColor(string typeDisplayName)
+    {
+        return typeDisplayName.ToLower() switch
+        {
+            "deposit" => "bg-green-500",
+            "withdrawal" => "bg-red-500",
+            "fee" => "bg-orange-500",
+            "interest" => "bg-blue-500",
+            "transfer" => "bg-purple-500",
+            "adjustment" => "bg-yellow-500",
+            _ => "bg-slate-500"
+        };
+    }
+
+    private string GetItemStatusColor(string statusDisplayName)
+    {
+        return statusDisplayName.ToLower() switch
+        {
+            "matched" => "bg-green-500",
+            "unmatched" => "bg-orange-500",
+            "disputed" => "bg-red-500",
+            "resolved" => "bg-blue-500",
+            "ignored" => "bg-slate-500",
+            _ => "bg-slate-400"
+        };
+    }
+
+    private void ViewSessionReport(string sessionId)
+    {
+        Navigation.NavigateTo($"/reconciliation/reports/{sessionId}");
+    }
+
+    private async Task ExportToPDF()
+    {
+        try
+        {
+            // TODO: Implement PDF export
+            await JSRuntime.InvokeVoidAsync("alert", "PDF export functionality will be implemented soon.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error exporting to PDF: {ex.Message}");
+        }
+    }
+
+    private async Task ExportToExcel()
+    {
+        try
+        {
+            // TODO: Implement Excel export
+            await JSRuntime.InvokeVoidAsync("alert", "Excel export functionality will be implemented soon.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error exporting to Excel: {ex.Message}");
+        }
+    }
+
+    private void GoBack()
+    {
+        if (!string.IsNullOrEmpty(SessionId))
+        {
+            Navigation.NavigateTo($"/reconciliation/process/{SessionId}");
+        }
+        else
+        {
+            Navigation.NavigateTo("/reconciliation");
+        }
+    }
+}

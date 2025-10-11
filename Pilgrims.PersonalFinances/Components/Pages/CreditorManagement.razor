@@ -1,0 +1,548 @@
+@page "/creditors"
+@using Pilgrims.PersonalFinances.Models
+@using Pilgrims.PersonalFinances.Services
+@using Pilgrims.PersonalFinances.Services.Interfaces
+@inject IDebtService DebtService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Creditor Management - Personal Finance</PageTitle>
+
+<div class="min-h-screen relative overflow-hidden" style="background: var(--primary-bg);">
+    <!-- Animated Background -->
+    <div class="absolute inset-0 overflow-hidden">
+        <div class="particles"></div>
+        <div class="absolute inset-0" style="background: linear-gradient(135deg, var(--accent-color)/5 0%, var(--secondary-color)/5 100%);"></div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="relative z-10 container mx-auto px-4 py-8">
+        <!-- Header Section -->
+        <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-6 mb-8"
+             style="background: var(--card-bg); border-color: var(--border-color);">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold mb-2" style="color: var(--text-primary);">
+                        Creditor Management
+                    </h1>
+                    <p class="text-lg" style="color: var(--text-secondary);">
+                        Manage your creditors and their contact information
+                    </p>
+                </div>
+                <button @onclick="AddCreditor" 
+                        class="px-6 py-3 rounded-lg transition-all duration-300 hover:scale-105 font-semibold"
+                        style="background: var(--accent-color); color: white;">
+                    ➕ Add Creditor
+                </button>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                <div class="text-center p-4 rounded-lg" style="background: var(--accent-color)/10;">
+                    <div class="text-2xl font-bold" style="color: var(--accent-color);">
+                        @creditors.Count
+                    </div>
+                    <div class="text-sm" style="color: var(--text-secondary);">Total Creditors</div>
+                </div>
+                <div class="text-center p-4 rounded-lg" style="background: var(--secondary-color)/10;">
+                    <div class="text-2xl font-bold" style="color: var(--secondary-color);">
+                        @activeCreditors
+                    </div>
+                    <div class="text-sm" style="color: var(--text-secondary);">Active Creditors</div>
+                </div>
+                <div class="text-center p-4 rounded-lg" style="background: var(--info-color)/10;">
+                    <div class="text-2xl font-bold" style="color: var(--info-color);">
+                        @totalDebts
+                    </div>
+                    <div class="text-sm" style="color: var(--text-secondary);">Associated Debts</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search and Filter -->
+        <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-6 mb-8"
+             style="background: var(--card-bg); border-color: var(--border-color);">
+            <div class="flex flex-col md:flex-row gap-4">
+                <div class="flex-1">
+                    <input @bind="searchTerm" @oninput="OnSearchChanged"
+                           placeholder="Search creditors by name, phone, or email..."
+                           class="w-full px-4 py-3 rounded-lg border transition-all duration-300 focus:scale-105"
+                           style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);" />
+                </div>
+                <div class="flex gap-2">
+                    <select @bind="sortBy" @bind:after="ApplyFilters"
+                            class="px-4 py-3 rounded-lg border transition-all duration-300"
+                            style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);">
+                        <option value="name">Sort by Name</option>
+                        <option value="debts">Sort by Debt Count</option>
+                        <option value="created">Sort by Date Added</option>
+                    </select>
+                    <button @onclick="ToggleSortOrder"
+                            class="px-4 py-3 rounded-lg border transition-all duration-300 hover:scale-105"
+                            style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);">
+                        @(sortAscending ? "↑" : "↓")
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Creditors List -->
+        @if (isLoading)
+        {
+            <div class="flex justify-center items-center py-20">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2" style="border-color: var(--accent-color);"></div>
+            </div>
+        }
+        else if (!filteredCreditors.Any())
+        {
+            <div class="text-center py-20">
+                <div class="text-6xl mb-4">🏢</div>
+                <h3 class="text-2xl font-bold mb-2" style="color: var(--text-primary);">
+                    @(string.IsNullOrEmpty(searchTerm) ? "No Creditors Found" : "No Matching Creditors")
+                </h3>
+                <p class="mb-6" style="color: var(--text-secondary);">
+                    @(string.IsNullOrEmpty(searchTerm) ? "Start by adding your first creditor to track debt relationships." : "Try adjusting your search criteria.")
+                </p>
+                @if (string.IsNullOrEmpty(searchTerm))
+                {
+                    <button @onclick="AddCreditor" 
+                            class="px-6 py-3 rounded-lg transition-all duration-300 hover:scale-105 font-semibold"
+                            style="background: var(--accent-color); color: white;">
+                        ➕ Add First Creditor
+                    </button>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                @foreach (var creditor in filteredCreditors)
+                {
+                    <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-6 transition-all duration-300 hover:scale-105"
+                         style="background: var(--card-bg); border-color: var(--border-color);">
+                        <!-- Creditor Header -->
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-12 h-12 rounded-full flex items-center justify-center text-xl"
+                                     style="background: var(--accent-color)/20; color: var(--accent-color);">
+                                    🏢
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold" style="color: var(--text-primary);">
+                                        @creditor.Name
+                                    </h3>
+                                    <div class="text-sm" style="color: var(--text-secondary);">
+                                        @creditor.Debts.Count debt(s)
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button @onclick="() => EditCreditor(creditor.Id)" 
+                                        class="p-2 rounded-lg transition-all duration-300 hover:scale-105"
+                                        style="background: var(--accent-color)/20; color: var(--accent-color);">
+                                    ✏️
+                                </button>
+                                <button @onclick="() => DeleteCreditor(creditor.Id)" 
+                                        class="p-2 rounded-lg transition-all duration-300 hover:scale-105"
+                                        style="background: var(--error-color)/20; color: var(--error-color);">
+                                    🗑️
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Contact Information -->
+                        <div class="space-y-2 mb-4">
+                            @if (!string.IsNullOrEmpty(creditor.Phone))
+                            {
+                                <div class="flex items-center gap-2 text-sm">
+                                    <span style="color: var(--text-secondary);">📞</span>
+                                    <span style="color: var(--text-primary);">@creditor.Phone</span>
+                                </div>
+                            }
+                            @if (!string.IsNullOrEmpty(creditor.Email))
+                            {
+                                <div class="flex items-center gap-2 text-sm">
+                                    <span style="color: var(--text-secondary);">📧</span>
+                                    <span style="color: var(--text-primary);">@creditor.Email</span>
+                                </div>
+                            }
+                            @if (!string.IsNullOrEmpty(creditor.Website))
+                            {
+                                <div class="flex items-center gap-2 text-sm">
+                                    <span style="color: var(--text-secondary);">🌐</span>
+                                    <a href="@creditor.Website" target="_blank" 
+                                       class="text-blue-500 hover:underline">@creditor.Website</a>
+                                </div>
+                            }
+                            @if (!string.IsNullOrEmpty(creditor.CustomerServicePhone))
+                            {
+                                <div class="flex items-center gap-2 text-sm">
+                                    <span style="color: var(--text-secondary);">🎧</span>
+                                    <span style="color: var(--text-primary);">@creditor.CustomerServicePhone</span>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Associated Debts -->
+                        @if (creditor.Debts.Any())
+                        {
+                            <div class="border-t pt-4" style="border-color: var(--border-color);">
+                                <h4 class="text-sm font-semibold mb-2" style="color: var(--text-primary);">Associated Debts</h4>
+                                <div class="space-y-1">
+                                    @foreach (var debt in creditor.Debts.Take(3))
+                                    {
+                                        <div class="flex justify-between items-center text-sm">
+                                            <span style="color: var(--text-secondary);">@debt.Name</span>
+                                            <span class="font-semibold text-red-500">@debt.CurrentBalance.ToString("C")</span>
+                                        </div>
+                                    }
+                                    @if (creditor.Debts.Count > 3)
+                                    {
+                                        <div class="text-xs text-center pt-2" style="color: var(--text-secondary);">
+                                            +@(creditor.Debts.Count - 3) more debt(s)
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+
+                        <!-- Action Buttons -->
+                        <div class="flex gap-2 mt-4">
+                            <button @onclick="() => ViewCreditorDebts(creditor.Id)" 
+                                    class="flex-1 px-3 py-2 rounded-lg transition-all duration-300 hover:scale-105 font-semibold text-sm"
+                                    style="background: var(--info-color); color: white;">
+                                View Debts
+                            </button>
+                            <button @onclick="() => AddDebtForCreditor(creditor.Id)" 
+                                    class="flex-1 px-3 py-2 rounded-lg transition-all duration-300 hover:scale-105 font-semibold text-sm"
+                                    style="background: var(--success-color); color: white;">
+                                Add Debt
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Add/Edit Creditor Modal -->
+@if (showCreditorModal)
+{
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-6 w-full max-w-md"
+             style="background: var(--card-bg); border-color: var(--border-color);">
+            <h3 class="text-xl font-bold mb-4" style="color: var(--text-primary);">
+                @(!string.IsNullOrWhiteSpace(editingCreditor?.Id) ? "Edit Creditor" : "Add New Creditor")
+            </h3>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">Name *</label>
+                    <input @bind="editingCreditor.Name" 
+                           class="w-full px-3 py-2 rounded-lg border"
+                           style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);"
+                           placeholder="Creditor name" />
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">Phone</label>
+                    <input @bind="editingCreditor.Phone" 
+                           class="w-full px-3 py-2 rounded-lg border"
+                           style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);"
+                           placeholder="Phone number" />
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">Email</label>
+                    <input @bind="editingCreditor.Email" type="email"
+                           class="w-full px-3 py-2 rounded-lg border"
+                           style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);"
+                           placeholder="Email address" />
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">Website</label>
+                    <input @bind="editingCreditor.Website" type="url"
+                           class="w-full px-3 py-2 rounded-lg border"
+                           style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);"
+                           placeholder="https://example.com" />
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">Customer Service Phone</label>
+                    <input @bind="editingCreditor.CustomerServicePhone" 
+                           class="w-full px-3 py-2 rounded-lg border"
+                           style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);"
+                           placeholder="Customer service number" />
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">Address</label>
+                    <textarea @bind="editingCreditor.Address" rows="3"
+                              class="w-full px-3 py-2 rounded-lg border"
+                              style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);"
+                              placeholder="Mailing address"></textarea>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">Notes</label>
+                    <textarea @bind="editingCreditor.Notes" rows="2"
+                              class="w-full px-3 py-2 rounded-lg border"
+                              style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);"
+                              placeholder="Additional notes"></textarea>
+                </div>
+            </div>
+            
+            <div class="flex gap-3 mt-6">
+                <button @onclick="SaveCreditor" 
+                        class="flex-1 px-4 py-2 rounded-lg transition-all duration-300 hover:scale-105 font-semibold"
+                        style="background: var(--success-color); color: white;">
+                    💾 Save
+                </button>
+                <button @onclick="CancelEdit" 
+                        class="flex-1 px-4 py-2 rounded-lg transition-all duration-300 hover:scale-105 font-semibold"
+                        style="background: var(--error-color); color: white;">
+                    ❌ Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Delete Confirmation Modal -->
+@if (showDeleteModal)
+{
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="backdrop-blur-lg rounded-2xl shadow-2xl border p-6 w-full max-w-md"
+             style="background: var(--card-bg); border-color: var(--border-color);">
+            <h3 class="text-xl font-bold mb-4" style="color: var(--text-primary);">Confirm Delete</h3>
+            <p class="mb-6" style="color: var(--text-secondary);">
+                Are you sure you want to delete this creditor? This action cannot be undone.
+            </p>
+            <div class="flex gap-3">
+                <button @onclick="ConfirmDelete" 
+                        class="flex-1 px-4 py-2 rounded-lg transition-all duration-300 hover:scale-105 font-semibold"
+                        style="background: var(--error-color); color: white;">
+                    🗑️ Delete
+                </button>
+                <button @onclick="CancelDelete" 
+                        class="flex-1 px-4 py-2 rounded-lg transition-all duration-300 hover:scale-105 font-semibold"
+                        style="background: var(--secondary-color); color: white;">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Particle Animation Styles -->
+<style>
+    .particles {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        z-index: 1;
+    }
+
+    .particles::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background-image: 
+            radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+            radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.3) 0%, transparent 50%);
+        animation: float 20s ease-in-out infinite;
+    }
+
+    @@keyframes float {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        33% { transform: translate(30px, -30px) rotate(120deg); }
+        66% { transform: translate(-20px, 20px) rotate(240deg); }
+    }
+</style>
+
+@code {
+    private List<Creditor> creditors = new();
+    private List<Creditor> filteredCreditors = new();
+    private bool isLoading = true;
+    private string searchTerm = string.Empty;
+    private string sortBy = "name";
+    private bool sortAscending = true;
+    private int activeCreditors = 0;
+    private int totalDebts = 0;
+
+    // Modal states
+    private bool showCreditorModal = false;
+    private bool showDeleteModal = false;
+    private Creditor editingCreditor = new();
+    private string creditorToDelete = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCreditors();
+        await JSRuntime.InvokeVoidAsync("initializeParticles");
+    }
+
+    private async Task LoadCreditors()
+    {
+        try
+        {
+            isLoading = true;
+            creditors = [.. await DebtService.GetAllCreditorsAsync()];
+            
+            // Calculate statistics
+            activeCreditors = creditors.Count(c => c.Debts.Any(d => d.IsActive));
+            totalDebts = creditors.Sum(c => c.Debts.Count);
+            
+            ApplyFilters();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading creditors: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void ApplyFilters()
+    {
+        var filtered = creditors.AsEnumerable();
+
+        // Apply search filter
+        if (!string.IsNullOrEmpty(searchTerm))
+        {
+            filtered = filtered.Where(c => 
+                c.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                (!string.IsNullOrEmpty(c.Phone) && c.Phone.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)) ||
+                (!string.IsNullOrEmpty(c.Email) && c.Email.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)));
+        }
+
+        // Apply sorting
+        filtered = sortBy switch
+        {
+            "name" => sortAscending ? filtered.OrderBy(c => c.Name) : filtered.OrderByDescending(c => c.Name),
+            "debts" => sortAscending ? filtered.OrderBy(c => c.Debts.Count) : filtered.OrderByDescending(c => c.Debts.Count),
+            "created" => sortAscending ? filtered.OrderBy(c => c.CreatedAt) : filtered.OrderByDescending(c => c.CreatedAt),
+            _ => filtered.OrderBy(c => c.Name)
+        };
+
+        filteredCreditors = filtered.ToList();
+        StateHasChanged();
+    }
+
+    private void OnSearchChanged(ChangeEventArgs e)
+    {
+        searchTerm = e.Value?.ToString() ?? string.Empty;
+        ApplyFilters();
+    }
+
+    private void ToggleSortOrder()
+    {
+        sortAscending = !sortAscending;
+        ApplyFilters();
+    }
+
+    private void AddCreditor()
+    {
+        editingCreditor = new Creditor();
+        showCreditorModal = true;
+    }
+
+    private void EditCreditor(string creditorId)
+    {
+        var creditor = creditors.FirstOrDefault(c => c.Id == creditorId);
+        if (creditor != null)
+        {
+            editingCreditor = new Creditor
+            {
+                Id = creditor.Id,
+                Name = creditor.Name,
+                Phone = creditor.Phone,
+                Email = creditor.Email,
+                Website = creditor.Website,
+                CustomerServicePhone = creditor.CustomerServicePhone,
+                Address = creditor.Address,
+                Notes = creditor.Notes
+            };
+            showCreditorModal = true;
+        }
+    }
+
+    private async Task SaveCreditor()
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(editingCreditor.Name))
+                return;
+
+            if (!string.IsNullOrEmpty(editingCreditor.Id))
+            {
+                await DebtService.UpdateCreditorAsync(editingCreditor);
+            }
+            else
+            {
+                await DebtService.CreateCreditorAsync(editingCreditor);
+            }
+
+            showCreditorModal = false;
+            await LoadCreditors();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving creditor: {ex.Message}");
+        }
+    }
+
+    private void CancelEdit()
+    {
+        showCreditorModal = false;
+        editingCreditor = new();
+    }
+
+    private void DeleteCreditor(string creditorId)
+    {
+        creditorToDelete = creditorId;
+        showDeleteModal = true;
+    }
+
+    private async Task ConfirmDelete()
+    {
+        try
+        {
+            await DebtService.DeleteCreditorAsync(creditorToDelete);
+            showDeleteModal = false;
+            creditorToDelete = string.Empty;
+            await LoadCreditors();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error deleting creditor: {ex.Message}");
+        }
+    }
+
+    private void CancelDelete()
+    {
+        showDeleteModal = false;
+        creditorToDelete = string.Empty;
+    }
+
+    private void ViewCreditorDebts(string? creditorId)
+    {
+        NavigationManager.NavigateTo($"/debts?creditorId={creditorId}");
+    }
+
+    private void AddDebtForCreditor(string? creditorId)
+    {
+        NavigationManager.NavigateTo($"/debts/create?creditorId={creditorId}");
+    }
+}

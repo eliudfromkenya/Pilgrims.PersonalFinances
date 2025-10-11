@@ -5,18 +5,462 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>Pilgrims.PersonalFinances</title>
     <base href="/" />
-    <link rel="stylesheet" href="css/tailwind-output.css" />
-    <link rel="stylesheet" href="css/themes.css" />
-    <link rel="stylesheet" href="css/dashboard-effects.css" />
-    <link rel="stylesheet" href="Pilgrims.PersonalFinances.styles.css" />
-    <link rel="icon" href="data:,">
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <link href="css/tailwind-output.css" rel="stylesheet" />
+    <link href="css/themes.css" rel="stylesheet" />
+    <link href="css/dashboard-effects.css" rel="stylesheet" />
+    <link href="css/financial-ui.css" rel="stylesheet" />
+    <link href="manifest.webmanifest" rel="manifest" />
+    <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png" />
+    
+    <style>
+        /* Loading Container with Stunning Background */
+        .loading-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            overflow: hidden;
+        }
+
+        /* Animated Background Particles */
+        .loading-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.3) 0%, transparent 50%);
+            animation: particleFloat 8s ease-in-out infinite;
+        }
+
+        /* Main Loading Progress Container */
+        .loading-progress {
+            position: relative;
+            display: block;
+            width: 12rem;
+            height: 12rem;
+            margin: 0 auto 2rem auto;
+            filter: drop-shadow(0 0 30px rgba(255, 255, 255, 0.5));
+        }
+
+        /* Outer Rotating Ring */
+        .loading-progress::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            border: 2px solid transparent;
+            border-top: 2px solid #ff6b6b;
+            border-right: 2px solid #4ecdc4;
+            border-radius: 50%;
+            animation: outerRingRotate 3s linear infinite;
+        }
+
+        /* Inner Pulsing Ring */
+        .loading-progress::after {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            bottom: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            animation: innerRingPulse 2s ease-in-out infinite;
+        }
+
+        /* SVG Circle Styles */
+        .loading-progress circle {
+            fill: none;
+            stroke-width: 0.8rem;
+            transform-origin: 50% 50%;
+            filter: drop-shadow(0 0 10px currentColor);
+        }
+
+        /* Background Circle */
+        .loading-progress circle:first-child {
+            stroke: rgba(255, 255, 255, 0.2);
+            transform: rotate(-90deg);
+        }
+
+        /* Animated Progress Circle */
+        .loading-progress circle:last-child {
+            stroke: url(#progressGradient);
+            stroke-dasharray: calc(3.141 * var(--blazor-load-percentage, 0%) * 0.8), 500%;
+            stroke-linecap: round;
+            transform: rotate(-90deg);
+            transition: stroke-dasharray 0.3s ease-in-out;
+            animation: progressGlow 2s ease-in-out infinite;
+        }
+
+        /* Central Loading Icon */
+        .loading-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 3rem;
+            height: 3rem;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
+            background-size: 300% 300%;
+            border-radius: 50%;
+            animation: iconSpin 4s linear infinite, gradientShift 3s ease-in-out infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+
+        .loading-icon::before {
+            content: '💰';
+            font-size: 1.5rem;
+            animation: iconBounce 1s ease-in-out infinite;
+        }
+
+        /* Enhanced Loading Text */
+        .loading-progress-text {
+            position: relative;
+            text-align: center;
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: white;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+            margin-top: 2rem;
+            animation: textGlow 2s ease-in-out infinite;
+        }
+
+        .loading-progress-text:after {
+            content: var(--blazor-load-percentage-text, "Loading Your Financial Dashboard");
+        }
+
+        /* Floating Dots Animation */
+        .loading-dots {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .loading-dot {
+            width: 0.8rem;
+            height: 0.8rem;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            border-radius: 50%;
+            animation: dotFloat 1.5s ease-in-out infinite;
+        }
+
+        .loading-dot:nth-child(2) { animation-delay: 0.2s; }
+        .loading-dot:nth-child(3) { animation-delay: 0.4s; }
+        .loading-dot:nth-child(4) { animation-delay: 0.6s; }
+        .loading-dot:nth-child(5) { animation-delay: 0.8s; }
+
+        /* Keyframe Animations */
+        @keyframes particleFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            33% { transform: translateY(-30px) rotate(120deg); }
+            66% { transform: translateY(15px) rotate(240deg); }
+        }
+
+        @keyframes outerRingRotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes innerRingPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.7; }
+        }
+
+        @keyframes progressGlow {
+            0%, 100% { filter: drop-shadow(0 0 10px currentColor); }
+            50% { filter: drop-shadow(0 0 20px currentColor) drop-shadow(0 0 30px currentColor); }
+        }
+
+        @keyframes iconSpin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes iconBounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        @keyframes textGlow {
+            0%, 100% { text-shadow: 0 0 20px rgba(255, 255, 255, 0.8); }
+            50% { text-shadow: 0 0 30px rgba(255, 255, 255, 1), 0 0 40px rgba(255, 255, 255, 0.8); }
+        }
+
+        @keyframes dotFloat {
+             0%, 100% { transform: translateY(0px); }
+             50% { transform: translateY(-15px); }
+         }
+
+         /* Sparkle Effects */
+         .sparkles {
+             position: absolute;
+             top: 0;
+             left: 0;
+             width: 100%;
+             height: 100%;
+             pointer-events: none;
+         }
+
+         .sparkle {
+             position: absolute;
+             width: 4px;
+             height: 4px;
+             background: white;
+             border-radius: 50%;
+             animation: sparkleAnimation 3s ease-in-out infinite;
+             box-shadow: 0 0 6px white;
+         }
+
+         .sparkle::before {
+             content: '';
+             position: absolute;
+             top: -2px;
+             left: -2px;
+             width: 8px;
+             height: 8px;
+             background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, transparent 70%);
+             border-radius: 50%;
+             animation: sparkleGlow 2s ease-in-out infinite;
+         }
+
+         @keyframes sparkleAnimation {
+             0%, 100% { 
+                 opacity: 0; 
+                 transform: scale(0) rotate(0deg); 
+             }
+             50% { 
+                 opacity: 1; 
+                 transform: scale(1) rotate(180deg); 
+             }
+         }
+
+         @keyframes sparkleGlow {
+             0%, 100% { transform: scale(0.5); opacity: 0.5; }
+             50% { transform: scale(1.5); opacity: 1; }
+         }
+
+         /* Floating Orbs Background Effect */
+         .loading-container::after {
+             content: '';
+             position: absolute;
+             top: 0;
+             left: 0;
+             width: 100%;
+             height: 100%;
+             background-image: 
+                 radial-gradient(circle at 10% 20%, rgba(255, 107, 107, 0.2) 0%, transparent 30%),
+                 radial-gradient(circle at 90% 80%, rgba(78, 205, 196, 0.2) 0%, transparent 30%),
+                 radial-gradient(circle at 70% 30%, rgba(69, 183, 209, 0.2) 0%, transparent 30%),
+                 radial-gradient(circle at 30% 70%, rgba(150, 206, 180, 0.2) 0%, transparent 30%);
+             animation: orbFloat 12s ease-in-out infinite;
+         }
+
+         @keyframes orbFloat {
+             0%, 100% { 
+                 transform: translateX(0px) translateY(0px) scale(1); 
+                 opacity: 0.6; 
+             }
+             25% { 
+                 transform: translateX(20px) translateY(-30px) scale(1.1); 
+                 opacity: 0.8; 
+             }
+             50% { 
+                 transform: translateX(-15px) translateY(20px) scale(0.9); 
+                 opacity: 0.7; 
+             }
+             75% { 
+                 transform: translateX(25px) translateY(10px) scale(1.05); 
+                 opacity: 0.9; 
+             }
+         }
+
+         /* Enhanced Progress Bar Pulse */
+         .loading-progress {
+             animation: progressContainerPulse 4s ease-in-out infinite;
+         }
+
+         @keyframes progressContainerPulse {
+             0%, 100% { 
+                 transform: scale(1); 
+                 filter: drop-shadow(0 0 30px rgba(255, 255, 255, 0.5)); 
+             }
+             50% { 
+                 transform: scale(1.05); 
+                 filter: drop-shadow(0 0 50px rgba(255, 255, 255, 0.8)); 
+             }
+         }
+
+        /* Error UI Styles */
+        #blazor-error-ui {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+            bottom: 0;
+            box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.3);
+            display: none;
+            left: 0;
+            padding: 1rem 1.5rem;
+            position: fixed;
+            width: 100%;
+            z-index: 10000;
+            color: white;
+            font-weight: 600;
+        }
+
+        #blazor-error-ui .dismiss {
+            cursor: pointer;
+            position: absolute;
+            right: 1rem;
+            top: 1rem;
+            font-size: 1.2rem;
+            opacity: 0.8;
+            transition: opacity 0.3s ease;
+        }
+
+        #blazor-error-ui .dismiss:hover {
+            opacity: 1;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .loading-progress {
+                width: 10rem;
+                height: 10rem;
+            }
+            
+            .loading-progress-text {
+                font-size: 1.2rem;
+            }
+            
+            .loading-icon {
+                width: 2.5rem;
+                height: 2.5rem;
+            }
+            
+            .loading-icon::before {
+                font-size: 1.2rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .loading-progress {
+                width: 8rem;
+                height: 8rem;
+            }
+            
+            .loading-progress-text {
+                font-size: 1rem;
+            }
+        }
+    </style>
 </head>
 
 <body>
-
-    <div class="status-bar-safe-area"></div>
-
-    <div id="app">Loading...</div>
+    <div id="app">
+        <div class="loading-container">
+            <svg class="loading-progress">
+                <defs>
+                    <!-- Gradient Definition for Progress Circle -->
+                    <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#ff6b6b;stop-opacity:1" />
+                        <stop offset="25%" style="stop-color:#4ecdc4;stop-opacity:1" />
+                        <stop offset="50%" style="stop-color:#45b7d1;stop-opacity:1" />
+                        <stop offset="75%" style="stop-color:#96ceb4;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#ffeaa7;stop-opacity:1" />
+                    </linearGradient>
+                    
+                    <!-- Animated Gradient for Extra Effects -->
+                    <linearGradient id="animatedGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#667eea;stop-opacity:0.8">
+                            <animate attributeName="stop-color" 
+                                values="#667eea;#764ba2;#f093fb;#f5576c;#4facfe;#00f2fe;#667eea" 
+                                dur="4s" repeatCount="indefinite"/>
+                        </stop>
+                        <stop offset="100%" style="stop-color:#764ba2;stop-opacity:0.8">
+                            <animate attributeName="stop-color" 
+                                values="#764ba2;#f093fb;#f5576c;#4facfe;#00f2fe;#667eea;#764ba2" 
+                                dur="4s" repeatCount="indefinite"/>
+                        </stop>
+                    </linearGradient>
+                    
+                    <!-- Glow Filter -->
+                    <filter id="glow">
+                        <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                        <feMerge> 
+                            <feMergeNode in="coloredBlur"/>
+                            <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                    </filter>
+                </defs>
+                
+                <!-- Background Circle -->
+                <circle r="40%" cx="50%" cy="50%" />
+                
+                <!-- Progress Circle with Gradient -->
+                <circle r="40%" cx="50%" cy="50%" filter="url(#glow)" />
+                
+                <!-- Decorative Outer Ring -->
+                <circle r="45%" cx="50%" cy="50%" fill="none" stroke="url(#animatedGradient)" stroke-width="1" opacity="0.6">
+                    <animateTransform attributeName="transform" type="rotate" 
+                        values="0 50 50;360 50 50" dur="8s" repeatCount="indefinite"/>
+                </circle>
+                
+                <!-- Inner Decorative Elements -->
+                <circle r="35%" cx="50%" cy="50%" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="0.5" stroke-dasharray="5,5">
+                    <animateTransform attributeName="transform" type="rotate" 
+                        values="360 50 50;0 50 50" dur="6s" repeatCount="indefinite"/>
+                </circle>
+            </svg>
+            
+            <!-- Central Loading Icon -->
+            <div class="loading-icon"></div>
+            
+            <!-- Enhanced Loading Text -->
+            <div class="loading-progress-text"></div>
+            
+            <!-- Floating Dots -->
+            <div class="loading-dots">
+                <div class="loading-dot"></div>
+                <div class="loading-dot"></div>
+                <div class="loading-dot"></div>
+                <div class="loading-dot"></div>
+                <div class="loading-dot"></div>
+            </div>
+            
+            <!-- Sparkle Effects -->
+            <div class="sparkles">
+                <div class="sparkle" style="top: 20%; left: 15%; animation-delay: 0s;"></div>
+                <div class="sparkle" style="top: 30%; right: 20%; animation-delay: 0.5s;"></div>
+                <div class="sparkle" style="bottom: 25%; left: 25%; animation-delay: 1s;"></div>
+                <div class="sparkle" style="bottom: 35%; right: 15%; animation-delay: 1.5s;"></div>
+                <div class="sparkle" style="top: 60%; left: 10%; animation-delay: 2s;"></div>
+                <div class="sparkle" style="top: 70%; right: 10%; animation-delay: 2.5s;"></div>
+            </div>
+        </div>
+    </div>
 
     <div id="blazor-error-ui">
         An unhandled error has occurred.
@@ -24,8 +468,122 @@
         <a class="dismiss">🗙</a>
     </div>
 
-    <script src="_framework/blazor.webview.js" autostart="false"></script>
+    <script src="_framework/blazor.webview.js"></script>
+    <script src="js/financial-animations.js"></script>
+    <script src="js/export.js"></script>
+    <script>
+        // Initialize particle background
+        function initParticleBackground() {
+            const canvas = document.createElement('canvas');
+            canvas.id = 'particle-canvas';
+            canvas.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    pointer-events: none;
+                    z-index: -1;
+                    opacity: 0.3;
+                `;
+            document.body.appendChild(canvas);
 
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+            let animationId;
+
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+
+            function createParticle() {
+                return {
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: (Math.random() - 0.5) * 0.5,
+                    vy: (Math.random() - 0.5) * 0.5,
+                    size: Math.random() * 2 + 1,
+                    opacity: Math.random() * 0.5 + 0.2,
+                    color: `hsl(${200 + Math.random() * 60}, 70%, 60%)`
+                };
+            }
+
+            function initParticles() {
+                particles = [];
+                for (let i = 0; i < 50; i++) {
+                    particles.push(createParticle());
+                }
+            }
+
+            function updateParticles() {
+                particles.forEach(particle => {
+                    particle.x += particle.vx;
+                    particle.y += particle.vy;
+
+                    if (particle.x < 0 || particle.x > canvas.width) particle.vx *= -1;
+                    if (particle.y < 0 || particle.y > canvas.height) particle.vy *= -1;
+                });
+            }
+
+            function drawParticles() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                particles.forEach(particle => {
+                    ctx.beginPath();
+                    ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                    ctx.fillStyle = particle.color;
+                    ctx.globalAlpha = particle.opacity;
+                    ctx.fill();
+                });
+
+                // Draw connections
+                particles.forEach((particle, i) => {
+                    particles.slice(i + 1).forEach(otherParticle => {
+                        const dx = particle.x - otherParticle.x;
+                        const dy = particle.y - otherParticle.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+
+                        if (distance < 100) {
+                            ctx.beginPath();
+                            ctx.moveTo(particle.x, particle.y);
+                            ctx.lineTo(otherParticle.x, otherParticle.y);
+                            ctx.strokeStyle = particle.color;
+                            ctx.globalAlpha = (100 - distance) / 100 * 0.2;
+                            ctx.lineWidth = 0.5;
+                            ctx.stroke();
+                        }
+                    });
+                });
+            }
+
+            function animate() {
+                updateParticles();
+                drawParticles();
+                animationId = requestAnimationFrame(animate);
+            }
+
+            // Initialize
+            resizeCanvas();
+            initParticles();
+            animate();
+
+            // Handle resize
+            window.addEventListener('resize', () => {
+                resizeCanvas();
+                initParticles();
+            });
+
+            // Cleanup function
+            return () => {
+                cancelAnimationFrame(animationId);
+                canvas.remove();
+            };
+        }
+
+        // Start particle background when page loads
+        document.addEventListener('DOMContentLoaded', initParticleBackground);
+    </script>
 </body>
 
 </html>

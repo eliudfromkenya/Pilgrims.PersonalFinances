@@ -4,8 +4,9 @@
 @inject IAuthenticationService AuthService
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
+@inject ILocalizationService LocalizationService
 
-<PageTitle>Register - Personal Finance</PageTitle>
+<PageTitle>@LocalizationService.GetString("Register") - @LocalizationService.GetString("PersonalFinance")</PageTitle>
 
 <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-500 to-purple-600 p-5 font-sans">
     <div class="bg-white rounded-2xl shadow-2xl p-10 w-full max-w-lg animate-slide-up">
@@ -18,10 +19,10 @@
                         <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
                     </svg>
                 </div>
-                <h1 class="text-slate-800 text-2xl font-bold m-0">Personal Finance</h1>
+                <h1 class="text-slate-800 text-2xl font-bold m-0">@LocalizationService.GetString("PersonalFinance")</h1>
             </div>
-            <h2 class="text-slate-800 text-3xl font-bold m-0 mb-2">Create Your Account</h2>
-            <p class="text-slate-600 text-base m-0">Join thousands of users managing their finances smarter</p>
+            <h2 class="text-slate-800 text-3xl font-bold m-0 mb-2">@LocalizationService.GetString("CreateYourAccount")</h2>
+            <p class="text-slate-600 text-base m-0">@LocalizationService.GetString("JoinThousandsOfUsers")</p>
         </div>
 
         <EditForm Model="@registerModel" OnValidSubmit="@HandleRegistration" class="flex flex-col gap-5">
@@ -52,28 +53,28 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="flex flex-col gap-2">
-                    <label for="firstName" class="text-slate-800 font-semibold text-sm">First Name</label>
-                    <InputText id="firstName" @bind-Value="registerModel.FirstName" class="form-input" placeholder="Enter your first name" />
+                    <label for="firstName" class="text-slate-800 font-semibold text-sm">@LocalizationService.GetString("FirstName")</label>
+                    <InputText id="firstName" @bind-Value="registerModel.FirstName" class="form-input" placeholder="@LocalizationService.GetString("EnterFirstName")" />
                     <ValidationMessage For="@(() => registerModel.FirstName)" class="text-red-600 text-xs font-medium" />
                 </div>
 
                 <div class="flex flex-col gap-2">
-                    <label for="lastName" class="text-slate-800 font-semibold text-sm">Last Name</label>
-                    <InputText id="lastName" @bind-Value="registerModel.LastName" class="form-input" placeholder="Enter your last name" />
+                    <label for="lastName" class="text-slate-800 font-semibold text-sm">@LocalizationService.GetString("LastName")</label>
+                    <InputText id="lastName" @bind-Value="registerModel.LastName" class="form-input" placeholder="@LocalizationService.GetString("EnterLastName")" />
                     <ValidationMessage For="@(() => registerModel.LastName)" class="text-red-600 text-xs font-medium" />
                 </div>
             </div>
 
             <div class="flex flex-col gap-2">
-                <label for="email" class="text-slate-800 font-semibold text-sm">Email Address</label>
-                <InputText id="email" @bind-Value="registerModel.Email" class="form-input" placeholder="Enter your email address" type="email" />
+                <label for="email" class="text-slate-800 font-semibold text-sm">@LocalizationService.GetString("EmailAddress")</label>
+                <InputText id="email" @bind-Value="registerModel.Email" class="form-input" placeholder="@LocalizationService.GetString("EnterEmailAddress")" type="email" />
                 <ValidationMessage For="@(() => registerModel.Email)" class="text-red-600 text-xs font-medium" />
             </div>
 
             <div class="flex flex-col gap-2">
-                <label for="password" class="text-slate-800 font-semibold text-sm">Password</label>
+                <label for="password" class="text-slate-800 font-semibold text-sm">@LocalizationService.GetString("Password")</label>
                 <div class="relative flex items-center">
-                    <InputText id="password" @bind-Value="registerModel.Password" class="form-input pr-12" placeholder="Create a strong password" type="@(showPassword ? "text" : "password")" />
+                    <InputText id="password" @bind-Value="registerModel.Password" class="form-input pr-12" placeholder="@LocalizationService.GetString("CreateStrongPassword")" type="@(showPassword ? "text" : "password")" />
                     <button type="button" class="absolute right-3 bg-none border-none text-slate-500 cursor-pointer p-1 rounded transition-colors duration-200 hover:text-slate-800" @onclick="TogglePasswordVisibility">
                         @if (showPassword)
                         {
@@ -94,35 +95,35 @@
                 </div>
                 <ValidationMessage For="@(() => registerModel.Password)" class="text-red-600 text-xs font-medium" />
                 <div class="bg-slate-50 border border-slate-200 rounded-md p-3 text-xs">
-                    <p class="m-0 mb-2 text-slate-700 font-semibold">Password must contain:</p>
+                    <p class="m-0 mb-2 text-slate-700 font-semibold">@LocalizationService.GetString("PasswordMustContain")</p>
                     <ul class="m-0 pl-4 list-none">
                         <li class="@(HasUppercase(registerModel.Password) ? "text-green-600" : "text-slate-500") mb-1 relative pl-5">
                             <span class="absolute left-0 font-bold">@(HasUppercase(registerModel.Password) ? "✓" : "✗")</span>
-                            At least one uppercase letter
+                            @LocalizationService.GetString("AtLeastOneUppercase")
                         </li>
                         <li class="@(HasLowercase(registerModel.Password) ? "text-green-600" : "text-slate-500") mb-1 relative pl-5">
                             <span class="absolute left-0 font-bold">@(HasLowercase(registerModel.Password) ? "✓" : "✗")</span>
-                            At least one lowercase letter
+                            @LocalizationService.GetString("AtLeastOneLowercase")
                         </li>
                         <li class="@(HasNumber(registerModel.Password) ? "text-green-600" : "text-slate-500") mb-1 relative pl-5">
                             <span class="absolute left-0 font-bold">@(HasNumber(registerModel.Password) ? "✓" : "✗")</span>
-                            At least one number
+                            @LocalizationService.GetString("AtLeastOneNumber")
                         </li>
                         <li class="@(HasSpecialChar(registerModel.Password) ? "text-green-600" : "text-slate-500") mb-1 relative pl-5">
                             <span class="absolute left-0 font-bold">@(HasSpecialChar(registerModel.Password) ? "✓" : "✗")</span>
-                            At least one special character
+                            @LocalizationService.GetString("AtLeastOneSpecialChar")
                         </li>
                         <li class="@(IsMinLength(registerModel.Password) ? "text-green-600" : "text-slate-500") mb-1 relative pl-5">
                             <span class="absolute left-0 font-bold">@(IsMinLength(registerModel.Password) ? "✓" : "✗")</span>
-                            At least 8 characters long
+                            @LocalizationService.GetString("AtLeast8Characters")
                         </li>
                     </ul>
                 </div>
             </div>
 
             <div class="flex flex-col gap-2">
-                <label for="confirmPassword" class="text-slate-800 font-semibold text-sm">Confirm Password</label>
-                <InputText id="confirmPassword" @bind-Value="registerModel.ConfirmPassword" class="form-input" placeholder="Confirm your password" type="password" />
+                <label for="confirmPassword" class="text-slate-800 font-semibold text-sm">@LocalizationService.GetString("ConfirmPassword")</label>
+                <InputText id="confirmPassword" @bind-Value="registerModel.ConfirmPassword" class="form-input" placeholder="@LocalizationService.GetString("ConfirmYourPassword")" type="password" />
                 <ValidationMessage For="@(() => registerModel.ConfirmPassword)" class="text-red-600 text-xs font-medium" />
             </div>
 
@@ -136,7 +137,7 @@
                         }
                     </span>
                     <span class="text-slate-700">
-                        I agree to the <a href="/terms" target="_blank" class="text-primary-500 no-underline hover:underline">Terms of Service</a> and <a href="/privacy" target="_blank" class="text-primary-500 no-underline hover:underline">Privacy Policy</a>
+                        @LocalizationService.GetString("IAgreeToThe") <a href="/terms" target="_blank" class="text-primary-500 no-underline hover:underline">@LocalizationService.GetString("TermsOfService")</a> @LocalizationService.GetString("And") <a href="/privacy" target="_blank" class="text-primary-500 no-underline hover:underline">@LocalizationService.GetString("PrivacyPolicy")</a>
                     </span>
                 </label>
                 <ValidationMessage For="@(() => registerModel.AcceptTerms)" class="text-red-600 text-xs font-medium" />
@@ -146,11 +147,11 @@
                 @if (isLoading)
                 {
                     <div class="w-5 h-5 border-2 border-white/30 rounded-full border-t-white animate-spin"></div>
-                    <span>Creating Account...</span>
+                    <span>@LocalizationService.GetString("CreatingAccount")</span>
                 }
                 else
                 {
-                    <span>Create Account</span>
+                    <span>@LocalizationService.GetString("CreateAccount")</span>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         <polyline points="12,5 19,12 12,19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -160,7 +161,7 @@
         </EditForm>
 
         <div class="text-center mt-6 pt-6 border-t border-slate-200">
-            <p class="text-slate-500 m-0">Already have an account? <a href="/login" class="text-primary-500 no-underline font-semibold hover:underline">Sign in here</a></p>
+            <p class="text-slate-500 m-0">@LocalizationService.GetString("AlreadyHaveAccount") <a href="/login" class="text-primary-500 no-underline font-semibold hover:underline">@LocalizationService.GetString("SignInHere")</a></p>
         </div>
     </div>
 </div>
@@ -176,13 +177,13 @@
     {
         if (!registerModel.AcceptTerms)
         {
-            errorMessage = "You must accept the Terms of Service and Privacy Policy to continue.";
+            errorMessage = LocalizationService.GetString("MustAcceptTerms");
             return;
         }
 
         if (registerModel.Password != registerModel.ConfirmPassword)
         {
-            errorMessage = "Passwords do not match.";
+            errorMessage = LocalizationService.GetString("PasswordsDoNotMatch");
             return;
         }
 
@@ -201,7 +202,7 @@
 
             if (result.IsSuccess)
             {
-                successMessage = "Account created successfully! Please check your email to verify your account.";
+                successMessage = LocalizationService.GetString("AccountCreatedSuccessfully");
                 registerModel = new RegisterModel();
                 
                 // Redirect to login page after a delay
@@ -210,12 +211,12 @@
             }
             else
             {
-                errorMessage = result.ErrorMessage ?? "Registration failed. Please try again.";
+                errorMessage = result.ErrorMessage ?? LocalizationService.GetString("RegistrationFailed");
             }
         }
         catch (Exception)
         {
-            errorMessage = "An unexpected error occurred. Please try again.";
+            errorMessage = LocalizationService.GetString("UnexpectedError");
         }
         finally
         {

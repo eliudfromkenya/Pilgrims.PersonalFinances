@@ -1,6 +1,12 @@
 @page "/reports"
 @using Pilgrims.PersonalFinances.Models
 @using Pilgrims.PersonalFinances.Models.Enums
+@using Pilgrims.PersonalFinances.Models.DTOs
+@using Pilgrims.PersonalFinances.Core.ViewModels
+@using Pilgrims.PersonalFinances.Core.Interfaces
+@inject ReportsViewModel ViewModel
+@inject NavigationManager Navigation
+@inject ICurrencyService CurrencyService
 
 <PageTitle>Reports - Pilgrims Personal Finance</PageTitle>
 
@@ -28,387 +34,208 @@
                     <p class="text-[var(--text-secondary)] mt-2">Comprehensive insights into your financial health</p>
                 </div>
                 <div class="flex items-center space-x-3">
-                    <select class="px-4 py-2 bg-white/50 dark:bg-gray-700/50 rounded-lg border border-white/20">
-                        <option>Last 12 Months</option>
-                        <option>Last 6 Months</option>
-                        <option>Last 3 Months</option>
-                        <option>This Year</option>
+                    <!-- Date Range Selector -->
+                    <div class="flex items-center space-x-2">
+                        <input type="date" @bind="ViewModel.StartDate" @bind:event="onchange"
+                               class="px-3 py-2 bg-white/50 dark:bg-gray-700/50 rounded-lg border border-white/20 text-sm" />
+                        <span class="text-gray-500">to</span>
+                        <input type="date" @bind="ViewModel.EndDate" @bind:event="onchange"
+                               class="px-3 py-2 bg-white/50 dark:bg-gray-700/50 rounded-lg border border-white/20 text-sm" />
+                    </div>
+                    
+                    <!-- Quick Date Range Selector -->
+                    <select @bind="ViewModel.SelectedPeriod" @bind:event="onchange"
+                            class="px-4 py-2 bg-white/50 dark:bg-gray-700/50 rounded-lg border border-white/20">
+                        <option value="custom">Custom Range</option>
+                        <option value="last30">Last 30 Days</option>
+                        <option value="last90">Last 90 Days</option>
+                        <option value="last6months">Last 6 Months</option>
+                        <option value="last12months">Last 12 Months</option>
+                        <option value="thisyear">This Year</option>
+                        <option value="lastyear">Last Year</option>
                     </select>
-                    <button class="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-300">
-                        <span class="mr-2">📥</span> Export Report
-                    </button>
+                    
+                    <!-- Export Options -->
+                    <div class="relative">
+                        <button @onclick="ViewModel.ToggleExportMenuCommand.Execute" 
+                                class="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-300">
+                            <span class="mr-2">📥</span> Export
+                        </button>
+                        @if (ViewModel.ShowExportMenu)
+                        {
+                            <div class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50">
+                                <button @onclick="() => ViewModel.ExportReportCommand.Execute(ExportFormat.PDF)" class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-t-lg">
+                                    📄 Export as PDF
+                                </button>
+                                <button @onclick="() => ViewModel.ExportReportCommand.Execute(ExportFormat.CSV)" class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                    📊 Export as CSV
+                                </button>
+                                <button @onclick="() => ViewModel.ExportReportCommand.Execute(ExportFormat.JPEG)" class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-b-lg">
+                                    🖼️ Export as Image
+                                </button>
+                            </div>
+                        }
+                    </div>
                 </div>
             </div>
             
             <!-- Key Metrics Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-                <div class="bg-gradient-to-r from-indigo-400 to-indigo-600 p-4 rounded-xl text-white">
-                    <div class="text-sm opacity-90">Net Worth</div>
-                    <div class="text-2xl font-bold">$847,250</div>
-                    <div class="text-xs opacity-75 mt-1">📈 +12.5% YoY</div>
-                </div>
-                <div class="bg-gradient-to-r from-purple-400 to-purple-600 p-4 rounded-xl text-white">
-                    <div class="text-sm opacity-90">Monthly Income</div>
-                    <div class="text-2xl font-bold">$8,450.00</div>
-                    <div class="text-xs opacity-75 mt-1">Average this year</div>
-                </div>
-                <div class="bg-gradient-to-r from-pink-400 to-pink-600 p-4 rounded-xl text-white">
-                    <div class="text-sm opacity-90">Monthly Expenses</div>
-                    <div class="text-2xl font-bold">$5,680.00</div>
-                    <div class="text-xs opacity-75 mt-1">67% of income</div>
-                </div>
-                <div class="bg-gradient-to-r from-rose-400 to-rose-600 p-4 rounded-xl text-white">
-                    <div class="text-sm opacity-90">Savings Rate</div>
-                    <div class="text-2xl font-bold">33%</div>
-                    <div class="text-xs opacity-75 mt-1">Above average</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Income vs Expenses & Net Worth Trend -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <!-- Income vs Expenses -->
-        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
-            <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
-                <span class="mr-2">💰</span> Income vs Expenses (12 Months)
-            </h3>
-            <div class="h-64 flex items-end justify-between space-x-1">
-                @{
-                    var months = new[] { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
-                    var income = new[] { 8200, 8450, 8300, 8600, 8750, 8400, 8500, 8650, 8300, 8800, 8950, 8450 };
-                    var expenses = new[] { 5400, 5680, 5520, 5800, 5950, 5600, 5750, 5850, 5650, 6100, 6200, 5680 };
-                    var maxValue = Math.Max(income.Max(), expenses.Max());
-                }
-                @for (int i = 0; i < 12; i++)
-                {
-                    var incomeHeight = (income[i] / (double)maxValue) * 100;
-                    var expenseHeight = (expenses[i] / (double)maxValue) * 100;
-                    
-                    <div class="flex-1 flex flex-col items-center space-y-1">
-                        <div class="flex items-end space-x-1 w-full">
-                            <div class="bg-gradient-to-t from-green-400 to-green-600 rounded-t-lg transition-all duration-1000 hover:shadow-lg flex-1" 
-                                 style="height: @(incomeHeight * 0.8)px; animation-delay: @(i * 0.05)s;" title="Income: $@income[i]">
-                            </div>
-                            <div class="bg-gradient-to-t from-red-400 to-red-600 rounded-t-lg transition-all duration-1000 hover:shadow-lg flex-1" 
-                                 style="height: @(expenseHeight * 0.8)px; animation-delay: @(i * 0.05 + 0.025)s;" title="Expenses: $@expenses[i]">
-                            </div>
-                        </div>
-                        <span class="text-xs text-gray-500 mt-2">@months[i]</span>
-                    </div>
-                }
-            </div>
-            
-            <div class="flex items-center justify-center space-x-6 mt-4">
-                <div class="flex items-center">
-                    <div class="w-3 h-3 bg-gradient-to-r from-green-400 to-green-600 rounded mr-2"></div>
-                    <span class="text-sm text-gray-600 dark:text-gray-300">Income</span>
-                </div>
-                <div class="flex items-center">
-                    <div class="w-3 h-3 bg-gradient-to-r from-red-400 to-red-600 rounded mr-2"></div>
-                    <span class="text-sm text-gray-600 dark:text-gray-300">Expenses</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Net Worth Trend -->
-        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
-            <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
-                <span class="mr-2">📈</span> Net Worth Trend
-            </h3>
-            <div class="h-64 relative">
-                <svg class="w-full h-full" viewBox="0 0 400 200">
-                    <defs>
-                        <linearGradient id="netWorthGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:0.8"/>
-                            <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:0.1"/>
-                        </linearGradient>
-                    </defs>
-                    @{
-                        var netWorthData = new[] { 720000, 735000, 748000, 762000, 778000, 785000, 798000, 812000, 825000, 835000, 842000, 847250 };
-                        var minNetWorth = netWorthData.Min();
-                        var maxNetWorth = netWorthData.Max();
-                        var range = maxNetWorth - minNetWorth;
-                        
-                        var points = new List<string>();
-                        for (int i = 0; i < netWorthData.Length; i++)
+            @if (ViewModel.BalanceSheet != null)
+            {
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+                    <div class="bg-gradient-to-r from-indigo-400 to-indigo-600 p-4 rounded-xl text-white">
+                        <div class="text-sm opacity-90">Net Worth</div>
+                        <div class="text-2xl font-bold">@(formattedAmounts.TryGetValue(ViewModel.BalanceSheet.NetWorth, out var netWorthFormatted) ? netWorthFormatted : ViewModel.BalanceSheet.NetWorth.ToString("C"))</div>
+                        @if (ViewModel.PreviousBalanceSheet != null)
                         {
-                            var x = (i / (double)(netWorthData.Length - 1)) * 380 + 10;
-                            var y = 180 - ((netWorthData[i] - minNetWorth) / (double)range) * 160;
-                            points.Add($"{x},{y}");
+                            var change = ViewModel.BalanceSheet.NetWorth - ViewModel.PreviousBalanceSheet.NetWorth;
+                            var changePercent = ViewModel.PreviousBalanceSheet.NetWorth != 0 ? (change / ViewModel.PreviousBalanceSheet.NetWorth) * 100 : 0;
+                            <div class="text-xs opacity-75 mt-1">
+                                @(change >= 0 ? "📈" : "📉") @changePercent.ToString("F1")% vs Previous
+                            </div>
                         }
-                        var pathData = "M " + string.Join(" L ", points);
-                        var areaData = pathData + " L 390,180 L 10,180 Z";
-                    }
-                    
-                    <path d="@areaData" fill="url(#netWorthGradient)"/>
-                    <path d="@pathData" stroke="#8b5cf6" stroke-width="3" fill="none"/>
-                    
-                    @for (int i = 0; i < netWorthData.Length; i++)
-                    {
-                        var x = (i / (double)(netWorthData.Length - 1)) * 380 + 10;
-                        var y = 180 - ((netWorthData[i] - minNetWorth) / (double)range) * 160;
-                        
-                        <circle cx="@x" cy="@y" r="4" fill="#8b5cf6" stroke="white" stroke-width="2"/>
-                    }
-                </svg>
-            </div>
-            
-            <div class="mt-4 grid grid-cols-3 gap-4 text-center">
-                <div>
-                    <div class="text-sm text-gray-500">Starting</div>
-                    <div class="font-semibold text-gray-800 dark:text-white">$720,000</div>
+                    </div>
+                    <div class="bg-gradient-to-r from-purple-400 to-purple-600 p-4 rounded-xl text-white">
+                        <div class="text-sm opacity-90">Total Income</div>
+                        <div class="text-2xl font-bold">@(ViewModel.IncomeStatement != null && formattedAmounts.TryGetValue(ViewModel.IncomeStatement.TotalIncome, out var incomeFormatted) ? incomeFormatted : (ViewModel.IncomeStatement?.TotalIncome.ToString("C") ?? "$0.00"))</div>
+                        <div class="text-xs opacity-75 mt-1">Selected period</div>
+                    </div>
+                    <div class="bg-gradient-to-r from-pink-400 to-pink-600 p-4 rounded-xl text-white">
+                        <div class="text-sm opacity-90">Total Expenses</div>
+                        <div class="text-2xl font-bold">@(ViewModel.IncomeStatement != null && formattedAmounts.TryGetValue(ViewModel.IncomeStatement.TotalExpenses, out var expensesFormatted) ? expensesFormatted : (ViewModel.IncomeStatement?.TotalExpenses.ToString("C") ?? "$0.00"))</div>
+                        <div class="text-xs opacity-75 mt-1">@(ViewModel.IncomeStatement != null && ViewModel.IncomeStatement.TotalIncome > 0 ? ((ViewModel.IncomeStatement.TotalExpenses / ViewModel.IncomeStatement.TotalIncome) * 100).ToString("F0") + "% of income" : "N/A")</div>
+                    </div>
+                    <div class="bg-gradient-to-r from-rose-400 to-rose-600 p-4 rounded-xl text-white">
+                        <div class="text-sm opacity-90">Net Income</div>
+                        <div class="text-2xl font-bold">@(ViewModel.IncomeStatement != null && formattedAmounts.TryGetValue(ViewModel.IncomeStatement.NetIncome, out var netIncomeFormatted) ? netIncomeFormatted : (ViewModel.IncomeStatement?.NetIncome.ToString("C") ?? "$0.00"))</div>
+                        <div class="text-xs opacity-75 mt-1">@(ViewModel.IncomeStatement != null && ViewModel.IncomeStatement.TotalIncome > 0 ? ((ViewModel.IncomeStatement.NetIncome / ViewModel.IncomeStatement.TotalIncome) * 100).ToString("F0") + "% savings rate" : "N/A")</div>
+                    </div>
                 </div>
-                <div>
-                    <div class="text-sm text-gray-500">Growth</div>
-                    <div class="font-semibold text-green-600">+$127,250</div>
-                </div>
-                <div>
-                    <div class="text-sm text-gray-500">Current</div>
-                    <div class="font-semibold text-gray-800 dark:text-white">$847,250</div>
-                </div>
-            </div>
+            }
         </div>
     </div>
 
-    <!-- Expense Breakdown & Asset Allocation -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <!-- Expense Breakdown -->
-        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
-            <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
-                <span class="mr-2">🥧</span> Expense Breakdown
-            </h3>
-            <div class="space-y-4">
-                @{
-                    var expenseCategories = new[]
-                    {
-                        new { Name = "Housing", Amount = 2450, Percentage = 43, Color = "from-blue-400 to-blue-600", Icon = "🏠" },
-                        new { Name = "Transportation", Amount = 850, Percentage = 15, Color = "from-green-400 to-green-600", Icon = "🚗" },
-                        new { Name = "Food & Dining", Amount = 680, Percentage = 12, Color = "from-yellow-400 to-yellow-600", Icon = "🍽️" },
-                        new { Name = "Utilities", Amount = 420, Percentage = 7, Color = "from-purple-400 to-purple-600", Icon = "⚡" },
-                        new { Name = "Entertainment", Amount = 380, Percentage = 7, Color = "from-pink-400 to-pink-600", Icon = "🎬" },
-                        new { Name = "Healthcare", Amount = 320, Percentage = 6, Color = "from-red-400 to-red-600", Icon = "🏥" },
-                        new { Name = "Shopping", Amount = 280, Percentage = 5, Color = "from-indigo-400 to-indigo-600", Icon = "🛍️" },
-                        new { Name = "Other", Amount = 300, Percentage = 5, Color = "from-gray-400 to-gray-600", Icon = "📦" }
-                    };
-                }
-                @foreach (var category in expenseCategories)
-                {
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center flex-1">
-                            <span class="text-xl mr-3">@category.Icon</span>
-                            <span class="text-gray-700 dark:text-gray-300 flex-1">@category.Name</span>
-                            <div class="w-20 bg-gray-200 dark:bg-gray-600 rounded-full h-2 mx-3">
-                                <div class="bg-gradient-to-r @category.Color h-2 rounded-full transition-all duration-1000" 
-                                     style="width: @(category.Percentage)%"></div>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <div class="font-semibold">$@category.Amount</div>
-                            <div class="text-xs text-gray-500">@category.Percentage%</div>
-                        </div>
-                    </div>
-                }
-            </div>
-        </div>
-
-        <!-- Asset Allocation -->
-        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
-            <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
-                <span class="mr-2">📊</span> Asset Allocation
-            </h3>
-            
-            <!-- Donut Chart Representation -->
-            <div class="flex items-center justify-center mb-6">
-                <div class="relative w-48 h-48">
-                    <svg class="w-full h-full transform -rotate-90" viewBox="0 0 200 200">
-                        @{
-                            var assets = new[]
-                            {
-                                new { Name = "Real Estate", Value = 450000, Color = "#3b82f6", Percentage = 53 },
-                                new { Name = "Stocks", Value = 185000, Color = "#10b981", Percentage = 22 },
-                                new { Name = "Cash & Savings", Value = 125000, Color = "#f59e0b", Percentage = 15 },
-                                new { Name = "Bonds", Value = 65000, Color = "#8b5cf6", Percentage = 8 },
-                                new { Name = "Other", Value = 22250, Color = "#ef4444", Percentage = 2 }
-                            };
-                            
-                            var radius = 80;
-                            var strokeWidth = 20;
-                            var circumference = 2 * Math.PI * radius;
-                            var currentAngle = 0;
-                        }
-                        
-                        @foreach (var asset in assets)
-                        {
-                            var strokeDasharray = (asset.Percentage / 100.0) * circumference;
-                            var strokeDashoffset = -currentAngle * circumference / 100.0;
-                            currentAngle += asset.Percentage;
-                            
-                            <circle cx="100" cy="100" r="@radius" 
-                                    stroke="@asset.Color" stroke-width="@strokeWidth" 
-                                    fill="transparent"
-                                    stroke-dasharray="@strokeDasharray @(circumference - strokeDasharray)"
-                                    stroke-dashoffset="@strokeDashoffset"
-                                    class="transition-all duration-1000"/>
-                        }
-                    </svg>
-                    <div class="absolute inset-0 flex items-center justify-center">
-                        <div class="text-center">
-                            <div class="text-2xl font-bold text-gray-800 dark:text-white">$847K</div>
-                            <div class="text-sm text-gray-600 dark:text-gray-300">Total Assets</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Asset Legend -->
-            <div class="space-y-2">
-                @foreach (var asset in assets)
-                {
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center">
-                            <div class="w-3 h-3 rounded-full mr-2" style="background-color: @asset.Color"></div>
-                            <span class="text-sm text-gray-700 dark:text-gray-300">@asset.Name</span>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-sm font-medium">$@(asset.Value / 1000)K</div>
-                            <div class="text-xs text-gray-500">@asset.Percentage%</div>
-                        </div>
-                    </div>
-                }
-            </div>
+    <!-- Report Type Selector -->
+    <div class="mb-6">
+        <div class="flex flex-wrap gap-2">
+            <button @onclick="() => ViewModel.SetActiveReportCommand.Execute(ReportType.IncomeStatement)" 
+                    class="px-4 py-2 rounded-lg transition-all @(ViewModel.ActiveReportType == ReportType.IncomeStatement ? "bg-indigo-600 text-white" : "bg-white/50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300")">
+                Income Statement
+            </button>
+            <button @onclick="() => ViewModel.SetActiveReportCommand.Execute(ReportType.BalanceSheet)" 
+                    class="px-4 py-2 rounded-lg transition-all @(ViewModel.ActiveReportType == ReportType.BalanceSheet ? "bg-indigo-600 text-white" : "bg-white/50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300")">
+                Balance Sheet
+            </button>
+            <button @onclick="() => ViewModel.SetActiveReportCommand.Execute(ReportType.CashFlowStatement)"
+                    class="px-4 py-2 rounded-lg transition-all @(ViewModel.ActiveReportType == ReportType.CashFlowStatement ? "bg-indigo-600 text-white" : "bg-white/50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300")">
+                Cash Flow
+            </button>
+            <button @onclick="() => ViewModel.SetActiveReportCommand.Execute(ReportType.BudgetVarianceReport)"
+                    class="px-4 py-2 rounded-lg transition-all @(ViewModel.ActiveReportType == ReportType.BudgetVarianceReport ? "bg-indigo-600 text-white" : "bg-white/50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300")">
+                Budget Variance
+            </button>
+            <button @onclick="() => ViewModel.SetActiveReportCommand.Execute(ReportType.NetWorthTrend)" 
+                    class="px-4 py-2 rounded-lg transition-all @(ViewModel.ActiveReportType == ReportType.NetWorthTrend ? "bg-indigo-600 text-white" : "bg-white/50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300")">
+                Net Worth Trend
+            </button>
+            <button @onclick="() => ViewModel.SetActiveReportCommand.Execute(ReportType.CategoryAnalysis)" 
+                    class="px-4 py-2 rounded-lg transition-all @(ViewModel.ActiveReportType == ReportType.CategoryAnalysis ? "bg-indigo-600 text-white" : "bg-white/50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300")">
+                Category Analysis
+            </button>
+            <button @onclick="() => ViewModel.SetActiveReportCommand.Execute(ReportType.AccountSummary)" 
+                    class="px-4 py-2 rounded-lg transition-all @(ViewModel.ActiveReportType == ReportType.AccountSummary ? "bg-indigo-600 text-white" : "bg-white/50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300")">
+                Account Summary
+            </button>
         </div>
     </div>
 
-    <!-- Financial Ratios & Performance Metrics -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        <!-- Financial Ratios -->
-        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
-            <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
-                <span class="mr-2">📐</span> Financial Ratios
-            </h3>
-            <div class="space-y-4">
-                @{
-                    var ratios = new[]
-                    {
-                        new { Name = "Debt-to-Income", Value = 32.0, Target = 36.0, Status = "Good", Color = "text-green-500", Unit = "%" },
-                        new { Name = "Emergency Fund", Value = 5.2, Target = 6.0, Status = "Good", Color = "text-green-500", Unit = "months" },
-                        new { Name = "Savings Rate", Value = 33.0, Target = 20.0, Status = "Excellent", Color = "text-blue-500", Unit = "%" },
-                        new { Name = "Housing Ratio", Value = 29.0, Target = 28.0, Status = "Fair", Color = "text-yellow-500", Unit = "%" }
-                    };
-                }
-                
-                @foreach (var ratio in ratios)
+    <!-- Loading Indicator -->
+    @if (ViewModel.IsBusy)
+    {
+        <div class="flex justify-center items-center py-12">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+            <span class="ml-3 text-gray-600 dark:text-gray-300">Loading report data...</span>
+        </div>
+    }
+
+    <!-- Report Content -->
+    @if (!ViewModel.IsBusy)
+    {
+        @switch (ViewModel.ActiveReportType)
+        {
+            case ReportType.IncomeStatement:
+                @if (ViewModel.IncomeStatement != null)
                 {
-                    <div class="flex items-center justify-between">
-                        <div class="flex-1">
-                            <div class="flex justify-between items-center mb-1">
-                                <span class="text-sm text-gray-700 dark:text-gray-300">@ratio.Name</span>
-                                <span class="text-sm @ratio.Color font-medium">@ratio.Status</span>
-                            </div>
-                            <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
-                                <div class="bg-gradient-to-r from-indigo-400 to-purple-600 h-2 rounded-full transition-all duration-1000" 
-                                     style="width: @(Math.Min(ratio.Value / ratio.Target * 100, 100))%"></div>
-                            </div>
-                            <div class="flex justify-between text-xs text-gray-500 mt-1">
-                                <span>@ratio.Value@(ratio.Unit ?? "%")</span>
-                                <span>Target: @ratio.Target@(ratio.Unit ?? "%")</span>
-                            </div>
-                        </div>
-                    </div>
+                    <IncomeStatementReport Report="ViewModel.IncomeStatement" OnCategoryClick="OnCategoryClick" />
                 }
-            </div>
-        </div>
-
-        <!-- Monthly Cash Flow -->
-        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
-            <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
-                <span class="mr-2">💸</span> Cash Flow Analysis
-            </h3>
-            <div class="space-y-4">
-                <div class="flex justify-between items-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                    <span class="text-green-700 dark:text-green-300">Total Income</span>
-                    <span class="font-bold text-green-800 dark:text-green-200">+$8,450</span>
-                </div>
-                
-                <div class="flex justify-between items-center p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                    <span class="text-red-700 dark:text-red-300">Total Expenses</span>
-                    <span class="font-bold text-red-800 dark:text-red-200">-$5,680</span>
-                </div>
-                
-                <div class="flex justify-between items-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                    <span class="text-blue-700 dark:text-blue-300">Net Cash Flow</span>
-                    <span class="font-bold text-blue-800 dark:text-blue-200">+$2,770</span>
-                </div>
-                
-                <div class="mt-4 p-3 bg-gradient-to-r from-indigo-100 to-purple-100 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-lg">
-                    <div class="text-sm text-indigo-700 dark:text-indigo-300 mb-1">Cash Flow Trend</div>
-                    <div class="text-xs text-indigo-600 dark:text-indigo-400">+15% improvement vs last month</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Investment Performance -->
-        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
-            <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
-                <span class="mr-2">📈</span> Investment Performance
-            </h3>
-            <div class="space-y-4">
-                @{
-                    var investments = new[]
-                    {
-                        new { Name = "401(k)", Value = 125000, Return = 8.5, Color = "text-green-500" },
-                        new { Name = "Roth IRA", Value = 45000, Return = 12.3, Color = "text-blue-500" },
-                        new { Name = "Brokerage", Value = 15000, Return = -2.1, Color = "text-red-500" }
-                    };
-                }
-                
-                @foreach (var investment in investments)
+                break;
+            
+            case ReportType.BalanceSheet:
+                @if (ViewModel.BalanceSheet != null)
                 {
-                    <div class="p-3 bg-white/50 dark:bg-gray-700/50 rounded-lg">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-medium text-gray-800 dark:text-white">@investment.Name</span>
-                            <span class="@investment.Color font-bold">@(investment.Return > 0 ? "+" : "")@investment.Return%</span>
-                        </div>
-                        <div class="text-sm text-gray-600 dark:text-gray-300">
-                            Value: $@(investment.Value / 1000)K
-                        </div>
-                    </div>
+                    <BalanceSheetReport Report="ViewModel.BalanceSheet" />
                 }
-                
-                <div class="mt-4 p-3 bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg">
-                    <div class="text-sm text-green-700 dark:text-green-300 mb-1">Overall Return</div>
-                    <div class="font-bold text-green-800 dark:text-green-200">+7.8% YTD</div>
-                </div>
-            </div>
-        </div>
-    </div>
+                break;
+            
+            case ReportType.CashFlowStatement:
+                @if (ViewModel.CashFlowStatement != null)
+                {
+                    <CashFlowReport Report="ViewModel.CashFlowStatement" />
+                }
+                break;
+            
+            case ReportType.BudgetVarianceReport:
+                @if (ViewModel.BudgetVariance != null)
+                {
+                    <BudgetVarianceReport Report="ViewModel.BudgetVariance" />
+                }
+                break;
+            
+            case ReportType.NetWorthTrend:
+                @if (ViewModel.NetWorthTrend != null)
+                {
+                    <NetWorthTrendReport Report="ViewModel.NetWorthTrend" />
+                }
+                break;
+            
+            case ReportType.CategoryAnalysis:
+                @if (ViewModel.CategoryAnalysis != null)
+                {
+                    <CategoryAnalysisReport Report="ViewModel.CategoryAnalysis" OnCategoryClick="OnCategoryClick" />
+                }
+                break;
+            
+            case ReportType.AccountSummary:
+                @if (ViewModel.AccountSummary != null)
+                {
+                    <AccountSummaryReport Accounts="ViewModel.AccountSummary" OnAccountClick="OnAccountClick" />
+                }
+                break;
+        }
+    }
 
-    <!-- Report Actions -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 text-center hover:shadow-xl transition-all duration-300 cursor-pointer">
-            <div class="text-4xl mb-3">📊</div>
-            <h4 class="font-semibold text-gray-800 dark:text-white mb-2">Custom Report</h4>
-            <p class="text-sm text-gray-600 dark:text-gray-300">Create custom financial report</p>
+    <!-- Comparison Section -->
+    @if (ViewModel.ComparisonData != null && ViewModel.ShowComparison)
+    {
+        <div class="mt-8">
+            <ComparisonChart Title="Period Comparison" 
+                           Subtitle="@ViewModel.ComparisonData.ComparisonType Analysis"
+                           ComparisonData="ViewModel.ComparisonData"
+                           OnMetricChange="OnComparisonMetricChanged"
+                           OnPeriodChange="OnComparisonPeriodChanged" />
         </div>
-        
-        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 text-center hover:shadow-xl transition-all duration-300 cursor-pointer">
-            <div class="text-4xl mb-3">📈</div>
-            <h4 class="font-semibold text-gray-800 dark:text-white mb-2">Trend Analysis</h4>
-            <p class="text-sm text-gray-600 dark:text-gray-300">Analyze financial trends</p>
-        </div>
-        
-        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 text-center hover:shadow-xl transition-all duration-300 cursor-pointer">
-            <div class="text-4xl mb-3">🎯</div>
-            <h4 class="font-semibold text-gray-800 dark:text-white mb-2">Budget vs Actual</h4>
-            <p class="text-sm text-gray-600 dark:text-gray-300">Compare budget performance</p>
-        </div>
-        
-        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 text-center hover:shadow-xl transition-all duration-300 cursor-pointer">
-            <div class="text-4xl mb-3">📅</div>
-            <h4 class="font-semibold text-gray-800 dark:text-white mb-2">Schedule Report</h4>
-            <p class="text-sm text-gray-600 dark:text-gray-300">Set up automated reports</p>
-        </div>
+    }
+
+    <!-- Comparison Controls -->
+    <div class="mt-6 flex justify-center space-x-4">
+        <button @onclick="ViewModel.GenerateYearOverYearComparisonCommand.Execute" 
+                class="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-300">
+            Year-over-Year Comparison
+        </button>
+        <button @onclick="ViewModel.GenerateMonthOverMonthComparisonCommand.Execute" 
+                class="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-300">
+            Month-over-Month Comparison
+        </button>
     </div>
 </div>
 
@@ -453,3 +280,61 @@
         box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
     }
 </style>
+
+@code {
+    private Dictionary<decimal, string> formattedAmounts = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ViewModel.InitializeCommand.ExecuteAsync(null);
+        await PreformatAmounts();
+    }
+
+    private async Task PreformatAmounts()
+    {
+        var amounts = new HashSet<decimal>();
+        
+        // Collect all amounts that need formatting
+        if (ViewModel.BalanceSheet != null)
+        {
+            amounts.Add(ViewModel.BalanceSheet.NetWorth);
+        }
+        
+        if (ViewModel.IncomeStatement != null)
+        {
+            amounts.Add(ViewModel.IncomeStatement.TotalIncome);
+            amounts.Add(ViewModel.IncomeStatement.TotalExpenses);
+            amounts.Add(ViewModel.IncomeStatement.NetIncome);
+        }
+
+        // Format all amounts
+        foreach (var amount in amounts)
+        {
+            formattedAmounts[amount] = await CurrencyService.FormatAmountAsync(amount);
+        }
+    }
+
+    private void OnCategoryClick(string categoryName)
+    {
+        // Navigate to category details or show category-specific report
+        Navigation.NavigateTo($"/transactions?category={categoryName}");
+    }
+
+    private void OnAccountClick(string accountId)
+    {
+        // Navigate to account details
+        Navigation.NavigateTo($"/accounts/{accountId}");
+    }
+
+    private void OnComparisonMetricChanged(string metric)
+    {
+        // Handle comparison metric change
+        ViewModel.UpdateComparisonMetricCommand.Execute(metric);
+    }
+
+    private void OnComparisonPeriodChanged(string period)
+    {
+        // Handle comparison period change
+        ViewModel.UpdateComparisonPeriodCommand.Execute(period);
+    }
+}

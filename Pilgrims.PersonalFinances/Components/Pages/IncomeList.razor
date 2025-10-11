@@ -1,0 +1,464 @@
+@page "/income-list"
+@using Pilgrims.PersonalFinances.Models
+@using Pilgrims.PersonalFinances.Services.Interfaces
+@inject IIncomeService IncomeService
+@inject NavigationManager Navigation
+@inject INotificationService NotificationService
+
+<PageTitle>Income List</PageTitle>
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h3 mb-0">Income Management</h1>
+            <p class="text-muted">View and manage all your income sources</p>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-primary" @onclick="NavigateToAddIncome">
+                <i class="fas fa-plus me-2"></i>Add Income
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Search</label>
+                    <input type="text" class="form-control" placeholder="Search incomes..." @bind="searchTerm" @oninput="OnSearchChanged" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Type</label>
+                    <select class="form-select" @bind="selectedType" @bind:after="OnFilterChanged">
+                        <option value="">All Types</option>
+                        <option value="Salary">Salary</option>
+                        <option value="Freelance">Freelance</option>
+                        <option value="Investment">Investment</option>
+                        <option value="Rental">Rental</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Frequency</label>
+                    <select class="form-select" @bind="selectedFrequency" @bind:after="OnFilterChanged">
+                        <option value="">All Frequencies</option>
+                        <option value="Weekly">Weekly</option>
+                        <option value="Bi-weekly">Bi-weekly</option>
+                        <option value="Monthly">Monthly</option>
+                        <option value="Quarterly">Quarterly</option>
+                        <option value="Annually">Annually</option>
+                        <option value="One-time">One-time</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Category</label>
+                    <select class="form-select" @bind="selectedCategory" @bind:after="OnFilterChanged">
+                        <option value="">All Categories</option>
+                        @foreach (var category in categories)
+                        {
+                            <option value="@category.Id">@category.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Status</label>
+                    <select class="form-select" @bind="selectedStatus" @bind:after="OnFilterChanged">
+                        <option value="">All</option>
+                        <option value="regular">Regular</option>
+                        <option value="variable">Variable</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label">&nbsp;</label>
+                    <button class="btn btn-outline-secondary d-block" @onclick="ClearFilters">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Summary Stats -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">Total Incomes</h5>
+                        <h3 class="text-primary">@filteredIncomes.Count</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">Total Amount</h5>
+                        <h3 class="text-success">@filteredIncomes.Sum(i => i.Amount).ToString("C")</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">Regular Incomes</h5>
+                        <h3 class="text-info">@filteredIncomes.Count(i => i.IsRegular)</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">Average Amount</h5>
+                        <h3 class="text-warning">@(filteredIncomes.Any() ? filteredIncomes.Average(i => i.Amount).ToString("C") : "$0.00")</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Income Table -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Income Records (@filteredIncomes.Count)</h5>
+                <div class="btn-group btn-group-sm">
+                    <button @onclick="() => ToggleView(false)" 
+                            class="@(showCardView ? "btn btn-outline-secondary" : "btn btn-secondary")">
+                        <i class="fas fa-table"></i> Table
+                    </button>
+                    <button @onclick="() => ToggleView(true)"
+                            class="@(showCardView ? "btn btn-secondary" : "btn btn-outline-secondary")">
+                        <i class="fas fa-th-large"></i> Cards
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                @if (filteredIncomes.Any())
+                {
+                    @if (showCardView)
+                    {
+                        <!-- Card View -->
+                        <div class="row">
+                            @foreach (var income in filteredIncomes)
+                            {
+                                <div class="col-md-6 col-lg-4 mb-3">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <h6 class="card-title mb-0">@income.Name</h6>
+                                                <div class="dropdown">
+                                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                                        <i class="fas fa-ellipsis-v"></i>
+                                                    </button>
+                                                    <ul class="dropdown-menu">
+                                                        <li><a class="dropdown-item" href="/income-edit/@income.Id"><i class="fas fa-edit me-2"></i>Edit</a></li>
+                                                        <li><a class="dropdown-item" href="/income-details/@income.Id"><i class="fas fa-eye me-2"></i>View Details</a></li>
+                                                        <li><hr class="dropdown-divider"></li>
+                                                        <li><button class="dropdown-item text-danger" @onclick="() => DeleteIncome(income.Id)"><i class="fas fa-trash me-2"></i>Delete</button></li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                            
+                                            @if (!string.IsNullOrEmpty(income.Description))
+                                            {
+                                                <p class="card-text text-muted small">@income.Description</p>
+                                            }
+                                            
+                                            <div class="mb-2">
+                                                <strong class="text-success fs-5">@income.Amount.ToString("C")</strong>
+                                                @if (income.IsPreTax)
+                                                {
+                                                    <small class="text-muted">(Pre-tax)</small>
+                                                }
+                                            </div>
+                                            
+                                            <div class="mb-2">
+                                                <span class="badge bg-primary me-1">@income.IncomeTypeDisplay</span>
+                                                <span class="badge bg-secondary me-1">@income.FrequencyDisplay</span>
+                                                @if (income.IsRegular)
+                                                {
+                                                    <span class="badge bg-success">Regular</span>
+                                                }
+                                            </div>
+                                            
+                                            @if (income.IncomeCategory != null)
+                                            {
+                                                <div class="mb-2">
+                                                    <span class="badge" style="background-color: @income.IncomeCategory.Color">
+                                                        @income.IncomeCategory.Name
+                                                    </span>
+                                                </div>
+                                            }
+                                            
+                                            <small class="text-muted">
+                                                Received: @income.ReceivedDate.ToString("MMM dd, yyyy")
+                                                @if (income.NextExpectedDate.HasValue)
+                                                {
+                                                    <br /><small class="text-muted">Next: @income.NextExpectedDate.Value.ToString("MMM dd, yyyy")</small>
+                                                }
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <!-- Table View -->
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Type</th>
+                                        <th>Amount</th>
+                                        <th>Frequency</th>
+                                        <th>Category</th>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var income in filteredIncomes)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <strong>@income.Name</strong>
+                                                @if (!string.IsNullOrEmpty(income.Description))
+                                                {
+                                                    <br><small class="text-muted">@income.Description</small>
+                                                }
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-primary">@income.IncomeTypeDisplay</span>
+                                            </td>
+                                            <td>
+                                                <strong class="text-success">@income.Amount.ToString("C")</strong>
+                                                @if (income.IsPreTax)
+                                                {
+                                                    <br><small class="text-muted">Pre-tax</small>
+                                                }
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-secondary">@income.FrequencyDisplay</span>
+                                            </td>
+                                            <td>
+                                                @if (income.IncomeCategory != null)
+                                                {
+                                                    <span class="badge" style="background-color: @income.IncomeCategory.Color">
+                                                        @income.IncomeCategory.Name
+                                                    </span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @income.ReceivedDate.ToString("MMM dd, yyyy")
+                                                @if (income.NextExpectedDate.HasValue)
+                                                {
+                                                    <br><small class="text-muted">Next: @income.NextExpectedDate.Value.ToString("MMM dd")</small>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (income.IsRegular)
+                                                {
+                                                    <span class="badge bg-success">Regular</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-warning">Variable</span>
+                                                }
+                                                @if (!income.IsActive)
+                                                {
+                                                    <br><span class="badge bg-danger">Inactive</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="/income-details/@income.Id" class="btn btn-outline-primary btn-sm">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a href="/income-edit/@income.Id" class="btn btn-outline-secondary btn-sm">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <button class="btn btn-outline-danger btn-sm" @onclick="() => DeleteIncome(income.Id)">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-center py-5">
+                        <i class="fas fa-money-bill-wave fa-3x text-muted mb-3"></i>
+                        <h5>No Income Records Found</h5>
+                        <p class="text-muted">
+                            @if (HasActiveFilters())
+                            {
+                                <span>No incomes match your current filters.</span>
+                            }
+                            else
+                            {
+                                <span>You haven't added any income records yet.</span>
+                            }
+                        </p>
+                        @if (HasActiveFilters())
+                        {
+                            <button class="btn btn-outline-secondary me-2" @onclick="ClearFilters">
+                                Clear Filters
+                            </button>
+                        }
+                        <button class="btn btn-primary" @onclick="NavigateToAddIncome">
+                            Add Income
+                        </button>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private bool isLoading = true;
+    private bool showCardView = false;
+    private List<Income> allIncomes = new();
+    private List<Income> filteredIncomes = new();
+    private List<IncomeCategory> categories = new();
+    
+    private string searchTerm = "";
+    private string selectedType = "";
+    private string selectedFrequency = "";
+    private string selectedCategory = "";
+    private string selectedStatus = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            isLoading = true;
+            
+            allIncomes = (await IncomeService.GetAllIncomesAsync()).ToList();
+            categories = (await IncomeService.GetAllIncomeCategoriesAsync()).ToList();
+            
+            ApplyFilters();
+        }
+        catch (Exception ex)
+        {
+            await NotificationService.ShowErrorAsync("Error loading incomes", ex.Message);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void ApplyFilters()
+    {
+        filteredIncomes = allIncomes.Where(income =>
+            (string.IsNullOrEmpty(searchTerm) || 
+             income.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+             (income.Description?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
+             (income.Source?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false)) &&
+            
+            (string.IsNullOrEmpty(selectedType) || income.IncomeType == selectedType) &&
+            (string.IsNullOrEmpty(selectedFrequency) || income.Frequency == selectedFrequency) &&
+            (string.IsNullOrEmpty(selectedCategory) || income.IncomeCategoryId == selectedCategory) &&
+            
+            (string.IsNullOrEmpty(selectedStatus) || selectedStatus switch
+            {
+                "regular" => income.IsRegular,
+                "variable" => !income.IsRegular,
+                "active" => income.IsActive,
+                "inactive" => !income.IsActive,
+                _ => true
+            })
+        ).ToList();
+    }
+
+    private async Task OnSearchChanged(ChangeEventArgs e)
+    {
+        searchTerm = e.Value?.ToString() ?? "";
+        ApplyFilters();
+        await Task.CompletedTask;
+    }
+
+    private async Task OnFilterChanged()
+    {
+        ApplyFilters();
+        await Task.CompletedTask;
+    }
+
+    private void ClearFilters()
+    {
+        searchTerm = "";
+        selectedType = "";
+        selectedFrequency = "";
+        selectedCategory = "";
+        selectedStatus = "";
+        ApplyFilters();
+    }
+
+    private bool HasActiveFilters()
+    {
+        return !string.IsNullOrEmpty(searchTerm) ||
+               !string.IsNullOrEmpty(selectedType) ||
+               !string.IsNullOrEmpty(selectedFrequency) ||
+               !string.IsNullOrEmpty(selectedCategory) ||
+               !string.IsNullOrEmpty(selectedStatus);
+    }
+
+    private void ToggleView(bool cardView)
+    {
+        showCardView = cardView;
+    }
+
+    private async Task DeleteIncome(string incomeId)
+    {
+        if (await NotificationService.ShowConfirmAsync("Delete Income", "Are you sure you want to delete this income record?"))
+        {
+            try
+            {
+                var success = await IncomeService.DeleteIncomeAsync(incomeId);
+                if (success)
+                {
+                    await NotificationService.ShowSuccessAsync("Income deleted successfully");
+                    await LoadData();
+                }
+                else
+                {
+                    await NotificationService.ShowErrorAsync("Error", "Failed to delete income");
+                }
+            }
+            catch (Exception ex)
+            {
+                await NotificationService.ShowErrorAsync("Error deleting income", ex.Message);
+            }
+        }
+    }
+
+    private void NavigateToAddIncome()
+    {
+        Navigation.NavigateTo("/income-create");
+    }
+}

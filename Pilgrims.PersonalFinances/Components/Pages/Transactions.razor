@@ -1,6 +1,12 @@
 @page "/transactions"
 @using Pilgrims.PersonalFinances.Models
 @using Pilgrims.PersonalFinances.Models.Enums
+@using Pilgrims.PersonalFinances.Services.Interfaces
+@using Pilgrims.PersonalFinances.Services
+@inject ITransactionService TransactionService
+@inject IAccountService AccountService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Transactions - Pilgrims Personal Finance</PageTitle>
 
@@ -27,32 +33,52 @@
                     </h1>
                     <p class="text-[var(--text-secondary)] mt-2">Track and analyze your financial transactions</p>
                 </div>
-                <button class="px-6 py-3 bg-gradient-to-r from-green-500 to-teal-600 text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-300">
-                    <span class="mr-2">➕</span> Add Transaction
-                </button>
+                <div class="flex gap-3">
+                    @if (selectedTransactions.Any())
+                    {
+                        <div class="flex items-center gap-2 mr-4">
+                            <span class="text-sm text-[var(--text-secondary)]">@selectedTransactions.Count selected</span>
+                            <button @onclick="ClearSelection" class="text-sm text-red-500 hover:text-red-700">Clear</button>
+                        </div>
+                        <div class="flex gap-2">
+                            <button @onclick="ShowBulkStatusModal" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                                Status
+                            </button>
+                            <button @onclick="ShowBulkCategoryModal" class="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors">
+                                Category
+                            </button>
+                            <button @onclick="BulkDelete" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
+                                Delete
+                            </button>
+                        </div>
+                    }
+                    <button @onclick="NavigateToAddTransaction" class="px-6 py-3 bg-gradient-to-r from-green-500 to-teal-600 text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-300">
+                        <span class="mr-2">➕</span> Add Transaction
+                    </button>
+                </div>
             </div>
             
             <!-- Transaction Summary Cards -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
                 <div class="bg-gradient-to-r from-green-400 to-green-600 p-4 rounded-xl text-white">
                     <div class="text-sm opacity-90">Total Income</div>
-                    <div class="text-2xl font-bold">$8,450.00</div>
-                    <div class="text-xs opacity-75 mt-1">↗️ +12% this month</div>
+                    <div class="text-2xl font-bold">@totalIncome.ToString("C")</div>
+                    <div class="text-xs opacity-75 mt-1">This month</div>
                 </div>
                 <div class="bg-gradient-to-r from-red-400 to-red-600 p-4 rounded-xl text-white">
                     <div class="text-sm opacity-90">Total Expenses</div>
-                    <div class="text-2xl font-bold">$5,230.75</div>
-                    <div class="text-xs opacity-75 mt-1">↗️ +8% this month</div>
+                    <div class="text-2xl font-bold">@totalExpenses.ToString("C")</div>
+                    <div class="text-xs opacity-75 mt-1">This month</div>
                 </div>
                 <div class="bg-gradient-to-r from-blue-400 to-blue-600 p-4 rounded-xl text-white">
                     <div class="text-sm opacity-90">Net Income</div>
-                    <div class="text-2xl font-bold">+$3,219.25</div>
-                    <div class="text-xs opacity-75 mt-1">↗️ +18% vs last month</div>
+                    <div class="text-2xl font-bold">@((totalIncome - totalExpenses).ToString("C"))</div>
+                    <div class="text-xs opacity-75 mt-1">This month</div>
                 </div>
                 <div class="bg-gradient-to-r from-purple-400 to-purple-600 p-4 rounded-xl text-white">
                     <div class="text-sm opacity-90">Transactions</div>
-                    <div class="text-2xl font-bold">127</div>
-                    <div class="text-xs opacity-75 mt-1">This month</div>
+                    <div class="text-2xl font-bold">@filteredTransactions.Count()</div>
+                    <div class="text-xs opacity-75 mt-1">Filtered results</div>
                 </div>
             </div>
         </div>
@@ -60,184 +86,208 @@
 
     <!-- Filters and Search -->
     <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 mb-6">
-        <div class="flex flex-wrap items-center gap-4">
-            <div class="flex-1 min-w-64">
-                <input type="text" placeholder="Search transactions..." 
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+            <div class="lg:col-span-2">
+                <input @bind="searchTerm" @oninput="OnSearchChanged" type="text" placeholder="Search transactions..." 
                        class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 focus:ring-2 focus:ring-green-500 focus:border-transparent">
             </div>
-            <select class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50">
-                <option>All Categories</option>
-                <option>Food & Dining</option>
-                <option>Transportation</option>
-                <option>Shopping</option>
-                <option>Bills & Utilities</option>
-            </select>
-            <select class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50">
-                <option>All Accounts</option>
-                <option>Chase Checking</option>
-                <option>Wells Fargo Savings</option>
-                <option>Investment Account</option>
-            </select>
-            <select class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50">
-                <option>Last 30 Days</option>
-                <option>Last 7 Days</option>
-                <option>This Month</option>
-                <option>Last Month</option>
-                <option>Custom Range</option>
-            </select>
-        </div>
-    </div>
-
-    <!-- Analytics Section -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <!-- Spending Trend Chart -->
-        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
-            <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
-                <span class="mr-2">📈</span> Spending Trend (Last 7 Days)
-            </h3>
-            <div class="h-48 flex items-end justify-between space-x-2">
-                @{
-                    var dailyAmounts = new[] { 120, 85, 200, 150, 95, 180, 110 };
-                    var days = new[] { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
-                }
-                @for (int i = 0; i < 7; i++)
-                {
-                    var height = (dailyAmounts[i] / 200.0) * 100;
-                    <div class="flex-1 flex flex-col items-center">
-                        <div class="bg-gradient-to-t from-green-500 to-emerald-600 rounded-t-lg transition-all duration-1000 hover:shadow-lg w-full" 
-                             style="height: @(height)%; animation-delay: @(i * 0.1)s;">
-                        </div>
-                        <span class="text-xs text-gray-500 mt-2">@days[i]</span>
-                        <span class="text-xs font-medium text-gray-700 dark:text-gray-300">$@dailyAmounts[i]</span>
-                    </div>
-                }
-            </div>
-        </div>
-
-        <!-- Category Breakdown -->
-        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
-            <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
-                <span class="mr-2">🥧</span> Category Breakdown
-            </h3>
-            <div class="space-y-4">
-                @{
-                    var categories = new[]
+            <div>
+                <select @bind="selectedAccountId" @bind:after="OnFilterChanged" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50">
+                    <option value="">All Accounts</option>
+                    @foreach (var account in accounts)
                     {
-                        new { Name = "Food & Dining", Amount = 1250, Color = "from-red-400 to-red-600", Percentage = 35 },
-                        new { Name = "Transportation", Amount = 850, Color = "from-blue-400 to-blue-600", Percentage = 24 },
-                        new { Name = "Shopping", Amount = 650, Color = "from-purple-400 to-purple-600", Percentage = 18 },
-                        new { Name = "Bills & Utilities", Amount = 480, Color = "from-orange-400 to-orange-600", Percentage = 13 },
-                        new { Name = "Entertainment", Amount = 350, Color = "from-green-400 to-green-600", Percentage = 10 }
-                    };
-                }
-                @foreach (var category in categories)
-                {
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center flex-1">
-                            <div class="w-4 h-4 bg-gradient-to-r @category.Color rounded-full mr-3"></div>
-                            <span class="text-gray-700 dark:text-gray-300 flex-1">@category.Name</span>
-                            <div class="w-24 bg-gray-200 dark:bg-gray-600 rounded-full h-2 mx-3">
-                                <div class="bg-gradient-to-r @category.Color h-2 rounded-full transition-all duration-1000" 
-                                     style="width: @(category.Percentage)%"></div>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <div class="font-semibold">$@category.Amount</div>
-                            <div class="text-xs text-gray-500">@category.Percentage%</div>
-                        </div>
-                    </div>
-                }
+                        <option value="@account.Id">@account.Name</option>
+                    }
+                </select>
+            </div>
+            <div>
+                <select @bind="selectedType" @bind:after="OnFilterChanged" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50">
+                    <option value="">All Types</option>
+                    <option value="@TransactionType.Income">Income</option>
+                    <option value="@TransactionType.Expense">Expense</option>
+                    <option value="@TransactionType.Transfer">Transfer</option>
+                    <option value="@TransactionType.Adjustment">Adjustment</option>
+                </select>
+            </div>
+            <div>
+                <select @bind="selectedStatus" @bind:after="OnFilterChanged" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50">
+                    <option value="">All Status</option>
+                    <option value="@TransactionStatus.Pending">Pending</option>
+                    <option value="@TransactionStatus.Cleared">Cleared</option>
+                    <option value="@TransactionStatus.Reconciled">Reconciled</option>
+                </select>
+            </div>
+            <div>
+                <select @bind="dateRange" @bind:after="OnDateRangeChanged" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50">
+                    <option value="30">Last 30 Days</option>
+                    <option value="7">Last 7 Days</option>
+                    <option value="90">Last 3 Months</option>
+                    <option value="365">Last Year</option>
+                    <option value="custom">Custom Range</option>
+                </select>
             </div>
         </div>
+        
+        @if (dateRange == "custom")
+        {
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div>
+                    <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">Start Date</label>
+                    <input @bind="startDate" type="date" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">End Date</label>
+                    <input @bind="endDate" type="date" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50">
+                </div>
+            </div>
+        }
     </div>
 
     <!-- Transaction List -->
     <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10">
         <div class="flex items-center justify-between mb-6">
             <h3 class="text-xl font-semibold text-gray-800 dark:text-white flex items-center">
-                <span class="mr-2">📋</span> Recent Transactions
+                <span class="mr-2">📋</span> Transactions (@filteredTransactions.Count())
             </h3>
             <div class="flex items-center space-x-2">
-                <button class="px-3 py-1 text-sm bg-green-100 text-green-800 rounded-full">All</button>
-                <button class="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded-full">Income</button>
-                <button class="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded-full">Expenses</button>
+                <label class="flex items-center">
+                    <input type="checkbox" @onchange="ToggleSelectAll" class="mr-2">
+                    <span class="text-sm">Select All</span>
+                </label>
             </div>
         </div>
         
-        <div class="space-y-3">
-            @{
-                var transactions = new[]
+        @if (isLoading)
+        {
+            <div class="text-center py-8">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto"></div>
+                <p class="mt-4 text-[var(--text-secondary)]">Loading transactions...</p>
+            </div>
+        }
+        else if (!filteredTransactions.Any())
+        {
+            <div class="text-center py-8">
+                <div class="text-6xl mb-4">📭</div>
+                <h3 class="text-xl font-semibold text-[var(--text-primary)] mb-2">No transactions found</h3>
+                <p class="text-[var(--text-secondary)]">Try adjusting your filters or add your first transaction.</p>
+                <button @onclick="NavigateToAddTransaction" class="mt-4 px-6 py-3 bg-gradient-to-r from-green-500 to-teal-600 text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-300">
+                    Add Transaction
+                </button>
+            </div>
+        }
+        else
+        {
+            <div class="space-y-3">
+                @foreach (var transaction in filteredTransactions.Skip(currentPage * pageSize).Take(pageSize))
                 {
-                    new { Icon = "💰", Name = "Salary Deposit", Category = "Income", Account = "Chase Checking", Date = "Today", Amount = 4200.00m, Type = "income" },
-                    new { Icon = "🍕", Name = "Pizza Palace", Category = "Food & Dining", Account = "Chase Checking", Date = "Today", Amount = -28.50m, Type = "expense" },
-                    new { Icon = "⛽", Name = "Shell Gas Station", Category = "Transportation", Account = "Chase Checking", Date = "Yesterday", Amount = -45.20m, Type = "expense" },
-                    new { Icon = "🛒", Name = "Amazon Purchase", Category = "Shopping", Account = "Chase Checking", Date = "Yesterday", Amount = -89.99m, Type = "expense" },
-                    new { Icon = "💡", Name = "Electric Bill", Category = "Bills & Utilities", Account = "Chase Checking", Date = "2 days ago", Amount = -125.30m, Type = "expense" },
-                    new { Icon = "🎬", Name = "Netflix Subscription", Category = "Entertainment", Account = "Chase Checking", Date = "3 days ago", Amount = -15.99m, Type = "expense" },
-                    new { Icon = "🏦", Name = "Interest Payment", Category = "Income", Account = "High Yield Savings", Date = "3 days ago", Amount = 125.00m, Type = "income" },
-                    new { Icon = "☕", Name = "Starbucks", Category = "Food & Dining", Account = "Chase Checking", Date = "4 days ago", Amount = -6.75m, Type = "expense" }
-                };
-            }
-            
-            @foreach (var transaction in transactions)
-            {
-                <div class="flex items-center justify-between p-4 bg-white/50 dark:bg-gray-700/50 rounded-xl hover:bg-white/70 dark:hover:bg-gray-700/70 transition-all duration-200 cursor-pointer group">
-                    <div class="flex items-center flex-1">
-                        <div class="w-12 h-12 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-600 dark:to-gray-700 rounded-full flex items-center justify-center text-xl mr-4 group-hover:scale-110 transition-transform duration-200">
-                            @transaction.Icon
-                        </div>
-                        <div class="flex-1">
-                            <div class="font-medium text-gray-800 dark:text-white">@transaction.Name</div>
-                            <div class="text-sm text-gray-500">@transaction.Category • @transaction.Account</div>
-                        </div>
-                        <div class="text-sm text-gray-500 mr-4">@transaction.Date</div>
-                        <div class="text-right">
-                            <div class="font-bold @(transaction.Type == "income" ? "text-green-600" : "text-red-600")">
-                                @(transaction.Amount > 0 ? "+" : "")$@Math.Abs(transaction.Amount)
+                    <div class="flex items-center justify-between p-4 bg-white/50 dark:bg-gray-700/50 rounded-xl hover:bg-white/70 dark:hover:bg-gray-700/70 transition-all duration-200 cursor-pointer group @(selectedTransactions.Contains(transaction.Id) ? "ring-2 ring-green-500" : "")">
+                        <div class="flex items-center flex-1">
+                            <input type="checkbox" 
+                                   checked="@selectedTransactions.Contains(transaction.Id)"
+                                   @onchange="@(e => ToggleTransactionSelection(transaction.Id, (bool)e.Value!))"
+                                   class="mr-4">
+                            <div class="w-12 h-12 bg-gradient-to-r @GetTransactionIconBackground(transaction.Type) rounded-full flex items-center justify-center text-xl mr-4 group-hover:scale-110 transition-transform duration-200">
+                                @GetTransactionIcon(transaction.Type)
                             </div>
-                            <div class="text-xs text-gray-500">@(transaction.Type == "income" ? "Credit" : "Debit")</div>
+                            <div class="flex-1">
+                                <div class="font-medium text-gray-800 dark:text-white">@transaction.Description</div>
+                                <div class="text-sm text-gray-500">
+                                    @transaction.Category?.Name • @transaction.Account?.Name
+                                    @if (!string.IsNullOrEmpty(transaction.Payee))
+                                    {
+                                        <span> • @transaction.Payee</span>
+                                    }
+                                </div>
+                            </div>
+                            <div class="text-sm text-gray-500 mr-4">
+                                <div>@transaction.Date.ToString("MMM dd")</div>
+                                <div class="text-xs">@GetStatusBadge(transaction.Status)</div>
+                            </div>
+                            <div class="text-right mr-4">
+                                <div class="font-bold @GetAmountColor(transaction.Type, transaction.Amount)">
+                                    @FormatAmount(transaction.Amount, transaction.Type)
+                                </div>
+                                <div class="text-xs text-gray-500">@transaction.Type.ToString()</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            <button @onclick="@(() => EditTransaction(transaction.Id))" class="p-2 text-blue-500 hover:text-blue-700">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                            </button>
+                            <button @onclick="@(() => DeleteTransaction(transaction.Id))" class="p-2 text-red-500 hover:text-red-700">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
                         </div>
                     </div>
-                    <div class="ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                        <button class="p-2 text-gray-400 hover:text-gray-600">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                            </svg>
-                        </button>
-                    </div>
+                }
+            </div>
+            
+            <!-- Pagination -->
+            @if (totalPages > 1)
+            {
+                <div class="flex justify-center items-center mt-6 space-x-2">
+                    <button @onclick="PreviousPage" disabled="@(currentPage == 0)" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg disabled:opacity-50">
+                        Previous
+                    </button>
+                    <span class="px-4 py-2">Page @(currentPage + 1) of @totalPages</span>
+                    <button @onclick="NextPage" disabled="@(currentPage >= totalPages - 1)" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg disabled:opacity-50">
+                        Next
+                    </button>
                 </div>
             }
-        </div>
-        
-        <!-- Load More Button -->
-        <div class="text-center mt-6">
-            <button class="px-6 py-3 bg-gradient-to-r from-green-500 to-teal-600 text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-300">
-                Load More Transactions
-            </button>
-        </div>
+        }
     </div>
 
     <!-- Quick Actions -->
-    <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 text-center hover:shadow-xl transition-all duration-300 cursor-pointer">
-            <div class="text-4xl mb-3">📊</div>
-            <h4 class="font-semibold text-gray-800 dark:text-white mb-2">Generate Report</h4>
-            <p class="text-sm text-gray-600 dark:text-gray-300">Create detailed transaction reports</p>
+    <div class="mt-8 grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div @onclick="NavigateToAddTransaction" class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 text-center hover:shadow-xl transition-all duration-300 cursor-pointer">
+            <div class="text-4xl mb-3">➕</div>
+            <h4 class="font-semibold text-gray-800 dark:text-white mb-2">Add Transaction</h4>
+            <p class="text-sm text-gray-600 dark:text-gray-300">Record a new transaction</p>
         </div>
         
-        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 text-center hover:shadow-xl transition-all duration-300 cursor-pointer">
+        <div @onclick="ShowTemplatesModal" class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 text-center hover:shadow-xl transition-all duration-300 cursor-pointer">
+            <div class="text-4xl mb-3">📋</div>
+            <h4 class="font-semibold text-gray-800 dark:text-white mb-2">Templates</h4>
+            <p class="text-sm text-gray-600 dark:text-gray-300">Use saved transaction templates</p>
+        </div>
+        
+        <div @onclick="ExportTransactions" class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 text-center hover:shadow-xl transition-all duration-300 cursor-pointer">
             <div class="text-4xl mb-3">📤</div>
             <h4 class="font-semibold text-gray-800 dark:text-white mb-2">Export Data</h4>
-            <p class="text-sm text-gray-600 dark:text-gray-300">Export transactions to CSV or PDF</p>
+            <p class="text-sm text-gray-600 dark:text-gray-300">Export transactions to CSV</p>
         </div>
         
-        <div class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 text-center hover:shadow-xl transition-all duration-300 cursor-pointer">
+        <div @onclick="ShowRecurringModal" class="glass-card p-6 rounded-2xl border border-white/20 backdrop-blur-lg bg-white/10 dark:bg-gray-800/10 text-center hover:shadow-xl transition-all duration-300 cursor-pointer">
             <div class="text-4xl mb-3">🔄</div>
-            <h4 class="font-semibold text-gray-800 dark:text-white mb-2">Recurring Transactions</h4>
-            <p class="text-sm text-gray-600 dark:text-gray-300">Set up automatic transactions</p>
+            <h4 class="font-semibold text-gray-800 dark:text-white mb-2">Recurring</h4>
+            <p class="text-sm text-gray-600 dark:text-gray-300">Manage recurring transactions</p>
         </div>
     </div>
 </div>
+
+<!-- Bulk Status Modal -->
+@if (showBulkStatusModal)
+{
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl max-w-md w-full mx-4">
+            <h3 class="text-xl font-semibold mb-4">Update Transaction Status</h3>
+            <select @bind="bulkStatus" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 mb-4">
+                <option value="@TransactionStatus.Pending">Pending</option>
+                <option value="@TransactionStatus.Cleared">Cleared</option>
+                <option value="@TransactionStatus.Reconciled">Reconciled</option>
+            </select>
+            <div class="flex justify-end space-x-3">
+                <button @onclick="@(() => showBulkStatusModal = false)" class="px-4 py-2 text-gray-600 hover:text-gray-800">Cancel</button>
+                <button @onclick="ApplyBulkStatus" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Update</button>
+            </div>
+        </div>
+    </div>
+}
 
 <style>
     .particles-container {
@@ -280,3 +330,323 @@
         box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
     }
 </style>
+
+@code {
+    private List<Transaction> allTransactions = new();
+    private IEnumerable<Transaction> filteredTransactions = new List<Transaction>();
+    private List<Account> accounts = new();
+    private HashSet<string> selectedTransactions = new();
+    
+    // Filter properties
+    private string searchTerm = "";
+    private string selectedAccountId = "";
+    private string selectedType = "";
+    private string selectedStatus = "";
+    private string dateRange = "30";
+    private DateTime startDate = DateTime.Today.AddDays(-30);
+    private DateTime endDate = DateTime.Today;
+    
+    // Pagination
+    private int currentPage = 0;
+    private int pageSize = 20;
+    private int totalPages => (int)Math.Ceiling((double)filteredTransactions.Count() / pageSize);
+    
+    // Summary data
+    private decimal totalIncome = 0;
+    private decimal totalExpenses = 0;
+    
+    // UI state
+    private bool isLoading = true;
+    private bool showBulkStatusModal = false;
+    private TransactionStatus bulkStatus = TransactionStatus.Pending;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+    
+    private async Task LoadData()
+    {
+        isLoading = true;
+        StateHasChanged();
+        
+        try
+        {
+            allTransactions = (await TransactionService.GetAllTransactionsAsync()).ToList();
+            accounts = (await AccountService.GetAllAccountsAsync()).ToList();
+            ApplyFilters();
+            CalculateSummary();
+        }
+        catch (Exception ex)
+        {
+            // Handle error
+            Console.WriteLine($"Error loading data: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+    
+    private void ApplyFilters()
+    {
+        var filtered = allTransactions.AsEnumerable();
+        
+        // Date range filter
+        if (dateRange != "custom")
+        {
+            var days = int.Parse(dateRange);
+            var filterStartDate = DateTime.Today.AddDays(-days);
+            filtered = filtered.Where(t => t.Date >= filterStartDate);
+        }
+        else
+        {
+            filtered = filtered.Where(t => t.Date >= startDate && t.Date <= endDate);
+        }
+        
+        // Account filter
+        if (!string.IsNullOrEmpty(selectedAccountId))
+        {
+            filtered = filtered.Where(t => t.AccountId == selectedAccountId);
+        }
+        
+        // Type filter
+        if (!string.IsNullOrEmpty(selectedType))
+        {
+            if (Enum.TryParse<TransactionType>(selectedType, out var type))
+            {
+                filtered = filtered.Where(t => t.Type == type);
+            }
+        }
+        
+        // Status filter
+        if (!string.IsNullOrEmpty(selectedStatus))
+        {
+            if (Enum.TryParse<TransactionStatus>(selectedStatus, out var status))
+            {
+                filtered = filtered.Where(t => t.Status == status);
+            }
+        }
+        
+        // Search filter
+        if (!string.IsNullOrEmpty(searchTerm))
+        {
+            var lowerSearchTerm = searchTerm.ToLower();
+            filtered = filtered.Where(t => 
+                (t.Description?.ToLower().Contains(lowerSearchTerm) ?? false) ||
+                (t.Payee?.ToLower().Contains(lowerSearchTerm) ?? false) ||
+                (t.Notes?.ToLower().Contains(lowerSearchTerm) ?? false) ||
+                t.Category?.Name.ToLower().Contains(lowerSearchTerm) == true);
+        }
+        
+        filteredTransactions = filtered.OrderByDescending(t => t.Date).ToList();
+        currentPage = 0; // Reset to first page when filters change
+    }
+    
+    private void CalculateSummary()
+    {
+        var monthStart = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+        var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+        
+        var monthTransactions = allTransactions.Where(t => t.Date >= monthStart && t.Date <= monthEnd);
+        
+        totalIncome = monthTransactions.Where(t => t.Type == TransactionType.Income).Sum(t => t.Amount);
+        totalExpenses = monthTransactions.Where(t => t.Type == TransactionType.Expense).Sum(t => Math.Abs(t.Amount));
+    }
+    
+    private void OnSearchChanged(ChangeEventArgs e)
+    {
+        searchTerm = e.Value?.ToString() ?? "";
+        ApplyFilters();
+    }
+    
+    private void OnFilterChanged()
+    {
+        ApplyFilters();
+    }
+    
+    private void OnDateRangeChanged()
+    {
+        if (dateRange != "custom")
+        {
+            var days = int.Parse(dateRange);
+            startDate = DateTime.Today.AddDays(-days);
+            endDate = DateTime.Today;
+        }
+        ApplyFilters();
+    }
+    
+    private void NavigateToAddTransaction()
+    {
+        Navigation.NavigateTo("/transactions/add");
+    }
+    
+    private void EditTransaction(string transactionId)
+    {
+        Navigation.NavigateTo($"/transactions/edit/{transactionId}");
+    }
+    
+    private async Task DeleteTransaction(string transactionId)
+    {
+        if (await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this transaction?"))
+        {
+            await TransactionService.DeleteTransactionAsync(transactionId);
+            await LoadData();
+        }
+    }
+    
+    private void ToggleTransactionSelection(string transactionId, bool isSelected)
+    {
+        if (isSelected)
+        {
+            selectedTransactions.Add(transactionId);
+        }
+        else
+        {
+            selectedTransactions.Remove(transactionId);
+        }
+    }
+    
+    private void ToggleSelectAll(ChangeEventArgs e)
+    {
+        var isSelected = (bool)e.Value!;
+        selectedTransactions.Clear();
+        
+        if (isSelected)
+        {
+            var visibleTransactions = filteredTransactions.Skip(currentPage * pageSize).Take(pageSize);
+            foreach (var transaction in visibleTransactions)
+            {
+                selectedTransactions.Add(transaction.Id);
+            }
+        }
+    }
+    
+    private void ClearSelection()
+    {
+        selectedTransactions.Clear();
+    }
+    
+    private void ShowBulkStatusModal()
+    {
+        showBulkStatusModal = true;
+    }
+    
+    private void ShowBulkCategoryModal()
+    {
+        // TODO: Implement bulk category modal functionality
+    }
+    
+    private async Task ApplyBulkStatus()
+    {
+        await TransactionService.BulkUpdateTransactionStatusAsync(selectedTransactions, bulkStatus);
+        showBulkStatusModal = false;
+        selectedTransactions.Clear();
+        await LoadData();
+    }
+    
+    private async Task BulkDelete()
+    {
+        if (await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete {selectedTransactions.Count} transactions?"))
+        {
+            await TransactionService.BulkDeleteTransactionsAsync(selectedTransactions);
+            selectedTransactions.Clear();
+            await LoadData();
+        }
+    }
+    
+    private void PreviousPage()
+    {
+        if (currentPage > 0)
+        {
+            currentPage--;
+        }
+    }
+    
+    private void NextPage()
+    {
+        if (currentPage < totalPages - 1)
+        {
+            currentPage++;
+        }
+    }
+    
+    private async Task ExportTransactions()
+    {
+        var transactionIds = filteredTransactions.Select(t => t.Id);
+        var csvData = await TransactionService.ExportTransactionsAsync(transactionIds, "csv");
+        
+        // Download the CSV file
+        await JSRuntime.InvokeVoidAsync("downloadFile", "transactions.csv", Convert.ToBase64String(csvData));
+    }
+    
+    private void ShowTemplatesModal()
+    {
+        // Navigate to templates page or show modal
+        Navigation.NavigateTo("/transactions/templates");
+    }
+    
+    private void ShowRecurringModal()
+    {
+        // Navigate to recurring transactions page or show modal
+        Navigation.NavigateTo("/transactions/recurring");
+    }
+    
+    // Helper methods for UI
+    private string GetTransactionIcon(TransactionType type)
+    {
+        return type switch
+        {
+            TransactionType.Income => "💰",
+            TransactionType.Expense => "💸",
+            TransactionType.Transfer => "🔄",
+            TransactionType.Adjustment => "⚖️",
+            _ => "💳"
+        };
+    }
+    
+    private string GetTransactionIconBackground(TransactionType type)
+    {
+        return type switch
+        {
+            TransactionType.Income => "from-green-100 to-green-200 dark:from-green-600 dark:to-green-700",
+            TransactionType.Expense => "from-red-100 to-red-200 dark:from-red-600 dark:to-red-700",
+            TransactionType.Transfer => "from-blue-100 to-blue-200 dark:from-blue-600 dark:to-blue-700",
+            TransactionType.Adjustment => "from-yellow-100 to-yellow-200 dark:from-yellow-600 dark:to-yellow-700",
+            _ => "from-gray-100 to-gray-200 dark:from-gray-600 dark:to-gray-700"
+        };
+    }
+    
+    private string GetAmountColor(TransactionType type, decimal amount)
+    {
+        return type switch
+        {
+            TransactionType.Income => "text-green-600",
+            TransactionType.Expense => "text-red-600",
+            TransactionType.Transfer => "text-blue-600",
+            _ => amount >= 0 ? "text-green-600" : "text-red-600"
+        };
+    }
+    
+    private string FormatAmount(decimal amount, TransactionType type)
+    {
+        return type switch
+        {
+            TransactionType.Income => $"+{amount:C}",
+            TransactionType.Expense => $"-{Math.Abs(amount):C}",
+            _ => amount.ToString("C")
+        };
+    }
+    
+    private string GetStatusBadge(TransactionStatus status)
+    {
+        return status switch
+        {
+            TransactionStatus.Pending => "🟡 Pending",
+            TransactionStatus.Cleared => "🟢 Cleared",
+            TransactionStatus.Reconciled => "✅ Reconciled",
+            _ => status.ToString()
+        };
+    }
+}

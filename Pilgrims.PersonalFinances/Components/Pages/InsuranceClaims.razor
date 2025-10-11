@@ -1,0 +1,740 @@
+@page "/insurance/claims"
+@using Pilgrims.PersonalFinances.Models
+@using Pilgrims.PersonalFinances.Models.Enums
+@using Pilgrims.PersonalFinances.Services.Interfaces
+@inject IInsuranceService InsuranceService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Insurance Claims - Personal Finance Manager</PageTitle>
+
+<div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-4 sm:p-6 lg:p-8">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header Section -->
+        <div class="mb-8">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2">Insurance Claims</h1>
+                    <p class="text-gray-600">Track and manage your insurance claims efficiently</p>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button @onclick="CreateNewClaim" 
+                            class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                        File New Claim
+                    </button>
+                    <button @onclick="RefreshData" 
+                            class="bg-white hover:bg-gray-50 text-gray-700 px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl border border-gray-200 transform hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        @if (isLoading)
+        {
+            <div class="flex items-center justify-center py-12">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                <span class="ml-3 text-gray-600">Loading claims data...</span>
+            </div>
+        }
+        else
+        {
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-gradient-to-r from-blue-500 to-cyan-600 p-6 rounded-2xl text-white shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-blue-100 text-sm font-medium">Total Claims</p>
+                            <p class="text-3xl font-bold">@totalClaims</p>
+                            <p class="text-blue-100 text-xs mt-1">All time</p>
+                        </div>
+                        <div class="bg-white bg-opacity-20 p-3 rounded-xl">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-r from-green-500 to-emerald-600 p-6 rounded-2xl text-white shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-green-100 text-sm font-medium">Approved Claims</p>
+                            <p class="text-3xl font-bold">@approvedClaimsValue.ToString("C0")</p>
+                            <p class="text-green-100 text-xs mt-1">@approvedClaimsCount claims</p>
+                        </div>
+                        <div class="bg-white bg-opacity-20 p-3 rounded-xl">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-r from-orange-500 to-red-600 p-6 rounded-2xl text-white shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-orange-100 text-sm font-medium">Pending Claims</p>
+                            <p class="text-3xl font-bold">@pendingClaimsValue.ToString("C0")</p>
+                            <p class="text-orange-100 text-xs mt-1">@pendingClaimsCount claims</p>
+                        </div>
+                        <div class="bg-white bg-opacity-20 p-3 rounded-xl">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-r from-purple-500 to-indigo-600 p-6 rounded-2xl text-white shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-purple-100 text-sm font-medium">Success Rate</p>
+                            <p class="text-3xl font-bold">@successRate.ToString("F1")%</p>
+                            <p class="text-purple-100 text-xs mt-1">Approval rate</p>
+                        </div>
+                        <div class="bg-white bg-opacity-20 p-3 rounded-xl">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters and Search -->
+            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+                <div class="flex flex-col lg:flex-row gap-4 items-center justify-between">
+                    <div class="flex flex-col sm:flex-row gap-4 flex-1">
+                        <div class="relative">
+                            <input @bind="searchTerm" @oninput="OnSearchChanged" 
+                                   placeholder="Search claims..." 
+                                   class="pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-64" />
+                            <svg class="absolute left-3 top-3.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                        </div>
+                        <select @bind="selectedStatus" @bind:after="() => OnFilterChanged(null!)" 
+                                class="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">All Statuses</option>
+                            <option value="Submitted">Submitted</option>
+                            <option value="UnderReview">Under Review</option>
+                            <option value="Approved">Approved</option>
+                            <option value="Rejected">Rejected</option>
+                            <option value="Settled">Settled</option>
+                        </select>
+                        <select @bind="selectedPolicyType" @bind:after="() => OnFilterChanged(null!)" 
+                                class="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">All Policy Types</option>
+                            <option value="Life">Life Insurance</option>
+                            <option value="Health">Health Insurance</option>
+                            <option value="Auto">Auto Insurance</option>
+                            <option value="Property">Property Insurance</option>
+                            <option value="Disability">Disability Insurance</option>
+                        </select>
+                    </div>
+                    <div class="flex gap-2">
+                        <button @onclick="() => SetDateFilter(DateFilter.LastMonth)" 
+                                class="px-4 py-2 rounded-lg @(currentDateFilter == DateFilter.LastMonth ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200") transition-colors duration-200">
+                            Last Month
+                        </button>
+                        <button @onclick="() => SetDateFilter(DateFilter.LastYear)" 
+                                class="px-4 py-2 rounded-lg @(currentDateFilter == DateFilter.LastYear ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200") transition-colors duration-200">
+                            Last Year
+                        </button>
+                        <button @onclick="() => SetDateFilter(DateFilter.All)" 
+                                class="px-4 py-2 rounded-lg @(currentDateFilter == DateFilter.All ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200") transition-colors duration-200">
+                            All Time
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Claims Status Overview -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <!-- Recent Claims Activity -->
+                <div class="lg:col-span-2 bg-white rounded-2xl shadow-lg p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-semibold text-gray-900">Recent Claims Activity</h2>
+                        <div class="text-sm text-gray-500">Last 30 days</div>
+                    </div>
+                    <div class="space-y-4 max-h-96 overflow-y-auto">
+                        @foreach (var claim in recentClaims.Take(8))
+                        {
+                            <div class="flex items-center justify-between p-4 rounded-xl hover:bg-gray-50 transition-all duration-200 border border-gray-100">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 rounded-xl bg-gradient-to-r @GetStatusGradient(claim.Status) flex items-center justify-center">
+                                        <span class="text-white font-bold">@GetStatusIcon(claim.Status)</span>
+                                    </div>
+                                    <div>
+                                        <div class="text-sm font-semibold text-gray-900">@claim.ClaimNumber</div>
+                                        <div class="text-xs text-gray-500">@claim.PolicyName</div>
+                                        <div class="text-xs text-gray-400">@claim.ClaimDate.ToString("MMM dd, yyyy")</div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-lg font-bold text-gray-900">@claim.ClaimedAmount.ToString("C")</div>
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full @GetStatusBadgeClass(claim.Status)">
+                                        @claim.Status
+                                    </span>
+                                    <div class="flex gap-2 mt-2">
+                                        <button @onclick="() => ViewClaim(claim.Id)" 
+                                                class="text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1 rounded-lg transition-colors duration-200">
+                                            View
+                                        </button>
+                                        @if (claim.Status == ClaimStatus.Submitted || claim.Status == ClaimStatus.UnderReview)
+                                        {
+                                            <button @onclick="() => UpdateClaimStatus(claim)" 
+                                                    class="text-xs bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1 rounded-lg transition-colors duration-200">
+                                                Update
+                                            </button>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Claims Statistics -->
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-6">Claims Statistics</h2>
+                    <div class="space-y-4">
+                        @foreach (var stat in claimsStatistics)
+                        {
+                            var percentage = totalClaims > 0 ? (stat.Count / (double)totalClaims) * 100 : 0;
+                            <div class="p-4 rounded-xl @GetStatBackgroundClass(stat.Status)">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-3 h-3 rounded-full @GetStatDotClass(stat.Status)"></div>
+                                        <span class="text-sm font-medium @GetStatTextClass(stat.Status)">@stat.Status</span>
+                                    </div>
+                                    <span class="text-sm font-bold @GetStatTextClass(stat.Status)">@stat.Count</span>
+                                </div>
+                                <div class="w-full bg-white bg-opacity-50 rounded-full h-2">
+                                    <div class="@GetStatDotClass(stat.Status) h-2 rounded-full transition-all duration-500" style="width: @percentage.ToString("F1")%"></div>
+                                </div>
+                                <div class="text-xs @GetStatTextClass(stat.Status) mt-1">@stat.Value.ToString("C0") • @percentage.ToString("F1")%</div>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="mt-6 pt-6 border-t border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+                        <div class="space-y-2">
+                            <button @onclick="CreateNewClaim" 
+                                    class="w-full flex items-center gap-3 p-3 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 transition-colors duration-200">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                                </svg>
+                                <span class="font-medium">File New Claim</span>
+                            </button>
+                            <button @onclick="ExportClaimsReport" 
+                                    class="w-full flex items-center gap-3 p-3 rounded-xl bg-green-50 hover:bg-green-100 text-green-700 transition-colors duration-200">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                <span class="font-medium">Export Report</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Claims Table -->
+            <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-xl font-semibold text-gray-900">All Claims</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Claim Details</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Policy</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amounts</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dates</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            @foreach (var claim in filteredClaims)
+                            {
+                                <tr class="hover:bg-gray-50 transition-colors duration-200">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div>
+                                            <div class="text-sm font-medium text-gray-900">@claim.ClaimNumber</div>
+                                            <div class="text-sm text-gray-500">@claim.Description</div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <div class="w-10 h-10 rounded-lg bg-gradient-to-r @GetPolicyTypeGradient(claim.PolicyType) flex items-center justify-center mr-3">
+                                                <span class="text-white font-bold text-sm">@GetPolicyTypeIcon(claim.PolicyType)</span>
+                                            </div>
+                                            <div>
+                                                <div class="text-sm font-medium text-gray-900">@claim.PolicyName</div>
+                                                <div class="text-sm text-gray-500">@claim.PolicyType</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-semibold text-gray-900">@claim.ClaimedAmount.ToString("C")</div>
+                                        @if (claim.ApprovedAmount.HasValue)
+                                        {
+                                            <div class="text-sm text-green-600">Approved: @claim.ApprovedAmount.Value.ToString("C")</div>
+                                        }
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900">Filed: @claim.ClaimDate.ToString("MMM dd, yyyy")</div>
+                                        @if (claim.SettlementDate.HasValue)
+                                        {
+                                            <div class="text-sm text-gray-500">Settled: @claim.SettlementDate.Value.ToString("MMM dd, yyyy")</div>
+                                        }
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full @GetStatusBadgeClass(claim.Status)">
+                                            @claim.Status
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <div class="flex gap-2">
+                                            <button @onclick="() => ViewClaim(claim.Id)" 
+                                                    class="text-blue-600 hover:text-blue-900 transition-colors duration-200">
+                                                View
+                                            </button>
+                                            <button @onclick="() => EditClaim(claim.Id)" 
+                                                    class="text-indigo-600 hover:text-indigo-900 transition-colors duration-200">
+                                                Edit
+                                            </button>
+                                            @if (claim.Status == ClaimStatus.Submitted || claim.Status == ClaimStatus.UnderReview)
+                                            {
+                                                <button @onclick="() => UpdateClaimStatus(claim)" 
+                                                        class="text-green-600 hover:text-green-900 transition-colors duration-200">
+                                                    Update
+                                                </button>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- New Claim Modal -->
+@if (showNewClaimModal)
+{
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold text-gray-900">File New Claim</h3>
+                <button @onclick="CloseNewClaimModal" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Policy</label>
+                    <select @bind="newClaim.InsuranceId" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">Select a policy</option>
+                        @foreach (var policy in allPolicies)
+                        {
+                            <option value="@policy.Id">@policy.PolicyName - @policy.InsuranceCompany</option>
+                        }
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Claim Description</label>
+                    <textarea @bind="newClaim.Description" rows="3" 
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Claimed Amount</label>
+                    <input @bind="newClaim.ClaimAmount" type="number" step="0.01" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Incident Date</label>
+                        <input @bind="newClaim.IncidentDate" type="date" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Incident Location</label>
+                    <input @bind="newClaim.IncidentLocation" type="text" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                </div>
+            </div>
+            
+            <div class="flex gap-3 mt-6">
+                <button @onclick="SaveNewClaim" 
+                        class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200">
+                    File Claim
+                </button>
+                <button @onclick="CloseNewClaimModal" 
+                        class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors duration-200">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool isLoading = true;
+    private bool showNewClaimModal = false;
+
+    // Filter properties
+    private string searchTerm = string.Empty;
+    private string selectedStatus = string.Empty;
+    private string selectedPolicyType = string.Empty;
+    private DateFilter currentDateFilter = DateFilter.All;
+
+    // Summary data
+    private int totalClaims = 0;
+    private decimal approvedClaimsValue = 0;
+    private int approvedClaimsCount = 0;
+    private decimal pendingClaimsValue = 0;
+    private int pendingClaimsCount = 0;
+    private double successRate = 0;
+
+    // Data collections
+    private List<ClaimInfo> allClaims = new();
+    private List<ClaimInfo> filteredClaims = new();
+    private List<ClaimInfo> recentClaims = new();
+    private List<Models.Insurance> allPolicies = new();
+    private List<ClaimStatistic> claimsStatistics = new();
+
+    // New claim modal
+    private InsuranceClaim newClaim = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadClaimsData();
+    }
+
+    private async Task LoadClaimsData()
+    {
+        isLoading = true;
+        try
+        {
+            // Load policies
+            allPolicies = (await InsuranceService.GetAllInsurancePoliciesAsync()).ToList();
+
+            // Load claims
+            var claims = (await InsuranceService.GetAllClaimsAsync()).ToList();
+
+            // Convert to ClaimInfo objects
+            allClaims = claims.Select(c => new ClaimInfo
+            {
+                Id = c.Id,
+                ClaimNumber = c.ClaimNumber,
+                Description = c.Description,
+                ClaimedAmount = c.ClaimAmount,
+                ApprovedAmount = c.ApprovedAmount,
+                Status = c.Status,
+                ClaimDate = c.ClaimDate,
+                IncidentDate = c.IncidentDate,
+                IncidentLocation = c.IncidentLocation,
+                SettlementDate = c.SettlementDate,
+                PolicyName = allPolicies.FirstOrDefault(p => p.Id == c.InsuranceId)?.PolicyName ?? "Unknown Policy",
+                PolicyType = allPolicies.FirstOrDefault(p => p.Id == c.InsuranceId)?.PolicyType ?? "Unknown"
+            }).ToList();
+
+            // Calculate summary metrics
+            CalculateSummaryMetrics();
+
+            // Get recent claims
+            recentClaims = allClaims.OrderByDescending(c => c.ClaimDate).ToList();
+
+            // Calculate statistics
+            CalculateStatistics();
+
+            // Apply filters
+            ApplyFilters();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading claims data: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void CalculateSummaryMetrics()
+    {
+        totalClaims = allClaims.Count;
+        
+        var approvedClaims = allClaims.Where(c => c.Status == ClaimStatus.Approved || c.Status == ClaimStatus.Settled).ToList();
+        approvedClaimsValue = approvedClaims.Sum(c => c.ApprovedAmount ?? c.ClaimedAmount);
+        approvedClaimsCount = approvedClaims.Count;
+
+        var pendingClaims = allClaims.Where(c => c.Status == ClaimStatus.Submitted || c.Status == ClaimStatus.UnderReview).ToList();
+        pendingClaimsValue = pendingClaims.Sum(c => c.ClaimedAmount);
+        pendingClaimsCount = pendingClaims.Count;
+
+        successRate = totalClaims > 0 ? (approvedClaimsCount / (double)totalClaims) * 100 : 0;
+    }
+
+    private void CalculateStatistics()
+    {
+        claimsStatistics = allClaims
+            .GroupBy(c => c.Status.ToString())
+            .Select(g => new ClaimStatistic
+            {
+                Status = g.Key,
+                Count = g.Count(),
+                Value = g.Sum(c => c.ApprovedAmount ?? c.ClaimedAmount)
+            })
+            .OrderByDescending(s => s.Count)
+            .ToList();
+    }
+
+    private void ApplyFilters()
+    {
+        filteredClaims = allClaims.ToList();
+
+        if (!string.IsNullOrEmpty(searchTerm))
+        {
+            filteredClaims = filteredClaims.Where(c => 
+                c.ClaimNumber.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                c.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                c.PolicyName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)).ToList();
+        }
+
+        if (!string.IsNullOrEmpty(selectedStatus))
+        {
+            if (Enum.TryParse<ClaimStatus>(selectedStatus, out var status))
+            {
+                filteredClaims = filteredClaims.Where(c => c.Status == status).ToList();
+            }
+        }
+
+        if (!string.IsNullOrEmpty(selectedPolicyType))
+        {
+            filteredClaims = filteredClaims.Where(c => c.PolicyType == selectedPolicyType).ToList();
+        }
+
+        switch (currentDateFilter)
+        {
+            case DateFilter.LastMonth:
+                var lastMonth = DateTime.Today.AddMonths(-1);
+                filteredClaims = filteredClaims.Where(c => c.ClaimDate >= lastMonth).ToList();
+                break;
+            case DateFilter.LastYear:
+                var lastYear = DateTime.Today.AddYears(-1);
+                filteredClaims = filteredClaims.Where(c => c.ClaimDate >= lastYear).ToList();
+                break;
+        }
+
+        filteredClaims = filteredClaims.OrderByDescending(c => c.ClaimDate).ToList();
+    }
+
+    private async Task OnSearchChanged(ChangeEventArgs e)
+    {
+        searchTerm = e.Value?.ToString() ?? string.Empty;
+        ApplyFilters();
+    }
+
+    private async Task OnFilterChanged(ChangeEventArgs e)
+    {
+        ApplyFilters();
+    }
+
+    private void SetDateFilter(DateFilter filter)
+    {
+        currentDateFilter = filter;
+        ApplyFilters();
+    }
+
+    private async Task RefreshData()
+    {
+        await LoadClaimsData();
+    }
+
+    private void CreateNewClaim()
+    {
+        newClaim = new InsuranceClaim
+        {
+            Id = Guid.NewGuid().ToString(),
+            ClaimDate = DateTime.Today,
+            IncidentDate = DateTime.Today,
+            Status = ClaimStatus.Submitted
+        };
+        showNewClaimModal = true;
+    }
+
+    private void CloseNewClaimModal()
+    {
+        showNewClaimModal = false;
+    }
+
+    private async Task SaveNewClaim()
+    {
+        if (string.IsNullOrEmpty(newClaim.InsuranceId) || newClaim.ClaimAmount <= 0)
+            return;
+
+        try
+        {
+            newClaim.ClaimNumber = $"CLM-{DateTime.Now:yyyyMMddHHmmss}";
+            newClaim.ClaimDate = DateTime.Now;
+
+            await InsuranceService.CreateClaimAsync(newClaim);
+            CloseNewClaimModal();
+            await LoadClaimsData();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error creating claim: {ex.Message}");
+        }
+    }
+
+    private void ViewClaim(string claimId) => Navigation.NavigateTo($"/insurance/claims/view/{claimId}");
+    private void EditClaim(string claimId) => Navigation.NavigateTo($"/insurance/claims/edit/{claimId}");
+
+    private async Task UpdateClaimStatus(ClaimInfo claim)
+    {
+        // Implementation for updating claim status
+        await JSRuntime.InvokeVoidAsync("alert", $"Update status for claim {claim.ClaimNumber}");
+    }
+
+    private async Task ExportClaimsReport()
+    {
+        // Implementation for exporting claims report
+        await JSRuntime.InvokeVoidAsync("alert", "Export functionality coming soon!");
+    }
+
+    // Helper methods for styling
+    private string GetStatusGradient(ClaimStatus status) => status switch
+    {
+        ClaimStatus.Submitted => "from-blue-500 to-cyan-600",
+        ClaimStatus.UnderReview => "from-yellow-500 to-orange-600",
+        ClaimStatus.Approved => "from-green-500 to-emerald-600",
+        ClaimStatus.Rejected => "from-red-500 to-pink-600",
+        ClaimStatus.Settled => "from-purple-500 to-indigo-600",
+        _ => "from-gray-500 to-slate-600"
+    };
+
+    private string GetStatusIcon(ClaimStatus status) => status switch
+    {
+        ClaimStatus.Submitted => "📝",
+        ClaimStatus.UnderReview => "🔍",
+        ClaimStatus.Approved => "✅",
+        ClaimStatus.Rejected => "❌",
+        ClaimStatus.Settled => "💰",
+        _ => "📋"
+    };
+
+    private string GetStatusBadgeClass(ClaimStatus status) => status switch
+    {
+        ClaimStatus.Submitted => "bg-blue-100 text-blue-800",
+        ClaimStatus.UnderReview => "bg-yellow-100 text-yellow-800",
+        ClaimStatus.Approved => "bg-green-100 text-green-800",
+        ClaimStatus.Rejected => "bg-red-100 text-red-800",
+        ClaimStatus.Settled => "bg-purple-100 text-purple-800",
+        _ => "bg-gray-100 text-gray-800"
+    };
+
+    private string GetPolicyTypeGradient(string policyType) => policyType.ToLower() switch
+    {
+        "life" => "from-purple-500 to-indigo-600",
+        "health" => "from-green-500 to-emerald-600",
+        "auto" => "from-blue-500 to-cyan-600",
+        "property" => "from-orange-500 to-red-600",
+        "disability" => "from-pink-500 to-rose-600",
+        _ => "from-gray-500 to-slate-600"
+    };
+
+    private string GetPolicyTypeIcon(string policyType) => policyType.ToLower() switch
+    {
+        "life" => "♥",
+        "health" => "⚕",
+        "auto" => "🚗",
+        "property" => "🏠",
+        "disability" => "🛡",
+        _ => "📋"
+    };
+
+    private string GetStatBackgroundClass(string status) => status.ToLower() switch
+    {
+        "submitted" => "bg-blue-50 border border-blue-200",
+        "underreview" => "bg-yellow-50 border border-yellow-200",
+        "approved" => "bg-green-50 border border-green-200",
+        "rejected" => "bg-red-50 border border-red-200",
+        "settled" => "bg-purple-50 border border-purple-200",
+        _ => "bg-gray-50 border border-gray-200"
+    };
+
+    private string GetStatDotClass(string status) => status.ToLower() switch
+    {
+        "submitted" => "bg-blue-500",
+        "underreview" => "bg-yellow-500",
+        "approved" => "bg-green-500",
+        "rejected" => "bg-red-500",
+        "settled" => "bg-purple-500",
+        _ => "bg-gray-500"
+    };
+
+    private string GetStatTextClass(string status) => status.ToLower() switch
+    {
+        "submitted" => "text-blue-800",
+        "underreview" => "text-yellow-800",
+        "approved" => "text-green-800",
+        "rejected" => "text-red-800",
+        "settled" => "text-purple-800",
+        _ => "text-gray-800"
+    };
+
+    // Helper classes and enums
+    public enum DateFilter
+    {
+        LastMonth,
+        LastYear,
+        All
+    }
+
+    public class ClaimInfo
+    {
+        public string Id { get; set; } = string.Empty;
+        public string ClaimNumber { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public decimal ClaimedAmount { get; set; }
+        public decimal? ApprovedAmount { get; set; }
+        public ClaimStatus Status { get; set; }
+        public DateTime ClaimDate { get; set; }
+        public DateTime IncidentDate { get; set; }
+        public string IncidentLocation { get; set; } = string.Empty;
+        public DateTime? SettlementDate { get; set; }
+        public string PolicyName { get; set; } = string.Empty;
+        public string PolicyType { get; set; } = string.Empty;
+    }
+
+    public class ClaimStatistic
+    {
+        public string Status { get; set; } = string.Empty;
+        public int Count { get; set; }
+        public decimal Value { get; set; }
+    }
+}

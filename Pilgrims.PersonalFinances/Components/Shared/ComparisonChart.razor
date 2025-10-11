@@ -1,0 +1,364 @@
+@using Pilgrims.PersonalFinances.Services
+@using Pilgrims.PersonalFinances.Core.Interfaces
+@inject ICurrencyService CurrencyService
+
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h3 class="text-lg font-semibold text-gray-900">@Title</h3>
+            @if (!string.IsNullOrEmpty(Subtitle))
+            {
+                <p class="text-sm text-gray-600 mt-1">@Subtitle</p>
+            }
+        </div>
+        
+        <div class="flex items-center space-x-2">
+            <select @bind="selectedMetric" @bind:event="onchange" 
+                    class="text-sm border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="income">Income</option>
+                <option value="expenses">Expenses</option>
+                <option value="netIncome">Net Income</option>
+            </select>
+            
+            <select @bind="selectedPeriod" @bind:event="onchange"
+                    class="text-sm border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="monthly">Monthly</option>
+                <option value="yearly">Yearly</option>
+            </select>
+        </div>
+    </div>
+
+    @if (ComparisonData != null)
+    {
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="bg-blue-50 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-blue-600">@ComparisonData.CurrentPeriod</p>
+                        <p class="text-2xl font-bold text-blue-900">@FormatCurrency(GetCurrentValue())</p>
+                    </div>
+                    <div class="p-2 bg-blue-100 rounded-lg">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-50 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">@ComparisonData.PreviousPeriod</p>
+                        <p class="text-2xl font-bold text-gray-900">@FormatCurrency(GetPreviousValue())</p>
+                    </div>
+                    <div class="p-2 bg-gray-100 rounded-lg">
+                        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="@(ComparisonData.Variance >= 0 ? "bg-green-50" : "bg-red-50") rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium @(ComparisonData.Variance >= 0 ? "text-green-600" : "text-red-600")">Change</p>
+                        <p class="text-2xl font-bold @(ComparisonData.Variance >= 0 ? "text-green-900" : "text-red-900")">
+                            @(ComparisonData.Variance >= 0 ? "+" : "")@FormatCurrency(ComparisonData.Variance)
+                        </p>
+                        <p class="text-sm @(ComparisonData.Variance >= 0 ? "text-green-600" : "text-red-600")">
+                            @(ComparisonData.PercentageChange >= 0 ? "+" : "")@ComparisonData.PercentageChange.ToString("F1")%
+                        </p>
+                    </div>
+                    <div class="p-2 @(ComparisonData.Variance >= 0 ? "bg-green-100" : "bg-red-100") rounded-lg">
+                        @if (ComparisonData.Variance >= 0)
+                        {
+                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"></path>
+                            </svg>
+                        }
+                        else
+                        {
+                            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6"></path>
+                            </svg>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparison Chart -->
+        <div class="mb-6">
+            <div class="h-64 relative">
+                <svg viewBox="0 0 800 200" class="w-full h-full">
+                    <!-- Chart background -->
+                    <rect x="0" y="0" width="800" height="200" fill="#f9fafb" rx="8"/>
+                    
+                    <!-- Grid lines -->
+                    @for (int i = 0; i <= 4; i++)
+                    {
+                        var y = 40 + (i * 30);
+                        <line x1="60" y1="@y" x2="740" y2="@y" stroke="#e5e7eb" stroke-width="1"/>
+                    }
+                    
+                    <!-- Bars -->
+                    @{
+                        var maxValue = Math.Max(Math.Abs(GetCurrentValue()), Math.Abs(GetPreviousValue()));
+                        var currentHeight = maxValue > 0 ? Math.Abs(GetCurrentValue()) / maxValue * 120 : 0;
+                        var previousHeight = maxValue > 0 ? Math.Abs(GetPreviousValue()) / maxValue * 120 : 0;
+                        var currentY = 160 - currentHeight;
+                        var previousY = 160 - previousHeight;
+                    }
+                    
+                    <!-- Previous period bar -->
+                    <rect x="250" y="@previousY" width="80" height="@previousHeight" fill="#9ca3af" rx="4"/>
+                    <text x="290" y="@(previousY - 10)" text-anchor="middle" class="text-xs fill-gray-600">
+                        @FormatCurrency(GetPreviousValue())
+                    </text>
+                    <text x="290" y="185" text-anchor="middle" class="text-xs fill-gray-600">
+                        @ComparisonData.PreviousPeriod
+                    </text>
+                    
+                    <!-- Current period bar -->
+                    <rect x="470" y="@currentY" width="80" height="@currentHeight" fill="#3b82f6" rx="4"/>
+                    <text x="510" y="@(currentY - 10)" text-anchor="middle" class="text-xs fill-blue-600">
+                        @FormatCurrency(GetCurrentValue())
+                    </text>
+                    <text x="510" y="185" text-anchor="middle" class="text-xs fill-blue-600">
+                        @ComparisonData.CurrentPeriod
+                    </text>
+                    
+                    <!-- Comparison arrow -->
+                    @if (ComparisonData.Variance != 0)
+                    {
+                        var arrowColor = ComparisonData.Variance > 0 ? "#10b981" : "#ef4444";
+                        var arrowDirection = ComparisonData.Variance > 0 ? "up" : "down";
+                        
+                        <line x1="330" y1="@((currentY + previousY) / 2)" x2="470" y2="@((currentY + previousY) / 2)" 
+                              stroke="@arrowColor" stroke-width="2" marker-end="url(#arrowhead-@arrowDirection)"/>
+                        
+                        <defs>
+                            <marker id="arrowhead-@arrowDirection" markerWidth="10" markerHeight="7" 
+                                    refX="9" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="@arrowColor"/>
+                            </marker>
+                        </defs>
+                        
+                        @((MarkupString)$"<text x=\"400\" y=\"{(currentY + previousY) / 2 - 10}\" text-anchor=\"middle\" font-size=\"12\" fill=\"{arrowColor}\">{(ComparisonData.PercentageChange >= 0 ? "+" : "")}{ComparisonData.PercentageChange:F1}%</text>")
+                    }
+                </svg>
+            </div>
+        </div>
+
+        <!-- Monthly/Category Breakdown -->
+        @if (ComparisonData.MonthlyBreakdown?.Any() == true || ComparisonData.CategoryBreakdown?.Any() == true)
+        {
+            <div class="border-t border-gray-200 pt-6">
+                <h4 class="text-md font-medium text-gray-900 mb-4">
+                    @(ComparisonData.MonthlyBreakdown?.Any() == true ? "Monthly Breakdown" : "Category Breakdown")
+                </h4>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    @(ComparisonData.MonthlyBreakdown?.Any() == true ? "Month" : "Category")
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    @ComparisonData.CurrentPeriod
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    @ComparisonData.PreviousPeriod
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Change
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    %
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            @if (ComparisonData.MonthlyBreakdown?.Any() == true)
+                            {
+                                @foreach (var month in ComparisonData.MonthlyBreakdown)
+                                {
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            @month.Month
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            @FormatCurrency(month.CurrentYearAmount)
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            @FormatCurrency(month.PreviousYearAmount)
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm @(month.Variance >= 0 ? "text-green-600" : "text-red-600")">
+                                            @(month.Variance >= 0 ? "+" : "")@FormatCurrency(month.Variance)
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm @(month.PercentageChange >= 0 ? "text-green-600" : "text-red-600")">
+                                            @(month.PercentageChange >= 0 ? "+" : "")@month.PercentageChange.ToString("F1")%
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else if (ComparisonData.CategoryBreakdown?.Any() == true)
+                            {
+                                @foreach (var category in ComparisonData.CategoryBreakdown.Take(10))
+                                {
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            @category.CategoryName
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            @FormatCurrency(category.CurrentPeriodAmount)
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            @FormatCurrency(category.PreviousPeriodAmount)
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm @(category.Variance >= 0 ? "text-green-600" : "text-red-600")">
+                                            @(category.Variance >= 0 ? "+" : "")@FormatCurrency(category.Variance)
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm @(category.PercentageChange >= 0 ? "text-green-600" : "text-red-600")">
+                                            @(category.PercentageChange >= 0 ? "+" : "")@category.PercentageChange.ToString("F1")%
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="flex items-center justify-center h-64">
+            <div class="text-center">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">No comparison data</h3>
+                <p class="mt-1 text-sm text-gray-500">Data will appear here when available.</p>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string Title { get; set; } = "Period Comparison";
+    [Parameter] public string Subtitle { get; set; } = "";
+    [Parameter] public ComparisonResultDto? ComparisonData { get; set; }
+    [Parameter] public EventCallback<string> OnMetricChange { get; set; }
+    [Parameter] public EventCallback<string> OnPeriodChange { get; set; }
+
+    private string selectedMetric = "netIncome";
+    private string selectedPeriod = "monthly";
+    private Dictionary<decimal, string> _formattedAmounts = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await PreformatAmounts();
+    }
+
+    private async Task PreformatAmounts()
+    {
+        _formattedAmounts.Clear();
+        
+        if (ComparisonData != null)
+        {
+            var amounts = new HashSet<decimal>();
+            
+            // Collect all amounts that need formatting
+            if (ComparisonData.CurrentData != null)
+            {
+                amounts.Add(ComparisonData.CurrentData.TotalIncome);
+                amounts.Add(ComparisonData.CurrentData.TotalExpenses);
+                amounts.Add(ComparisonData.CurrentData.NetIncome);
+            }
+            
+            if (ComparisonData.PreviousData != null)
+            {
+                amounts.Add(ComparisonData.PreviousData.TotalIncome);
+                amounts.Add(ComparisonData.PreviousData.TotalExpenses);
+                amounts.Add(ComparisonData.PreviousData.NetIncome);
+            }
+            
+            amounts.Add(ComparisonData.Variance);
+            
+            // Add monthly breakdown amounts
+            if (ComparisonData.MonthlyBreakdown?.Any() == true)
+            {
+                foreach (var month in ComparisonData.MonthlyBreakdown)
+                {
+                    amounts.Add(month.CurrentYearAmount);
+                    amounts.Add(month.PreviousYearAmount);
+                    amounts.Add(month.Variance);
+                }
+            }
+            
+            // Add category breakdown amounts
+            if (ComparisonData.CategoryBreakdown?.Any() == true)
+            {
+                foreach (var category in ComparisonData.CategoryBreakdown)
+                {
+                    amounts.Add(category.CurrentPeriodAmount);
+                    amounts.Add(category.PreviousPeriodAmount);
+                    amounts.Add(category.Variance);
+                }
+            }
+            
+            // Format all amounts
+            foreach (var amount in amounts)
+            {
+                _formattedAmounts[amount] = await CurrencyService.FormatAmountAsync(amount);
+            }
+        }
+    }
+
+    private async Task OnMetricChanged(ChangeEventArgs e)
+    {
+        selectedMetric = e.Value?.ToString() ?? "netIncome";
+        await OnMetricChange.InvokeAsync(selectedMetric);
+    }
+
+    private async Task OnPeriodChanged(ChangeEventArgs e)
+    {
+        selectedPeriod = e.Value?.ToString() ?? "monthly";
+        await OnPeriodChange.InvokeAsync(selectedPeriod);
+    }
+
+    private decimal GetCurrentValue()
+    {
+        if (ComparisonData?.CurrentData == null) return 0;
+
+        return selectedMetric switch
+        {
+            "income" => ComparisonData.CurrentData.TotalIncome,
+            "expenses" => ComparisonData.CurrentData.TotalExpenses,
+            "netIncome" => ComparisonData.CurrentData.NetIncome,
+            _ => ComparisonData.CurrentData.NetIncome
+        };
+    }
+
+    private decimal GetPreviousValue()
+    {
+        if (ComparisonData?.PreviousData == null) return 0;
+
+        return selectedMetric switch
+        {
+            "income" => ComparisonData.PreviousData.TotalIncome,
+            "expenses" => ComparisonData.PreviousData.TotalExpenses,
+            "netIncome" => ComparisonData.PreviousData.NetIncome,
+            _ => ComparisonData.PreviousData.NetIncome
+        };
+    }
+
+    private string FormatCurrency(decimal amount)
+    {
+        return _formattedAmounts.TryGetValue(amount, out var formatted) ? formatted : amount.ToString("C");
+    }
+}
