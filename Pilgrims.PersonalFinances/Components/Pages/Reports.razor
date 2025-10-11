@@ -219,7 +219,7 @@
     {
         <div class="mt-8">
             <ComparisonChart Title="Period Comparison" 
-                           Subtitle="@ViewModel.ComparisonData.ComparisonType Analysis"
+                           Subtitle="@($"{ViewModel.ComparisonData.ComparisonType} Analysis")"
                            ComparisonData="ViewModel.ComparisonData"
                            OnMetricChange="OnComparisonMetricChanged"
                            OnPeriodChange="OnComparisonPeriodChanged" />

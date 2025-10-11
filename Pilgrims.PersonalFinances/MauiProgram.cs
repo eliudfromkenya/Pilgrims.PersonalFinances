@@ -13,6 +13,7 @@ using Pilgrims.PersonalFinances.Core.Logging;
 using Serilog;
 using Pilgrims.PersonalFinances.Core.Interfaces;
 using Pilgrims.PersonalFinances.Core.Services;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Pilgrims.PersonalFinances
 {
@@ -37,7 +38,7 @@ namespace Pilgrims.PersonalFinances
             {
                 var dbPath = Path.Combine(FileSystem.AppDataDirectory, "PersonalFinance.db");
                 var connectionString = $"Data Source={dbPath};";
-                options.UseSqlite(connectionString);
+                options.UseSqlite(connectionString, b => b.MigrationsAssembly("Pilgrims.PersonalFinances.Core"));
             });
 
             // Messaging & Logging
@@ -75,11 +76,20 @@ namespace Pilgrims.PersonalFinances
             builder.Services.AddHostedService<InsuranceNotificationBackgroundService>();
 
 #if DEBUG
-    		builder.Services.AddBlazorWebViewDeveloperTools();
-    		builder.Logging.AddDebug();
+            builder.Services.AddBlazorWebViewDeveloperTools();
+            builder.Logging.AddDebug();
 #endif
 
-            return builder.Build();
+            // Build app and apply migrations at startup
+            var app = builder.Build();
+
+            using (var scope = app.Services.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<PersonalFinanceContext>();
+                db.Database.Migrate();
+            }
+
+            return app;
         }
     }
 }
