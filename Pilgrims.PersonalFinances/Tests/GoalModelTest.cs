@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Pilgrims.PersonalFinances.Models;
+using Pilgrims.PersonalFinances.Core.Models;
 using Pilgrims.PersonalFinances.Core.Models.Enums;
 using Pilgrims.PersonalFinances.Services;
 using Pilgrims.PersonalFinances.Core.Services.Interfaces;

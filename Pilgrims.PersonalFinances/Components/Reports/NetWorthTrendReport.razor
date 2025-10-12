@@ -1,6 +1,6 @@
 @using Pilgrims.PersonalFinances.Core.Interfaces
 @using Pilgrims.PersonalFinances.Core.Models.DTOs
-@using Pilgrims.PersonalFinances.Services
+
 @inject IJSRuntime JSRuntime
 @inject ICurrencyService CurrencyService
 
@@ -309,10 +309,8 @@
     </div>
 </div>
 
-@using Pilgrims.PersonalFinances.Core.Models.DTOs
-
 @code {
-    [Parameter] public Pilgrims.PersonalFinances.Models.DTOs.NetWorthTrendDto Report { get; set; } = new();
+    [Parameter] public Pilgrims.PersonalFinances.Core.Models.DTOs.NetWorthTrendDto Report { get; set; } = new();
     
     private Dictionary<decimal, string> formattedAmounts = new();
 

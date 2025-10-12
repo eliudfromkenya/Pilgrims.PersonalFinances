@@ -1,8 +1,9 @@
 @page "/transactions/recurring"
-@using Pilgrims.PersonalFinances.Models
+
+@using Pilgrims.PersonalFinances.Core.Models
 @using Pilgrims.PersonalFinances.Core.Models.Enums
 @using Pilgrims.PersonalFinances.Core.Services.Interfaces
-@using Pilgrims.PersonalFinances.Services
+
 @inject IScheduledTransactionService ScheduledTransactionService
 @inject ITransactionService TransactionService
 @inject IAccountService AccountService

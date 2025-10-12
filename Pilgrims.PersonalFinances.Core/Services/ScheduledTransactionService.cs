@@ -399,7 +399,7 @@ public class ScheduledTransactionService : IScheduledTransactionService
             {
                 var existingOverdueNotification = await _context.TransactionNotifications
                     .AnyAsync(tn => tn.ScheduledTransactionId == scheduledTransaction.Id &&
-                                   tn.NotificationType == Pilgrims.PersonalFinances.Core.Models.AppNotificationType.BudgetAlert &&
+                                   tn.NotificationType == Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.BudgetAlert &&
                                    !tn.IsSent);
 
                 if (!existingOverdueNotification)
@@ -418,7 +418,7 @@ public class ScheduledTransactionService : IScheduledTransactionService
                     {
                         var existingReminder = await _context.TransactionNotifications
                             .AnyAsync(tn => tn.ScheduledTransactionId == scheduledTransaction.Id &&
-                                           tn.NotificationType == Pilgrims.PersonalFinances.Core.Models.AppNotificationType.BillReminder &&
+                                           tn.NotificationType == Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.BillReminder &&
                                            tn.ScheduledDate.Date == reminderDate.Date);
 
                         if (!existingReminder)

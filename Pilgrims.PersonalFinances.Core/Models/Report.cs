@@ -260,16 +260,16 @@ namespace Pilgrims.PersonalFinances.Core.Models
                 {
                     return DateRangePreset.Value switch
                     {
-                        DateRangePreset.Today => "Today",
-                        DateRangePreset.Yesterday => "Yesterday",
-                        DateRangePreset.ThisWeek => "This Week",
-                        DateRangePreset.LastWeek => "Last Week",
-                        DateRangePreset.ThisMonth => "This Month",
-                        DateRangePreset.LastMonth => "Last Month",
-                        DateRangePreset.ThisQuarter => "This Quarter",
-                        DateRangePreset.LastQuarter => "Last Quarter",
-                        DateRangePreset.ThisYear => "This Year",
-                        DateRangePreset.LastYear => "Last Year",
+                        Pilgrims.PersonalFinances.Core.Models.Enums.DateRangePreset.Today => "Today",
+                        Pilgrims.PersonalFinances.Core.Models.Enums.DateRangePreset.Yesterday => "Yesterday",
+                        Pilgrims.PersonalFinances.Core.Models.Enums.DateRangePreset.ThisWeek => "This Week",
+                        Pilgrims.PersonalFinances.Core.Models.Enums.DateRangePreset.LastWeek => "Last Week",
+                        Pilgrims.PersonalFinances.Core.Models.Enums.DateRangePreset.ThisMonth => "This Month",
+                        Pilgrims.PersonalFinances.Core.Models.Enums.DateRangePreset.LastMonth => "Last Month",
+                        Pilgrims.PersonalFinances.Core.Models.Enums.DateRangePreset.ThisQuarter => "This Quarter",
+                        Pilgrims.PersonalFinances.Core.Models.Enums.DateRangePreset.LastQuarter => "Last Quarter",
+                        Pilgrims.PersonalFinances.Core.Models.Enums.DateRangePreset.ThisYear => "This Year",
+                        Pilgrims.PersonalFinances.Core.Models.Enums.DateRangePreset.LastYear => "Last Year",
                         _ => "Custom Range"
                     };
                 }

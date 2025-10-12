@@ -1,8 +1,7 @@
 @page "/transactions/templates"
-@using Pilgrims.PersonalFinances.Models
+@using Pilgrims.PersonalFinances.Core.Models
 @using Pilgrims.PersonalFinances.Core.Models.Enums
 @using Pilgrims.PersonalFinances.Core.Services.Interfaces
-@using Pilgrims.PersonalFinances.Services
 @inject ITransactionService TransactionService
 @inject IAccountService AccountService
 @inject NavigationManager Navigation
@@ -368,14 +367,14 @@
 </style>
 
 @code {
-    private List<TransactionTemplate> templates = new();
-    private List<TransactionTemplate> filteredTemplates = new();
+    private List<Pilgrims.PersonalFinances.Core.Models.TransactionTemplate> templates = new();
+    private List<Pilgrims.PersonalFinances.Core.Models.TransactionTemplate> filteredTemplates = new();
     private List<Category> categories = new();
     private List<Account> accounts = new();
     
     private bool isLoading = true;
     private bool showTemplateModal = false;
-    private TransactionTemplate? editingTemplate = null;
+    private Pilgrims.PersonalFinances.Core.Models.TransactionTemplate? editingTemplate = null;
     private TransactionTemplateForm templateForm = new();
     
     private string searchQuery = "";
@@ -461,7 +460,7 @@
         showTemplateModal = true;
     }
 
-    private void EditTemplate(TransactionTemplate template)
+    private void EditTemplate(Pilgrims.PersonalFinances.Core.Models.TransactionTemplate template)
     {
         editingTemplate = template;
         templateForm = new TransactionTemplateForm
@@ -493,7 +492,7 @@
             return;
         }
 
-        var template = new TransactionTemplate
+        var template = new Pilgrims.PersonalFinances.Core.Models.TransactionTemplate
         {
             Id = editingTemplate?.Id ?? Guid.NewGuid().ToString(),
             Name = templateForm.Name,
@@ -520,7 +519,7 @@
         CloseTemplateModal();
     }
 
-    private async Task DeleteTemplate(TransactionTemplate template)
+    private async Task DeleteTemplate(Pilgrims.PersonalFinances.Core.Models.TransactionTemplate template)
     {
         var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", 
             $"Are you sure you want to delete the template '{template.Name}'?");
@@ -533,7 +532,7 @@
         }
     }
 
-    private async Task UseTemplate(TransactionTemplate template)
+    private async Task UseTemplate(Pilgrims.PersonalFinances.Core.Models.TransactionTemplate template)
     {
         // Increment usage count
         template.UsageCount++;
@@ -553,9 +552,9 @@
         Navigation.NavigateTo($"/transactions/add?{query}");
     }
 
-    private async Task DuplicateTemplate(TransactionTemplate template)
+    private async Task DuplicateTemplate(Pilgrims.PersonalFinances.Core.Models.TransactionTemplate template)
     {
-        var duplicate = new TransactionTemplate
+        var duplicate = new Pilgrims.PersonalFinances.Core.Models.TransactionTemplate
         {
             Id = Guid.NewGuid().ToString(),
             Name = $"{template.Name} (Copy)",

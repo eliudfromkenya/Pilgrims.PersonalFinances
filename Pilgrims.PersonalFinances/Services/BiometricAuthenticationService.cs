@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Pilgrims.PersonalFinances.Core.Services.Interfaces;
 
-namespace Pilgrims.PersonalFinances.Services;
+namespace Pilgrims.PersonalFinances.Core.Services;
 
 /// <summary>
 /// Service for managing biometric authentication

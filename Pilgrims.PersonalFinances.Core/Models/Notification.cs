@@ -158,10 +158,10 @@ public class Notification : BaseEntity
 
         var nextDate = RecurrenceType switch
         {
-            RecurrenceType.Daily => ScheduledDate.AddDays(RecurrenceInterval ?? 1),
-            RecurrenceType.Weekly => ScheduledDate.AddDays((RecurrenceInterval ?? 1) * 7),
-            RecurrenceType.Monthly => ScheduledDate.AddMonths(RecurrenceInterval ?? 1),
-            RecurrenceType.Annually => ScheduledDate.AddYears(RecurrenceInterval ?? 1),
+            Pilgrims.PersonalFinances.Core.Models.Enums.RecurrenceType.Daily => ScheduledDate.AddDays(RecurrenceInterval ?? 1),
+            Pilgrims.PersonalFinances.Core.Models.Enums.RecurrenceType.Weekly => ScheduledDate.AddDays((RecurrenceInterval ?? 1) * 7),
+            Pilgrims.PersonalFinances.Core.Models.Enums.RecurrenceType.Monthly => ScheduledDate.AddMonths(RecurrenceInterval ?? 1),
+            Pilgrims.PersonalFinances.Core.Models.Enums.RecurrenceType.Annually => ScheduledDate.AddYears(RecurrenceInterval ?? 1),
             _ => ScheduledDate.AddDays(1)
         };
 

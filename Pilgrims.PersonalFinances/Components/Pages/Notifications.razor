@@ -1,5 +1,4 @@
 @page "/notifications"
-@using Pilgrims.PersonalFinances.Models
 @using Pilgrims.PersonalFinances.Core.Models.Enums
 @using Pilgrims.PersonalFinances.Core.Services.Interfaces
 @using Pilgrims.PersonalFinances.Core.Messaging.Interfaces
@@ -231,7 +230,7 @@
                                     </svg>
                                 </button>
                                 
-                                @if (notification.NotificationType == Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.SystemAlert && notification.ScheduledTransaction != null)
+                                @if (notification.NotificationType == AppNotificationType.SystemAlert && notification.ScheduledTransaction != null)
                                 {
                                     <button @onclick="() => NavigateToTransaction(notification.ScheduledTransaction.Id)"
                                             class="px-3 py-1 text-sm bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors">
@@ -302,7 +301,7 @@
     private void CalculateStatistics()
     {
         unreadCount = notifications.Count(n => !n.IsRead && !n.IsDismissed);
-        highPriorityCount = notifications.Count(n => n.Priority == Pilgrims.PersonalFinances.Models.Enums.NotificationPriority.High && !n.IsRead && !n.IsDismissed);
+        highPriorityCount = notifications.Count(n => n.Priority == Pilgrims.PersonalFinances.Core.Models.Enums.NotificationPriority.High && !n.IsRead && !n.IsDismissed);
         todayCount = notifications.Count(n => n.ScheduledDate.Date == DateTime.Today);
     }
 
@@ -311,10 +310,10 @@
         var filtered = selectedFilter switch
         {
             "unread" => notifications.Where(n => !n.IsRead && !n.IsDismissed),
-            "high" => notifications.Where(n => n.Priority == Pilgrims.PersonalFinances.Models.Enums.NotificationPriority.High && !n.IsRead && !n.IsDismissed),
-            "reminder" => notifications.Where(n => n.NotificationType == Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.BillReminder),
-            "overdue" => notifications.Where(n => n.NotificationType == Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.BudgetAlert),
-            "approval" => notifications.Where(n => n.NotificationType == Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.SystemAlert),
+            "high" => notifications.Where(n => n.Priority == Pilgrims.PersonalFinances.Core.Models.Enums.NotificationPriority.High && !n.IsRead && !n.IsDismissed),
+            "reminder" => notifications.Where(n => n.NotificationType == Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.BillReminder),
+            "overdue" => notifications.Where(n => n.NotificationType == Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.BudgetAlert),
+            "approval" => notifications.Where(n => n.NotificationType == Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.SystemAlert),
             _ => notifications.AsEnumerable()
         };
 
@@ -425,97 +424,97 @@
         Navigation.NavigateTo($"/recurring-transactions/edit/{scheduledTransactionId}");
     }
 
-    private string GetNotificationIcon(Pilgrims.PersonalFinances.Models.Enums.AppNotificationType type)
+    private string GetNotificationIcon(AppNotificationType type)
     {
         return type switch
         {
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.BillReminder => "fas fa-bell",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.BudgetAlert => "fas fa-exclamation-triangle",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.DebtPayment => "fas fa-credit-card",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.IncomeExpectation => "fas fa-dollar-sign",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.ReconciliationReminder => "fas fa-balance-scale",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.SystemAlert => "fas fa-cog",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.InsurancePremiumDue => "fas fa-shield-alt",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.InsuranceClaimUpdate => "fas fa-file-medical",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.InsurancePolicyExpiry => "fas fa-calendar-times",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.ObligationPaymentDue => "fas fa-hand-holding-usd",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.ObligationArrears => "fas fa-exclamation-circle",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.ObligationBenefitAvailable => "fas fa-gift",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.GroupContributionReminder => "fas fa-users",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.BillReminder => "fas fa-bell",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.BudgetAlert => "fas fa-exclamation-triangle",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.DebtPayment => "fas fa-credit-card",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.IncomeExpectation => "fas fa-dollar-sign",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.ReconciliationReminder => "fas fa-balance-scale",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.SystemAlert => "fas fa-cog",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.InsurancePremiumDue => "fas fa-shield-alt",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.InsuranceClaimUpdate => "fas fa-file-medical",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.InsurancePolicyExpiry => "fas fa-calendar-times",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.ObligationPaymentDue => "fas fa-hand-holding-usd",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.ObligationArrears => "fas fa-exclamation-circle",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.ObligationBenefitAvailable => "fas fa-gift",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.GroupContributionReminder => "fas fa-users",
             _ => "fas fa-info-circle"
         };
     }
 
-    private string GetNotificationIconBg(Pilgrims.PersonalFinances.Models.Enums.AppNotificationType type)
+    private string GetNotificationIconBg(Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType type)
     {
         return type switch
         {
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.BillReminder => "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.BudgetAlert => "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.DebtPayment => "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.IncomeExpectation => "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.ReconciliationReminder => "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.SystemAlert => "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.InsurancePremiumDue => "bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.InsuranceClaimUpdate => "bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.InsurancePolicyExpiry => "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.ObligationPaymentDue => "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.ObligationArrears => "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.ObligationBenefitAvailable => "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.GroupContributionReminder => "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.BillReminder => "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.BudgetAlert => "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.DebtPayment => "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.IncomeExpectation => "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.ReconciliationReminder => "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.SystemAlert => "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.InsurancePremiumDue => "bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.InsuranceClaimUpdate => "bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.InsurancePolicyExpiry => "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.ObligationPaymentDue => "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.ObligationArrears => "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.ObligationBenefitAvailable => "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.GroupContributionReminder => "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400",
             _ => "bg-gray-100 dark:bg-gray-900/30 text-gray-600 dark:text-gray-400"
         };
     }
 
-    private string GetPriorityBadgeClass(Pilgrims.PersonalFinances.Models.Enums.NotificationPriority priority)
+    private string GetPriorityBadgeClass(Pilgrims.PersonalFinances.Core.Models.Enums.NotificationPriority priority)
     {
         return priority switch
         {
-            Pilgrims.PersonalFinances.Models.Enums.NotificationPriority.Critical => "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
-            Pilgrims.PersonalFinances.Models.Enums.NotificationPriority.High => "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
-            Pilgrims.PersonalFinances.Models.Enums.NotificationPriority.Low => "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+            Pilgrims.PersonalFinances.Core.Models.Enums.NotificationPriority.Critical => "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+            Pilgrims.PersonalFinances.Core.Models.Enums.NotificationPriority.High => "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
+            Pilgrims.PersonalFinances.Core.Models.Enums.NotificationPriority.Low => "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
             _ => "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400"
         };
     }
 
-    private string GetTypeBadgeClass(Pilgrims.PersonalFinances.Models.Enums.AppNotificationType type)
+    private string GetTypeBadgeClass(Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType type)
     {
         return type switch
         {
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.BillReminder => "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.BudgetAlert => "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.DebtPayment => "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.IncomeExpectation => "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.ReconciliationReminder => "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.SystemAlert => "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.InsurancePremiumDue => "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.InsuranceClaimUpdate => "bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.InsurancePolicyExpiry => "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.ObligationPaymentDue => "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.ObligationArrears => "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.ObligationBenefitAvailable => "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.GroupContributionReminder => "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.BillReminder => "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.BudgetAlert => "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.DebtPayment => "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.IncomeExpectation => "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.ReconciliationReminder => "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.SystemAlert => "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.InsurancePremiumDue => "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.InsuranceClaimUpdate => "bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.InsurancePolicyExpiry => "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.ObligationPaymentDue => "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.ObligationArrears => "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.ObligationBenefitAvailable => "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.GroupContributionReminder => "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300",
             _ => "bg-gray-100 dark:bg-gray-900/30 text-gray-700 dark:text-gray-300"
         };
     }
 
-    private string GetTypeDisplayName(Pilgrims.PersonalFinances.Models.Enums.AppNotificationType type)
+    private string GetTypeDisplayName(Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType type)
     {
         return type switch
         {
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.BillReminder => "Bill Reminder",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.BudgetAlert => "Budget Alert",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.DebtPayment => "Debt Payment",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.IncomeExpectation => "Income Expectation",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.ReconciliationReminder => "Reconciliation Reminder",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.SystemAlert => "System Alert",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.InsurancePremiumDue => "Insurance Premium Due",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.InsuranceClaimUpdate => "Insurance Claim Update",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.InsurancePolicyExpiry => "Insurance Policy Expiry",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.ObligationPaymentDue => "Obligation Payment Due",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.ObligationArrears => "Obligation Arrears",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.ObligationBenefitAvailable => "Obligation Benefit Available",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.GroupContributionReminder => "Group Contribution Reminder",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.BillReminder => "Bill Reminder",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.BudgetAlert => "Budget Alert",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.DebtPayment => "Debt Payment",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.IncomeExpectation => "Income Expectation",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.ReconciliationReminder => "Reconciliation Reminder",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.SystemAlert => "System Alert",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.InsurancePremiumDue => "Insurance Premium Due",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.InsuranceClaimUpdate => "Insurance Claim Update",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.InsurancePolicyExpiry => "Insurance Policy Expiry",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.ObligationPaymentDue => "Obligation Payment Due",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.ObligationArrears => "Obligation Arrears",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.ObligationBenefitAvailable => "Obligation Benefit Available",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.GroupContributionReminder => "Group Contribution Reminder",
             _ => "Unknown"
         };
     }

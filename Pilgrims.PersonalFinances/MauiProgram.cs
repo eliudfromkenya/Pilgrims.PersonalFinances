@@ -1,7 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using Pilgrims.PersonalFinances.Data;
-using Pilgrims.PersonalFinances.Services;
 using Pilgrims.PersonalFinances.Core.Services.Interfaces;
 using Pilgrims.PersonalFinances.Core.Localization.Interfaces;
 using Pilgrims.PersonalFinances.Core.Localization.Services;

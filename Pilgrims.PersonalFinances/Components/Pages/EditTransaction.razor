@@ -1,9 +1,7 @@
 @page "/transactions/edit/{id}"
-@using Pilgrims.PersonalFinances.Models
 @using Pilgrims.PersonalFinances.Core.Models.DTOs
 @using Pilgrims.PersonalFinances.Core.Models.Enums
 @using Pilgrims.PersonalFinances.Core.Services.Interfaces
-@using Pilgrims.PersonalFinances.Services
 @using Pilgrims.PersonalFinances.Components.Shared
 @inject ITransactionService TransactionService
 @inject IAccountService AccountService
@@ -908,7 +906,7 @@
         var templateName = await JSRuntime.InvokeAsync<string>("prompt", "Enter template name:");
         if (!string.IsNullOrWhiteSpace(templateName))
         {
-            var template = new Models.TransactionTemplate
+            var template = new Pilgrims.PersonalFinances.Core.Models.TransactionTemplate
             {
                 Id = Guid.NewGuid().ToString(),
                 Name = templateName,
@@ -970,16 +968,5 @@
         };
     }
     
-    // DTO for transaction templates
-    public class TransactionTemplate
-    {
-        public string Id { get; set; } = "";
-        public string Name { get; set; } = "";
-        public string Description { get; set; } = "";
-        public decimal Amount { get; set; }
-        public TransactionType Type { get; set; }
-        public string? CategoryId { get; set; }
-        public string? Payee { get; set; }
-        public string? Tags { get; set; }
-    }
+
 }

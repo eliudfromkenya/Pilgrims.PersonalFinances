@@ -1,11 +1,12 @@
 @page "/obligations/payoff-calculator"
-@using Pilgrims.PersonalFinances.Models
+@using Pilgrims.PersonalFinances.Core.Models
 @using Pilgrims.PersonalFinances.Core.Models.Enums
 @using Pilgrims.PersonalFinances.Core.Services.Interfaces
 @using Pilgrims.PersonalFinances.Core.Messaging.Interfaces
 @using Pilgrims.PersonalFinances.Core.Models.DTOs
 @inject IObligationService ObligationService
 @inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
 @inject IMessagingService MessagingService
 
 <PageTitle>Payoff Calculator - Personal Finance</PageTitle>

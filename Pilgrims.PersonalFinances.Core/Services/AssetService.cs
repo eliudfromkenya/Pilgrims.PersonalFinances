@@ -90,7 +90,7 @@ public class AssetService : IAssetService
         await _notificationService.CreateNotificationAsync(
             "New Asset Added",
             $"Asset '{asset.Name}' has been successfully added to your portfolio.",
-            Pilgrims.PersonalFinances.Core.Models.AppNotificationType.SystemAlert
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.SystemAlert
         );
 
         return asset;
@@ -396,7 +396,7 @@ public class AssetService : IAssetService
             await _notificationService.CreateNotificationAsync(
                 "Maintenance Record Added",
                 $"Maintenance record for '{asset.Name}' has been added.",
-                Pilgrims.PersonalFinances.Core.Models.AppNotificationType.SystemAlert
+                Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.SystemAlert
             );
         }
 
