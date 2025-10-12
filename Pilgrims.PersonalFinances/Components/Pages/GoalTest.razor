@@ -208,7 +208,7 @@
         }
     }
 
-    private async Task RunModelTests()
+    private Task RunModelTests()
     {
         try
         {
@@ -255,10 +255,12 @@
             AddTestResult("Goal Completion", testGoal.IsCompleted, 
                 $"Goal completed: {testGoal.IsCompleted} | Completion date: {testGoal.CompletedDate}");
 
+            return Task.CompletedTask;
         }
         catch (Exception ex)
         {
             AddTestResult("Model Tests", false, $"Error in model tests: {ex.Message}");
+            return Task.CompletedTask;
         }
     }
 

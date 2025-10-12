@@ -322,7 +322,7 @@
         asset.IsActive = true;
     }
 
-    private async Task OnDepreciationMethodChanged(ChangeEventArgs e)
+    private void OnDepreciationMethodChanged(ChangeEventArgs e)
     {
         asset.DepreciationMethod = e.Value?.ToString() ?? "Straight-line";
         

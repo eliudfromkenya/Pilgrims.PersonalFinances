@@ -403,23 +403,23 @@
         StateHasChanged();
     }
 
-    private async Task OnSearchChanged(ChangeEventArgs e)
+    private void OnSearchChanged(ChangeEventArgs e)
     {
         searchTerm = e.Value?.ToString() ?? "";
         ApplyFilters();
     }
 
-    private async Task OnCategoryChanged()
+    private void OnCategoryChanged()
     {
         ApplyFilters();
     }
 
-    private async Task OnConditionChanged()
+    private void OnConditionChanged()
     {
         ApplyFilters();
     }
 
-    private async Task OnViewModeChanged()
+    private void OnViewModeChanged()
     {
         StateHasChanged();
     }
@@ -444,7 +444,7 @@
         Navigation.NavigateTo($"/assets/details/{assetId}");
     }
 
-    private string GetConditionBadgeClass(string condition)
+    private string GetConditionBadgeClass(string? condition)
     {
         return condition?.ToLower() switch
         {

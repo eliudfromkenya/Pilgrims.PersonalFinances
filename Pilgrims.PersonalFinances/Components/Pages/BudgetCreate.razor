@@ -478,7 +478,7 @@
         budgetModel.EnableAlerts = true;
     }
 
-    private async Task OnBudgetTypeChanged(ChangeEventArgs e)
+    private void OnBudgetTypeChanged(ChangeEventArgs e)
     {
         if (Enum.TryParse<BudgetType>(e.Value?.ToString(), out var budgetType))
         {
@@ -488,7 +488,6 @@
             budgetModel.CategoryId = null;
             budgetModel.AccountId = null;
             budgetModel.Tags = null;
-            
             StateHasChanged();
         }
     }

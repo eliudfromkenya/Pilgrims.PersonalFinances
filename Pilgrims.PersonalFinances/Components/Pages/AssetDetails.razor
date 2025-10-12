@@ -163,7 +163,7 @@
                                             @GetDepreciationText(asset.PurchasePrice, asset.CurrentValue)
                                         </span>
                                     </div>
-                                    @if (asset.SalvageValue > 0)
+                                    @if ((asset.SalvageValue ?? 0) > 0)
                                     {
                                         <div class="flex justify-between">
                                             <span class="text-slate-600 dark:text-slate-400">Salvage Value:</span>
@@ -496,7 +496,7 @@
         await JSRuntime.InvokeVoidAsync("showToast", "info", "Document management would be implemented here");
     }
 
-    private string GetConditionBadgeClass(string condition)
+    private string GetConditionBadgeClass(string? condition)
     {
         return condition?.ToLower() switch
         {
@@ -544,9 +544,12 @@
         };
     }
 
-    private string GetInsuranceStatusClass(DateTime expiryDate)
+    private string GetInsuranceStatusClass(DateTime? expiryDate)
     {
-        var daysUntilExpiry = (expiryDate - DateTime.Now).Days;
+        if (!expiryDate.HasValue)
+            return "text-slate-600 dark:text-slate-400";
+    
+        var daysUntilExpiry = (expiryDate.Value - DateTime.Now).Days;
         if (daysUntilExpiry < 0)
             return "text-red-600 dark:text-red-400";
         else if (daysUntilExpiry < 30)
@@ -555,9 +558,12 @@
             return "text-green-600 dark:text-green-400";
     }
 
-    private string GetInsuranceStatus(DateTime expiryDate)
+    private string GetInsuranceStatus(DateTime? expiryDate)
     {
-        var daysUntilExpiry = (expiryDate - DateTime.Now).Days;
+        if (!expiryDate.HasValue)
+            return "Unknown";
+    
+        var daysUntilExpiry = (expiryDate.Value - DateTime.Now).Days;
         if (daysUntilExpiry < 0)
             return "Expired";
         else if (daysUntilExpiry < 30)

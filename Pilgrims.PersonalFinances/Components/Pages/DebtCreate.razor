@@ -415,8 +415,8 @@
         {
             var debt = new Debt
             {
-                Id = debtModel.Id,
-                Name = debtModel.Name,
+                Id = string.IsNullOrWhiteSpace(debtModel.Id) ? Guid.NewGuid().ToString() : debtModel.Id,
+                Name = debtModel.Name ?? string.Empty,
                 DebtType = debtModel.DebtType,
                 CreditorId = debtModel.CreditorId,
                 PrincipalAmount = debtModel.PrincipalAmount,

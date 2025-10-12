@@ -462,7 +462,7 @@
             activeBudgets = await BudgetService.GetActiveBudgetsAsync();
             
             // Load budget insights
-            budgetInsights = await GenerateBudgetInsights();
+            budgetInsights = GenerateBudgetInsights();
             
             // Load monthly data for charts
             var currentYear = DateTime.Now.Year;
@@ -479,7 +479,7 @@
         }
     }
 
-    private Task<List<BudgetInsight>> GenerateBudgetInsights()
+    private List<BudgetInsight> GenerateBudgetInsights()
     {
         var insights = new List<BudgetInsight>();
         
@@ -551,7 +551,7 @@
             }
         }
 
-        return Task.FromResult(insights);
+        return insights;
     }
 
     private async Task RefreshDashboard()
@@ -559,9 +559,9 @@
         await LoadDashboardData();
     }
 
-    private async Task RefreshInsights()
+    private void RefreshInsights()
     {
-        budgetInsights = await GenerateBudgetInsights();
+        budgetInsights = GenerateBudgetInsights();
         StateHasChanged();
     }
 
@@ -590,7 +590,7 @@
         Navigation.NavigateTo("/budget/alerts");
     }
 
-    private async Task ExecuteInsightAction(BudgetInsight insight)
+    private void ExecuteInsightAction(BudgetInsight insight)
     {
         switch (insight.ActionText)
         {

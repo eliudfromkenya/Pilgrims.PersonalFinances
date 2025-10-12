@@ -342,7 +342,7 @@
         }
         catch (Exception ex)
         {
-            MessagingService.ShowAlertAsync($"Error creating account: {ex.Message}");
+            await MessagingService.ShowAlertAsync($"Error creating account: {ex.Message}");
         }
         finally
         {
@@ -352,7 +352,7 @@
 
     private async Task HandleInvalidSubmit()
     {
-        MessagingService.ShowAlertAsync("Please fix the validation errors before submitting.");
+        await MessagingService.ShowAlertAsync("Please fix the validation errors before submitting.");
     }
 
     private void Cancel()

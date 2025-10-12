@@ -131,7 +131,7 @@
                                         @creditor.Name
                                     </h3>
                                     <div class="text-sm" style="color: var(--text-secondary);">
-                                        @creditor.Debts.Count debt(s)
+                                        @(creditor.Debts?.Count ?? 0) debt(s)
                                     </div>
                                 </div>
                             </div>
@@ -183,22 +183,22 @@
                         </div>
 
                         <!-- Associated Debts -->
-                        @if (creditor.Debts.Any())
+                        @if ((creditor.Debts?.Any()) == true)
                         {
                             <div class="border-t pt-4" style="border-color: var(--border-color);">
                                 <h4 class="text-sm font-semibold mb-2" style="color: var(--text-primary);">Associated Debts</h4>
                                 <div class="space-y-1">
-                                    @foreach (var debt in creditor.Debts.Take(3))
+                                    @foreach (var debt in (creditor.Debts ?? new List<Debt>()).Take(3))
                                     {
                                         <div class="flex justify-between items-center text-sm">
                                             <span style="color: var(--text-secondary);">@debt.Name</span>
                                             <span class="font-semibold text-red-500">@debt.CurrentBalance.ToString("C")</span>
                                         </div>
                                     }
-                                    @if (creditor.Debts.Count > 3)
+                                    @if ((creditor.Debts?.Count ?? 0) > 3)
                                     {
                                         <div class="text-xs text-center pt-2" style="color: var(--text-secondary);">
-                                            +@(creditor.Debts.Count - 3) more debt(s)
+                                            +@((creditor.Debts?.Count ?? 0) - 3) more debt(s)
                                         </div>
                                     }
                                 </div>
@@ -398,8 +398,8 @@
             creditors = [.. await DebtService.GetAllCreditorsAsync()];
             
             // Calculate statistics
-            activeCreditors = creditors.Count(c => c.Debts.Any(d => d.IsActive));
-            totalDebts = creditors.Sum(c => c.Debts.Count);
+            activeCreditors = creditors.Count(c => c.Debts?.Any(d => d.IsActive) == true);
+            totalDebts = creditors.Sum(c => c.Debts?.Count ?? 0);
             
             ApplyFilters();
         }
@@ -430,7 +430,7 @@
         filtered = sortBy switch
         {
             "name" => sortAscending ? filtered.OrderBy(c => c.Name) : filtered.OrderByDescending(c => c.Name),
-            "debts" => sortAscending ? filtered.OrderBy(c => c.Debts.Count) : filtered.OrderByDescending(c => c.Debts.Count),
+            "debts" => sortAscending ? filtered.OrderBy(c => c.Debts?.Count ?? 0) : filtered.OrderByDescending(c => c.Debts?.Count ?? 0),
             "created" => sortAscending ? filtered.OrderBy(c => c.CreatedAt) : filtered.OrderByDescending(c => c.CreatedAt),
             _ => filtered.OrderBy(c => c.Name)
         };

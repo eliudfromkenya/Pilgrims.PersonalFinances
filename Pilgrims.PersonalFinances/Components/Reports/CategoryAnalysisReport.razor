@@ -46,7 +46,7 @@
             @if (Report.Categories?.Any() == true)
             {
                 <PieChart Data="@GetCategoryChartData()" 
-                          OnSegmentClick="@OnCategoryClick" 
+                          OnItemClick="@OnCategoryItemClick" 
                           ShowLegend="true" />
             }
             else
@@ -320,6 +320,15 @@
             var c when c.Contains("tax") => "📋",
             _ => "📊"
         };
+    }
+
+    private async Task OnCategoryItemClick(PieChart.ChartDataItem item)
+    {
+        var categoryName = item.Label;
+        if (OnCategoryDrillDown.HasDelegate)
+        {
+            await OnCategoryDrillDown.InvokeAsync(categoryName);
+        }
     }
 
     private async Task OnCategoryClick(string categoryName)

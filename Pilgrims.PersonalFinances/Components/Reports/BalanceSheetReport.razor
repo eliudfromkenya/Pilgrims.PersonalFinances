@@ -39,7 +39,7 @@
             @if (Report.Assets?.Any() == true)
             {
                 <PieChart Data="@GetAssetChartData()" 
-                          OnSegmentClick="@OnAssetClick" 
+                          OnItemClick="@OnAssetClick" 
                           ShowLegend="true" />
             }
             else
