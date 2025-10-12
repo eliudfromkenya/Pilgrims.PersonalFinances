@@ -114,30 +114,30 @@
                                             <span class="text-slate-900 dark:text-white font-medium">@asset.Brand</span>
                                         </div>
                                     }
-                                    @if (!string.IsNullOrEmpty(asset.Model))
+                                    @if (!string.IsNullOrEmpty(asset?.Model))
                                     {
                                         <div class="flex justify-between">
                                             <span class="text-slate-600 dark:text-slate-400">Model:</span>
-                                            <span class="text-slate-900 dark:text-white font-medium">@asset.Model</span>
+                                            <span class="text-slate-900 dark:text-white font-medium">@asset?.Model</span>
                                         </div>
                                     }
-                                    @if (!string.IsNullOrEmpty(asset.SerialNumber))
+                                    @if (!string.IsNullOrEmpty(asset?.SerialNumber))
                                     {
                                         <div class="flex justify-between">
                                             <span class="text-slate-600 dark:text-slate-400">Serial Number:</span>
-                                            <span class="text-slate-900 dark:text-white font-medium font-mono text-sm">@asset.SerialNumber</span>
+                                            <span class="text-slate-900 dark:text-white font-medium font-mono text-sm">@asset?.SerialNumber</span>
                                         </div>
                                     }
-                                    @if (!string.IsNullOrEmpty(asset.Location))
+                                    @if (!string.IsNullOrEmpty(asset?.Location))
                                     {
                                         <div class="flex justify-between">
                                             <span class="text-slate-600 dark:text-slate-400">Location:</span>
-                                            <span class="text-slate-900 dark:text-white font-medium">@asset.Location</span>
+                                            <span class="text-slate-900 dark:text-white font-medium">@asset?.Location</span>
                                         </div>
                                     }
                                     <div class="flex justify-between">
                                         <span class="text-slate-600 dark:text-slate-400">Purchase Date:</span>
-                                        <span class="text-slate-900 dark:text-white font-medium">@asset.PurchaseDate?.ToString("MMM dd, yyyy")</span>
+                                        <span class="text-slate-900 dark:text-white font-medium">@asset?.PurchaseDate?.ToString("MMM dd, yyyy")</span>
                                     </div>
                                     <div class="flex justify-between">
                                         <span class="text-slate-600 dark:text-slate-400">Age:</span>
@@ -151,38 +151,39 @@
                                 <div class="space-y-3">
                                     <div class="flex justify-between">
                                         <span class="text-slate-600 dark:text-slate-400">Purchase Price:</span>
-                                        <span class="text-slate-900 dark:text-white font-medium">$@asset.PurchasePrice?.ToString("N2")</span>
+                                        <span class="text-slate-900 dark:text-white font-medium">$@asset?.PurchasePrice?.ToString("N2")</span>
                                     </div>
                                     <div class="flex justify-between">
                                         <span class="text-slate-600 dark:text-slate-400">Current Value:</span>
-                                        <span class="text-slate-900 dark:text-white font-medium">$@asset.CurrentValue?.ToString("N2")</span>
+                                        <span class="text-slate-900 dark:text-white font-medium">$@asset?.CurrentValue?.ToString("N2")</span>
                                     </div>
                                     <div class="flex justify-between">
                                         <span class="text-slate-600 dark:text-slate-400">Depreciation:</span>
-                                        <span class="@GetDepreciationClass(asset.PurchasePrice - asset.CurrentValue) font-medium">
-                                            @GetDepreciationText(asset.PurchasePrice, asset.CurrentValue)
+                                        <span class="@GetDepreciationClass((asset?.PurchasePrice ?? 0m) - (asset?.CurrentValue ?? 0m)) font-medium">
+                                            @GetDepreciationText(asset?.PurchasePrice ?? 0m, asset?.CurrentValue ?? 0m)
                                         </span>
                                     </div>
-                                    @if ((asset.SalvageValue ?? 0) > 0)
+                                    @* Ensure asset is null-safe in salvage value check *@
+                                    @if ((asset?.SalvageValue ?? 0) > 0)
                                     {
                                         <div class="flex justify-between">
                                             <span class="text-slate-600 dark:text-slate-400">Salvage Value:</span>
-                                            <span class="text-slate-900 dark:text-white font-medium">$@asset.SalvageValue?.ToString("N2")</span>
+                                            <span class="text-slate-900 dark:text-white font-medium">$@asset?.SalvageValue?.ToString("N2")</span>
                                         </div>
                                     }
                                     <div class="flex justify-between">
                                         <span class="text-slate-600 dark:text-slate-400">Depreciation Method:</span>
-                                        <span class="text-slate-900 dark:text-white font-medium">@GetDepreciationMethodDisplay(asset.DepreciationMethod)</span>
+                                        <span class="text-slate-900 dark:text-white font-medium">@GetDepreciationMethodDisplay(asset?.DepreciationMethod)</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        @if (!string.IsNullOrEmpty(asset.Description))
+                        @if (!string.IsNullOrEmpty(asset?.Description))
                         {
                             <div class="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
                                 <h3 class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">Description</h3>
-                                <p class="text-slate-700 dark:text-slate-300">@asset.Description</p>
+                                <p class="text-slate-700 dark:text-slate-300">@asset?.Description</p>
                             </div>
                         }
                     </div>
@@ -283,21 +284,21 @@
                         <div class="space-y-4">
                             <div class="flex items-center justify-between">
                                 <span class="text-slate-600 dark:text-slate-400">Current Value</span>
-                                <span class="text-xl font-bold text-slate-900 dark:text-white">$@asset.CurrentValue?.ToString("N0")</span>
+                                <span class="text-xl font-bold text-slate-900 dark:text-white">$@asset?.CurrentValue?.ToString("N0")</span>
                             </div>
                             <div class="flex items-center justify-between">
                                 <span class="text-slate-600 dark:text-slate-400">Total Depreciation</span>
-                                <span class="text-lg font-semibold @GetDepreciationClass(asset.PurchasePrice - asset.CurrentValue)">
-                                    $@((asset.PurchasePrice - asset.CurrentValue)?.ToString("N0"))
+                                <span class="text-lg font-semibold @GetDepreciationClass((asset?.PurchasePrice ?? 0m) - (asset?.CurrentValue ?? 0m))">
+                                    $@(((asset?.PurchasePrice ?? 0m) - (asset?.CurrentValue ?? 0m)).ToString("N0"))
                                 </span>
                             </div>
                             <div class="flex items-center justify-between">
                                 <span class="text-slate-600 dark:text-slate-400">Maintenance Cost</span>
-                                <span class="text-lg font-semibold text-slate-900 dark:text-white">$@maintenanceRecords.Sum(m => m.Cost).ToString("N0")</span>
+                                <span class="text-lg font-semibold text-slate-900 dark:text-white">$@((maintenanceRecords.Sum(m => m.Cost)).ToString("N0"))</span>
                             </div>
                             <div class="flex items-center justify-between">
                                 <span class="text-slate-600 dark:text-slate-400">Total Investment</span>
-                                <span class="text-lg font-semibold text-slate-900 dark:text-white">$@((asset.PurchasePrice + maintenanceRecords.Sum(m => m.Cost))?.ToString("N0"))</span>
+                                <span class="text-lg font-semibold text-slate-900 dark:text-white">$@(((asset?.PurchasePrice ?? 0m) + (maintenanceRecords.Sum(m => m.Cost))).ToString("N0"))</span>
                             </div>
                         </div>
                     </div>
@@ -533,7 +534,7 @@
         return $"${depreciation:N2} ({percentage:F1}%)";
     }
 
-    private string GetDepreciationMethodDisplay(string method)
+    private string GetDepreciationMethodDisplay(string? method)
     {
         return method?.ToLower() switch
         {

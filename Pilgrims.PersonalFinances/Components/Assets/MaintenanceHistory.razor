@@ -294,18 +294,21 @@
         return mostCommon ?? "N/A";
     }
 
-    private (string Icon, string BgColor) GetMaintenanceTypeInfo(string maintenanceType)
+    private (string Icon, string BgColor) GetMaintenanceTypeInfo(string? maintenanceType)
     {
-        return maintenanceType?.ToLower() switch
+        var type = maintenanceType?.ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(type))
         {
-            var type when type.Contains("repair") => ("🔧", "bg-red-500"),
-            var type when type.Contains("service") => ("⚙️", "bg-blue-500"),
-            var type when type.Contains("inspection") => ("🔍", "bg-green-500"),
-            var type when type.Contains("cleaning") => ("🧽", "bg-cyan-500"),
-            var type when type.Contains("maintenance") => ("🛠️", "bg-orange-500"),
-            var type when type.Contains("upgrade") => ("⬆️", "bg-purple-500"),
-            var type when type.Contains("replacement") => ("🔄", "bg-yellow-500"),
-            _ => ("📋", "bg-gray-500")
-        };
+            return ("📋", "bg-gray-500");
+        }
+
+        if (type.Contains("repair")) return ("🔧", "bg-red-500");
+        if (type.Contains("service")) return ("⚙️", "bg-blue-500");
+        if (type.Contains("inspection")) return ("🔍", "bg-green-500");
+        if (type.Contains("cleaning")) return ("🧽", "bg-cyan-500");
+        if (type.Contains("maintenance")) return ("🛠️", "bg-orange-500");
+        if (type.Contains("upgrade")) return ("⬆️", "bg-purple-500");
+        if (type.Contains("replacement")) return ("🔄", "bg-yellow-500");
+        return ("📋", "bg-gray-500");
     }
 }
