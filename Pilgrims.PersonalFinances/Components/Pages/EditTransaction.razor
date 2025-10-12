@@ -678,7 +678,7 @@
             {
                 if (!ValidateExistingSplitTransactions())
                 {
-                    await JSRuntime.InvokeVoidAsync("alert", "Split transaction amounts must equal the total transaction amount.");
+                    await JSRuntime.InvokeVoidAsync("showAlertToast", "Validation", "Split transaction amounts must equal the total transaction amount.");
                     return;
                 }
             }
@@ -726,12 +726,12 @@
                 }
             }
             
-            await JSRuntime.InvokeVoidAsync("alert", "Transaction updated successfully!");
+            await JSRuntime.InvokeVoidAsync("showAlertToast", "Success", "Transaction updated successfully!");
             Navigation.NavigateTo("/transactions");
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error updating transaction: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("showAlertToast", "Error", $"Error updating transaction: {ex.Message}");
         }
         finally
         {
@@ -751,12 +751,12 @@
         try
         {
             await TransactionService.DeleteTransactionAsync(transaction.Id);
-            await JSRuntime.InvokeVoidAsync("alert", "Transaction deleted successfully!");
+            await JSRuntime.InvokeVoidAsync("showAlertToast", "Success", "Transaction deleted successfully!");
             Navigation.NavigateTo("/transactions");
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error deleting transaction: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("showAlertToast", "Error", $"Error deleting transaction: {ex.Message}");
         }
         finally
         {
@@ -787,12 +787,12 @@
             };
             
             var savedTransaction = await TransactionService.CreateTransactionAsync(duplicateTransaction);
-            await JSRuntime.InvokeVoidAsync("alert", "Transaction duplicated successfully!");
+            await JSRuntime.InvokeVoidAsync("showAlertToast", "Success", "Transaction duplicated successfully!");
             Navigation.NavigateTo($"/transactions/edit/{savedTransaction.Id}");
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error duplicating transaction: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("showAlertToast", "Error", $"Error duplicating transaction: {ex.Message}");
         }
     }
     
@@ -862,7 +862,7 @@
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", $"File {file.Name} is too large. Maximum size is 10MB.");
+                await JSRuntime.InvokeVoidAsync("showAlertToast", "Validation", $"File {file.Name} is too large. Maximum size is 10MB.");
             }
         }
     }
@@ -878,11 +878,11 @@
         {
             await TransactionService.DeleteAttachmentAsync(attachment.Id);
             existingAttachments.Remove(attachment);
-            await JSRuntime.InvokeVoidAsync("alert", "Attachment removed successfully!");
+            await JSRuntime.InvokeVoidAsync("showAlertToast", "Success", "Attachment removed successfully!");
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error removing attachment: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("showAlertToast", "Error", $"Error removing attachment: {ex.Message}");
         }
     }
     
@@ -919,7 +919,7 @@
             };
             
             await TransactionService.CreateTransactionTemplateAsync(template);
-            await JSRuntime.InvokeVoidAsync("alert", "Template saved successfully!");
+            await JSRuntime.InvokeVoidAsync("showAlertToast", "Success", "Template saved successfully!");
         }
     }
     

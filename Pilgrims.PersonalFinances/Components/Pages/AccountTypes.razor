@@ -1,0 +1,53 @@
+@page "/accounts/types"
+@using Pilgrims.PersonalFinances.Core.Services.Interfaces
+@using Pilgrims.PersonalFinances.Core.Models
+@inject IAccountTypeService AccountTypeService
+
+<h1 class="text-2xl font-bold mb-4">Account Types</h1>
+
+@if (isLoading)
+{
+    <p>Loading account types...</p>
+}
+else if (loadError is not null)
+{
+    <div class="text-red-600">@loadError</div>
+}
+else
+{
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        @foreach (var type in accountTypes)
+        {
+            <div class="p-4 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm">
+                <div class="flex items-center mb-2">
+                    <span class="text-2xl mr-2">@type.Icon</span>
+                    <span class="font-semibold">@type.Name</span>
+                </div>
+                <p class="text-sm text-gray-600 dark:text-gray-400">@type.Description</p>
+                <div class="mt-2 text-xs text-gray-500 dark:text-gray-400">Enum: @type.EnumValue</div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private bool isLoading = true;
+    private string? loadError;
+    private List<AccountTypeDefinition> accountTypes = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            accountTypes = await AccountTypeService.GetActiveTypesAsync();
+        }
+        catch (Exception ex)
+        {
+            loadError = $"Failed to load account types: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

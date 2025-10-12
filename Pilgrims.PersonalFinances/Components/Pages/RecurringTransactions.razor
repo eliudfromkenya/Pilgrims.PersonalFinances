@@ -426,7 +426,7 @@
 
     private async Task DeleteTransaction(ScheduledTransaction transaction)
     {
-        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete '{transaction.Name}'?");
+        var confirmed = await JSRuntime.InvokeAsync<bool>("showConfirmationToast", "Delete Recurring Transaction", $"Are you sure you want to delete '{transaction.Name}'? This action cannot be undone.", "Delete", "Cancel");
         if (confirmed)
         {
             try

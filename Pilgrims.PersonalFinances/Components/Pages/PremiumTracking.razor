@@ -639,13 +639,13 @@
     private async Task SetupAutoPayReminders()
     {
         // Implementation for setting up automatic payment reminders
-        await JSRuntime.InvokeVoidAsync("alert", "Auto-pay reminders setup feature coming soon!");
+        await JSRuntime.InvokeVoidAsync("showAlertToast", "Info", "Auto-pay reminders setup feature coming soon!");
     }
 
     private async Task ExportPaymentHistory()
     {
         // Implementation for exporting payment history
-        await JSRuntime.InvokeVoidAsync("alert", "Export functionality coming soon!");
+        await JSRuntime.InvokeVoidAsync("showAlertToast", "Export", "Export functionality coming soon!");
     }
 
     // Helper methods for styling

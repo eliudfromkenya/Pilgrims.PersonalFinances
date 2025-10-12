@@ -65,14 +65,14 @@
     private List<Currency> filteredCurrencies = new();
     private Timer? debounceTimer;
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
-        await LoadCurrencies();
-        
+        // Synchronous initialization: load seed data if DbContext is unavailable yet
         if(!allCurrencies.Any())
         {
             allCurrencies = CurrencySeedData.GetCurrencies().ToList();
         }
+
         // Set initial search text if Value is provided
         if (!string.IsNullOrEmpty(Value))
         {
@@ -86,6 +86,12 @@
                 searchText = Value;
             }
         }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCurrencies();
+        StateHasChanged();
     }
 
     private async Task LoadCurrencies()
@@ -103,23 +109,23 @@
         }
     }
 
-    private async Task OnSearchInput(ChangeEventArgs e)
+    private void OnSearchInput(ChangeEventArgs e)
     {
         searchText = e.Value?.ToString() ?? string.Empty;
         
         // Debounce the search to avoid too many database queries
         debounceTimer?.Dispose();
-        debounceTimer = new Timer(async _ =>
+        debounceTimer = new Timer(_ =>
         {
-            await InvokeAsync(async () =>
+            InvokeAsync(() =>
             {
-                await FilterCurrencies();
+                FilterCurrencies();
                 StateHasChanged();
             });
         }, null, 300, Timeout.Infinite);
     }
 
-    private async Task FilterCurrencies()
+    private void FilterCurrencies()
     {
         if (string.IsNullOrWhiteSpace(searchText))
         {
@@ -138,12 +144,12 @@
         }
     }
 
-    private async Task OnFocus()
+    private void OnFocus()
     {
         showDropdown = true;
         if (!filteredCurrencies.Any())
         {
-            await FilterCurrencies();
+            FilterCurrencies();
         }
     }
 

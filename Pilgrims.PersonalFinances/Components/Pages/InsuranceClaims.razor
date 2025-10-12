@@ -618,13 +618,13 @@
     private async Task UpdateClaimStatus(ClaimInfo claim)
     {
         // Implementation for updating claim status
-        await JSRuntime.InvokeVoidAsync("alert", $"Update status for claim {claim.ClaimNumber}");
+        await JSRuntime.InvokeVoidAsync("showAlertToast", "Validation", "Please complete all required fields before submitting the claim.");
     }
 
     private async Task ExportClaimsReport()
     {
         // Implementation for exporting claims report
-        await JSRuntime.InvokeVoidAsync("alert", "Export functionality coming soon!");
+        await JSRuntime.InvokeVoidAsync("showAlertToast", "Export functionality coming soon!");
     }
 
     // Helper methods for styling

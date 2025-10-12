@@ -489,7 +489,7 @@
     
     private async Task DeleteTransaction(string transactionId)
     {
-        if (await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this transaction?"))
+        if (await JSRuntime.InvokeAsync<bool>("showConfirmationToast", "Delete Transaction", "Are you sure you want to delete this transaction?", "Delete", "Cancel"))
         {
             await TransactionService.DeleteTransactionAsync(transactionId);
             await LoadData();
@@ -548,7 +548,7 @@
     
     private async Task BulkDelete()
     {
-        if (await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete {selectedTransactions.Count} transactions?"))
+        if (await JSRuntime.InvokeAsync<bool>("showConfirmationToast", "Delete Transactions", $"Are you sure you want to delete {selectedTransactions.Count} transactions?", "Delete", "Cancel"))
         {
             await TransactionService.BulkDeleteTransactionsAsync(selectedTransactions);
             selectedTransactions.Clear();
