@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace Pilgrims.PersonalFinances.Services
+namespace Pilgrims.PersonalFinances.Core.Services
 {
     public interface IThemeService
     {

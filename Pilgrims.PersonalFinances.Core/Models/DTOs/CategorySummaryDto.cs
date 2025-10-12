@@ -1,11 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Pilgrims.PersonalFinances.Models.DTOs
+namespace Pilgrims.PersonalFinances.Core.Models.DTOs
 {
     public class CategorySummaryDto
     {
@@ -20,3 +20,4 @@ namespace Pilgrims.PersonalFinances.Models.DTOs
         public decimal Percentage { get; set; }
     }
 }
+

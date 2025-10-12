@@ -1,6 +1,6 @@
 @using Pilgrims.PersonalFinances.Core.Interfaces
-@using Pilgrims.PersonalFinances.Models.DTOs
-@using Pilgrims.PersonalFinances.Services
+@using Pilgrims.PersonalFinances.Core.Models.DTOs
+
 @inject IJSRuntime JSRuntime
 @inject ICurrencyService CurrencyService
 
@@ -108,22 +108,30 @@
                                   stroke-width="2"/>
                         
                         <!-- Data Points -->
-                        @for (int i = 0; i < Report.DataPoints.Count; i++)
-                    {
-                        var month = Report.DataPoints[i];
-                        var x = (double)i / (double)(Report.DataPoints.Count - 1) * 100;
-                            var y = (1 - (double)(month.NetWorth - minValue) / (double)range) * 100;
-                            
-                            <circle cx="@x" cy="@y" r="1.5" fill="#3b82f6" class="hover:r-3 transition-all cursor-pointer">
-                                <title>@month.Date.ToString("MMM yyyy"): @(formattedAmounts.TryGetValue(month.NetWorth, out var formattedMonthNetWorth) ? formattedMonthNetWorth : month.NetWorth.ToString("C"))</title>
-                            </circle>
-                        }
-                    </svg>
+                         @{ 
+                             var dataPointsForCircles = Report.DataPoints ?? new List<NetWorthDataPoint>();
+                             var circlesCount = dataPointsForCircles.Count;
+                         }
+                         @for (int i = 0; i < circlesCount; i++)
+                         {
+                             var month = dataPointsForCircles[i];
+                             var x = circlesCount > 1 ? (double)i / (double)(circlesCount - 1) * 100 : 0;
+                             var y = (1 - (double)((double)month.NetWorth - (double)minValue) / (double)range) * 100;
+                             
+                             <circle cx="@x" cy="@y" r="1.5" fill="#3b82f6" class="hover:r-3 transition-all cursor-pointer">
+                                 <title>@month.Date.ToString("MMM yyyy"): @(formattedAmounts.TryGetValue(month.NetWorth, out var formattedMonthNetWorth) ? formattedMonthNetWorth : month.NetWorth.ToString("C"))</title>
+                             </circle>
+                         }
+                     </svg>
                     
                     <!-- Chart Labels -->
+                    @{ 
+                        var firstPoint = Report.DataPoints?.FirstOrDefault();
+                        var lastPoint = Report.DataPoints?.LastOrDefault();
+                    }
                     <div class="absolute bottom-0 left-0 right-0 flex justify-between text-xs text-gray-500 px-2">
-                        <span>@Report.DataPoints.First().Date.ToString("MMM yyyy")</span>
-                        <span>@Report.DataPoints.Last().Date.ToString("MMM yyyy")</span>
+                        <span>@(firstPoint?.Date.ToString("MMM yyyy") ?? "-")</span>
+                        <span>@(lastPoint?.Date.ToString("MMM yyyy") ?? "-")</span>
                     </div>
                     
                     <div class="absolute top-0 left-0 bottom-0 flex flex-col justify-between text-xs text-gray-500 py-2">
@@ -309,10 +317,8 @@
     </div>
 </div>
 
-@using Pilgrims.PersonalFinances.Models.DTOs
-
 @code {
-    [Parameter] public Pilgrims.PersonalFinances.Models.DTOs.NetWorthTrendDto Report { get; set; } = new();
+    [Parameter] public Pilgrims.PersonalFinances.Core.Models.DTOs.NetWorthTrendDto Report { get; set; } = new();
     
     private Dictionary<decimal, string> formattedAmounts = new();
 
@@ -357,36 +363,28 @@
     }
 
     private decimal GetAverageMonthlyGrowth()
-    {
-        if (Report.DataPoints?.Count < 2) return 0;
-        
-        var changes = new List<decimal>();
-        for (int i = 1; i < Report.DataPoints.Count; i++)
-        {
-            changes.Add(Report.DataPoints[i].NetWorth - Report.DataPoints[i - 1].NetWorth);
-        }
-        
-        return changes.Average();
-    }
-
-    private NetWorthDataPoint? GetBestPerformingMonth()
-    {
-        return Report.DataPoints?.OrderByDescending(m => m.NetWorth).FirstOrDefault();
-    }
-
-    private NetWorthDataPoint? GetWorstPerformingMonth()
-    {
-        return Report.DataPoints?.OrderBy(m => m.NetWorth).FirstOrDefault();
-    }
-
-    private double GetVolatility()
-    {
-        if (Report.DataPoints?.Count < 2) return 0;
+     {
+         var dataPoints = Report.DataPoints ?? new List<NetWorthDataPoint>();
+         if (dataPoints.Count < 2) return 0;
+         
+         var changes = new List<decimal>();
+         for (int i = 1; i < dataPoints.Count; i++)
+         {
+             changes.Add(dataPoints[i].NetWorth - dataPoints[i - 1].NetWorth);
+         }
+         
+         return changes.Average();
+     }
+ 
+     private double GetVolatility()
+     {
+        var dataPoints = Report.DataPoints ?? new List<NetWorthDataPoint>();
+        if (dataPoints.Count < 2) return 0;
         
         var changes = new List<double>();
-        for (int i = 1; i < Report.DataPoints.Count; i++)
+        for (int i = 1; i < dataPoints.Count; i++)
         {
-            var change = (double)(Report.DataPoints[i].NetWorth - Report.DataPoints[i - 1].NetWorth);
+            var change = (double)(dataPoints[i].NetWorth - dataPoints[i - 1].NetWorth);
             changes.Add(change);
         }
         
@@ -396,8 +394,50 @@
         var variance = changes.Select(x => Math.Pow(x - mean, 2)).Average();
         var stdDev = Math.Sqrt(variance);
         
-        var avgNetWorth = (double)Report.DataPoints.Average(m => m.NetWorth);
+        var avgNetWorth = (double)dataPoints.Average(m => m.NetWorth);
         return avgNetWorth > 0 ? (stdDev / avgNetWorth) * 100 : 0;
+    }
+
+    private NetWorthDataPoint? GetBestPerformingMonth()
+    {
+        var dataPoints = Report.DataPoints ?? new List<NetWorthDataPoint>();
+        if (dataPoints.Count < 2) return null;
+
+        NetWorthDataPoint? bestMonth = null;
+        decimal bestIncrease = decimal.MinValue;
+
+        for (int i = 1; i < dataPoints.Count; i++)
+        {
+            var increase = dataPoints[i].NetWorth - dataPoints[i - 1].NetWorth;
+            if (increase > bestIncrease)
+            {
+                bestIncrease = increase;
+                bestMonth = dataPoints[i];
+            }
+        }
+
+        return bestMonth;
+    }
+
+    private NetWorthDataPoint? GetWorstPerformingMonth()
+    {
+        var dataPoints = Report.DataPoints ?? new List<NetWorthDataPoint>();
+        if (dataPoints.Count < 2) return null;
+
+        NetWorthDataPoint? worstMonth = null;
+        decimal worstChange = decimal.MaxValue;
+
+        for (int i = 1; i < dataPoints.Count; i++)
+        {
+            var change = dataPoints[i].NetWorth - dataPoints[i - 1].NetWorth;
+            if (change < worstChange)
+            {
+                worstChange = change;
+                worstMonth = dataPoints[i];
+            }
+        }
+
+        return worstMonth;
     }
 
     private (decimal SixMonths, decimal OneYear, decimal FiveYears) GetProjectedNetWorth()

@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Components.Forms;
 
-namespace Pilgrims.PersonalFinances.Services.Interfaces;
+namespace Pilgrims.PersonalFinances.Core.Services.Interfaces;
 
 /// <summary>
 /// Service interface for file operations including upload, download, and management

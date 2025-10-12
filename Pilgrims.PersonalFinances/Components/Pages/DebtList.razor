@@ -1,7 +1,6 @@
 @page "/debt-list"
-@using Pilgrims.PersonalFinances.Models
-@using Pilgrims.PersonalFinances.Models.Enums
-@using Pilgrims.PersonalFinances.Services.Interfaces
+@using Pilgrims.PersonalFinances.Core.Models.Enums
+@using Pilgrims.PersonalFinances.Core.Services.Interfaces
 @inject IDebtService DebtService
 @inject IJSRuntime JSRuntime
 @inject NavigationManager Navigation
@@ -78,7 +77,7 @@
                     </div>
                     <div class="bg-gradient-to-r from-orange-400 to-orange-600 p-4 rounded-xl text-white transform hover:scale-105 transition-all duration-300 animate-slide-up" style="animation-delay: 0.4s;">
                         <div class="text-sm opacity-90">Avg Interest Rate</div>
-                        <div class="text-2xl font-bold">@(filteredDebts.Where(d => d.InterestRate.HasValue).Any() ? filteredDebts.Where(d => d.InterestRate.HasValue).Average(d => d.InterestRate.Value).ToString("F1") + "%" : "N/A")</div>
+                        <div class="text-2xl font-bold">@(filteredDebts.Any(d => d.InterestRate.HasValue) ? filteredDebts.Where(d => d.InterestRate.HasValue).Average(d => d.InterestRate.GetValueOrDefault()).ToString("F1") + "%" : "N/A")</div>
                         <div class="text-xs opacity-75 mt-1">📈 Weighted average</div>
                     </div>
                 </div>
@@ -474,18 +473,18 @@
         StateHasChanged();
     }
 
-    private async Task OnSearchChanged(ChangeEventArgs e)
+    private void OnSearchChanged(ChangeEventArgs e)
     {
         searchTerm = e.Value?.ToString() ?? string.Empty;
         ApplyFiltersAndSort();
     }
 
-    private async Task OnFilterChanged(ChangeEventArgs e)
+    private void OnFilterChanged(ChangeEventArgs e)
     {
         ApplyFiltersAndSort();
     }
 
-    private async Task OnSortChanged(ChangeEventArgs e)
+    private void OnSortChanged(ChangeEventArgs e)
     {
         ApplyFiltersAndSort();
     }

@@ -1,6 +1,6 @@
-using Pilgrims.PersonalFinances.Models;
+using Pilgrims.PersonalFinances.Core.Models;
 
-namespace Pilgrims.PersonalFinances.Services;
+namespace Pilgrims.PersonalFinances.Core.Services;
 
 /// <summary>
 /// Interface for background service that handles scheduled transaction processing

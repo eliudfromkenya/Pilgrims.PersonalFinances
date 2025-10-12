@@ -1,4 +1,4 @@
-@using Pilgrims.PersonalFinances.Models.DTOs
+@using Pilgrims.PersonalFinances.Core.Models.DTOs
 @using Pilgrims.PersonalFinances.Core.Interfaces
 @inject IJSRuntime JSRuntime
 @inject ICurrencyService CurrencyService
@@ -216,7 +216,7 @@
                 {
                     var maxMonthlyBalance = Report.MonthlyBreakdown.Max(m => m.Accounts?.Max(a => a.Balance) ?? 0);
                     if (maxMonthlyBalance == 0) maxMonthlyBalance = 10000;
-                    var topAccountsForChart = Report.Accounts?.OrderByDescending(a => a.Balance).Take(5).ToList() ?? new List<Pilgrims.PersonalFinances.Models.DTOs.AccountSummaryDto>();
+                    var topAccountsForChart = Report.Accounts?.OrderByDescending(a => a.Balance).Take(5).ToList() ?? new List<Pilgrims.PersonalFinances.Core.Models.DTOs.AccountSummaryDto>();
                     var colors = new[] { "#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ef4444" };
                     @foreach (var month in Report.MonthlyBreakdown.OrderBy(m => m.Month))
                     {
@@ -362,7 +362,7 @@
 </div>
 
 @code {
-    [Parameter] public Pilgrims.PersonalFinances.Models.DTOs.AccountSummaryReportDto Report { get; set; } = new();
+    [Parameter] public Pilgrims.PersonalFinances.Core.Models.DTOs.AccountSummaryReportDto Report { get; set; } = new();
     [Parameter] public EventCallback<string> OnAccountDrillDown { get; set; }
 
     private string GetAccountIcon(string accountType)

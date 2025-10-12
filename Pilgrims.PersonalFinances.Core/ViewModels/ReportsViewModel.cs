@@ -2,10 +2,11 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Pilgrims.PersonalFinances.Core.Messaging.Interfaces;
 using Pilgrims.PersonalFinances.Core.Messaging.Messages;
-using Pilgrims.PersonalFinances.Services;
-using Pilgrims.PersonalFinances.Services.Interfaces;
-using Pilgrims.PersonalFinances.Models.DTOs;
-using Pilgrims.PersonalFinances.Models.Enums;
+using Pilgrims.PersonalFinances.Core.Services;
+using Pilgrims.PersonalFinances.Core.Services.Interfaces;
+using Pilgrims.PersonalFinances.Core.Models.DTOs;
+using Pilgrims.PersonalFinances.Core.Models.Enums;
+using Pilgrims.PersonalFinances.Core.Models.DTOs;
 
 namespace Pilgrims.PersonalFinances.Core.ViewModels
 {
@@ -54,13 +55,13 @@ namespace Pilgrims.PersonalFinances.Core.ViewModels
         private BudgetVarianceReportDto? budgetVariance;
 
         [ObservableProperty]
-        private Pilgrims.PersonalFinances.Models.DTOs.NetWorthTrendDto? netWorthTrend;
+        private NetWorthTrendDto? netWorthTrend;
 
         [ObservableProperty]
-        private Pilgrims.PersonalFinances.Models.DTOs.CategoryAnalysisDto? categoryAnalysis;
+        private CategoryAnalysisDto? categoryAnalysis;
 
         [ObservableProperty]
-        private Pilgrims.PersonalFinances.Models.DTOs.AccountSummaryReportDto? accountSummary;
+        private AccountSummaryReportDto? accountSummary;
 
         [ObservableProperty]
         private string selectedPeriod = "last12months";

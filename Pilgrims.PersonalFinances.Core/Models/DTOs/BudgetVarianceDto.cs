@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Pilgrims.PersonalFinances.Models.DTOs
+namespace Pilgrims.PersonalFinances.Core.Models.DTOs
 {
     /// <summary>
     /// Data transfer object for budget variance analysis

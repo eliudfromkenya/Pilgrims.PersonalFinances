@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Pilgrims.PersonalFinances.Models;
-using Pilgrims.PersonalFinances.Models.Enums;
+using Pilgrims.PersonalFinances.Core.Models;
+using Pilgrims.PersonalFinances.Core.Models.Enums;
 using Pilgrims.PersonalFinances.Core.Models;
 using Pilgrims.PersonalFinances.Core.Data;
 using Pilgrims.PersonalFinances.Core.Interceptors;
@@ -123,6 +123,9 @@ public class PersonalFinanceContext : DbContext
 
     // Currency Management
     public DbSet<Currency> Currencies { get; set; }
+
+    // Account Type Definitions
+    public DbSet<AccountTypeDefinition> AccountTypeDefinitions { get; set; }
 
     // Audit Trail System
     public DbSet<AuditLog> AuditLogs { get; set; }
@@ -1131,19 +1134,31 @@ public class PersonalFinanceContext : DbContext
             entity.HasIndex(e => e.TargetDate);
         });
 
-        // Configure ApplicationSettings entity
-        modelBuilder.Entity<ApplicationSettings>(entity =>
+        // Configure AccountTypeDefinition entity
+        modelBuilder.Entity<AccountTypeDefinition>(entity =>
         {
             entity.HasKey(e => e.Id);
-            entity.Property(e => e.DefaultCurrency).IsRequired().HasMaxLength(10);
-            entity.Property(e => e.DateFormat).HasMaxLength(50);
-            entity.Property(e => e.NumberFormat).HasMaxLength(50);
-            entity.Property(e => e.Theme).HasMaxLength(50);
-            entity.Property(e => e.LastUpdatedVersion).HasMaxLength(20);
-            entity.Property(e => e.LastModifiedByUserId).HasMaxLength(50);
-
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.Icon).HasMaxLength(50);
+            entity.Property(e => e.EnumValue).IsRequired();
+            entity.Property(e => e.IsActive).IsRequired();
+        
+            entity.HasIndex(e => e.EnumValue).IsUnique();
             entity.HasIndex(e => e.IsActive);
         });
+        
+        // Seed data for AccountTypeDefinition based on AccountType enum
+        modelBuilder.Entity<AccountTypeDefinition>().HasData(
+            new AccountTypeDefinition { Id = "acc-type-1", Name = "Checking Account", Description = "A standard checking account for daily transactions.", Icon = "🏦", EnumValue = (int)AccountType.Checking, IsActive = true, CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+            new AccountTypeDefinition { Id = "acc-type-2", Name = "Savings Account", Description = "A savings account typically used for saving money.", Icon = "💰", EnumValue = (int)AccountType.Savings, IsActive = true, CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+            new AccountTypeDefinition { Id = "acc-type-3", Name = "Cash Account", Description = "Represents cash held physically or in simple cash accounts.", Icon = "💵", EnumValue = (int)AccountType.Cash, IsActive = true, CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+            new AccountTypeDefinition { Id = "acc-type-4", Name = "Credit Card", Description = "A credit card account used for purchases.", Icon = "💳", EnumValue = (int)AccountType.CreditCard, IsActive = true, CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+            new AccountTypeDefinition { Id = "acc-type-5", Name = "Investment Account", Description = "An investment account for stocks, bonds, and other assets.", Icon = "📈", EnumValue = (int)AccountType.Investment, IsActive = true, CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+            new AccountTypeDefinition { Id = "acc-type-6", Name = "Loan Account", Description = "An account representing loans with balances owed.", Icon = "🏠", EnumValue = (int)AccountType.Loan, IsActive = true, CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+            new AccountTypeDefinition { Id = "acc-type-7", Name = "Credit Account", Description = "A general credit account representing lines of credit.", Icon = "💳", EnumValue = (int)AccountType.Credit, IsActive = true, CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+            new AccountTypeDefinition { Id = "acc-type-8", Name = "Other", Description = "Other types of accounts not categorized above.", Icon = "📋", EnumValue = (int)AccountType.Other, IsActive = true, CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) }
+        );
 
         // Seed data for categories if needed
         modelBuilder.Entity<Category>().HasData(

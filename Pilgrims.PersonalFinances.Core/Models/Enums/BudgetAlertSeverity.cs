@@ -1,4 +1,4 @@
-namespace Pilgrims.PersonalFinances.Models.Enums
+namespace Pilgrims.PersonalFinances.Core.Models.Enums
 {
     /// <summary>
     /// Represents the severity level of a budget alert

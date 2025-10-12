@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
-using Pilgrims.PersonalFinances.Models.Enums;
+using Pilgrims.PersonalFinances.Core.Models.Enums;
 
-namespace Pilgrims.PersonalFinances.Models;
+namespace Pilgrims.PersonalFinances.Core.Models;
 
 /// <summary>
 /// Represents a financial transaction with comprehensive tracking capabilities

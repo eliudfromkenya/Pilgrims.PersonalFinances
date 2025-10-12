@@ -1,5 +1,5 @@
 using Pilgrims.PersonalFinances.Core.Messaging.Interfaces;
-using Pilgrims.PersonalFinances.Models;
+using Pilgrims.PersonalFinances.Core.Models;
 
 namespace Pilgrims.PersonalFinances.Core.Messaging.Messages
 {

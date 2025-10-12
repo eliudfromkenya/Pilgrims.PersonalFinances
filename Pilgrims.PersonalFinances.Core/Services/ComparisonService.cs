@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Pilgrims.PersonalFinances.Data;
-using Pilgrims.PersonalFinances.Models.DTOs;
-using Pilgrims.PersonalFinances.Models;
+using Pilgrims.PersonalFinances.Core.Models.DTOs;
+using Pilgrims.PersonalFinances.Core.Models;
 
-namespace Pilgrims.PersonalFinances.Services
+namespace Pilgrims.PersonalFinances.Core.Services
 {
     public class ComparisonService : IComparisonService
     {

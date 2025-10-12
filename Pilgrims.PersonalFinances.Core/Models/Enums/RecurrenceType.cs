@@ -1,4 +1,4 @@
-namespace Pilgrims.PersonalFinances.Models.Enums
+namespace Pilgrims.PersonalFinances.Core.Models.Enums
 {
     /// <summary>
     /// Defines the types of recurrence patterns for scheduled transactions

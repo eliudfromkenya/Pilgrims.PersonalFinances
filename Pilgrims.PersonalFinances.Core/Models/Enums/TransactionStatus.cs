@@ -1,4 +1,4 @@
-namespace Pilgrims.PersonalFinances.Models.Enums
+namespace Pilgrims.PersonalFinances.Core.Models.Enums
 {
     /// <summary>
     /// Defines the status of a transaction in the processing pipeline

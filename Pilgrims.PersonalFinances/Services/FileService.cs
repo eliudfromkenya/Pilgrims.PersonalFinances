@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Components.Forms;
-using Pilgrims.PersonalFinances.Services.Interfaces;
+using Pilgrims.PersonalFinances.Core.Services.Interfaces;
 using Pilgrims.PersonalFinances.Core.Logging;
 
 namespace Pilgrims.PersonalFinances.Services;

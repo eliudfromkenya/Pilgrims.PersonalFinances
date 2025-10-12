@@ -1,7 +1,8 @@
 @page "/accounts/{AccountId:int}/reconcile"
-@using Pilgrims.PersonalFinances.Models
-@using Pilgrims.PersonalFinances.Models.Enums
-@using Pilgrims.PersonalFinances.Services
+
+@using Pilgrims.PersonalFinances.Core.Models
+@using Pilgrims.PersonalFinances.Core.Models.Enums
+
 @using System.ComponentModel.DataAnnotations
 @inject IAccountService AccountService
 @inject NavigationManager NavigationManager

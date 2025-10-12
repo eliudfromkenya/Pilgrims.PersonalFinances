@@ -2,7 +2,7 @@ using Microsoft.JSInterop;
 using System;
 using System.Threading.Tasks;
 
-namespace Pilgrims.PersonalFinances.Services
+namespace Pilgrims.PersonalFinances.Core.Services
 {
     public class ThemeService : IThemeService
     {

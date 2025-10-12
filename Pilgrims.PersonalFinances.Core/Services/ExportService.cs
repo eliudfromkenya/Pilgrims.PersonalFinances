@@ -1,10 +1,10 @@
 using System.Text;
 using System.Text.Json;
 using Microsoft.JSInterop;
-using Pilgrims.PersonalFinances.Models.DTOs;
+using Pilgrims.PersonalFinances.Core.Models.DTOs;
 using Pilgrims.PersonalFinances.Core.Logging;
 
-namespace Pilgrims.PersonalFinances.Services;
+namespace Pilgrims.PersonalFinances.Core.Services;
 
 public class ExportService : IExportService
 {

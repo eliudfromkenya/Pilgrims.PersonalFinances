@@ -1,11 +1,12 @@
 @page "/obligations/payoff-calculator"
-@using Pilgrims.PersonalFinances.Models
-@using Pilgrims.PersonalFinances.Models.Enums
-@using Pilgrims.PersonalFinances.Services.Interfaces
+@using Pilgrims.PersonalFinances.Core.Models
+@using Pilgrims.PersonalFinances.Core.Models.Enums
+@using Pilgrims.PersonalFinances.Core.Services.Interfaces
 @using Pilgrims.PersonalFinances.Core.Messaging.Interfaces
-@using Pilgrims.PersonalFinances.Models.DTOs
+@using Pilgrims.PersonalFinances.Core.Models.DTOs
 @inject IObligationService ObligationService
 @inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
 @inject IMessagingService MessagingService
 
 <PageTitle>Payoff Calculator - Personal Finance</PageTitle>
@@ -576,10 +577,10 @@
         StateHasChanged();
     }
 
-    private async Task InitializeCharts()
+    private Task InitializeCharts()
     {
-        if (payoffResults == null) return;
-
+        if (payoffResults == null) return Task.CompletedTask;
+    
         try
         {
             var chartData = GeneratePayoffChartData();
@@ -588,6 +589,7 @@
                 "payoffTimelineChart",
                 chartData
             ));
+            MessagingService.Send("Charts initialized.");
         }
         catch (Exception ex)
         {
@@ -596,7 +598,10 @@
                 $"Error initializing charts: {ex.Message}"
             ));
         }
+    
+        return Task.CompletedTask;
     }
+
 
     private object GeneratePayoffChartData()
     {

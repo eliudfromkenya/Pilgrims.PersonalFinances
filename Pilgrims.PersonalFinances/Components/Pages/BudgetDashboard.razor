@@ -1,8 +1,8 @@
 @page "/budget-dashboard"
-@using Pilgrims.PersonalFinances.Models
-@using Pilgrims.PersonalFinances.Models.Enums
-@using Pilgrims.PersonalFinances.Models.DTOs
-@using Pilgrims.PersonalFinances.Services.Interfaces
+
+@using Pilgrims.PersonalFinances.Core.Models.Enums
+@using Pilgrims.PersonalFinances.Core.Models.DTOs
+@using Pilgrims.PersonalFinances.Core.Services.Interfaces
 @inject IBudgetService BudgetService
 @inject IJSRuntime JSRuntime
 @inject NavigationManager Navigation
@@ -443,7 +443,6 @@
     private IEnumerable<Budget>? activeBudgets;
     private List<BudgetInsight>? budgetInsights;
     private IEnumerable<MonthlyBudgetPerformanceDto>? monthlyData;
-    private bool isLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
@@ -454,7 +453,6 @@
     {
         try
         {
-            isLoading = true;
             StateHasChanged();
 
             // Load dashboard data
@@ -464,7 +462,7 @@
             activeBudgets = await BudgetService.GetActiveBudgetsAsync();
             
             // Load budget insights
-            budgetInsights = await GenerateBudgetInsights();
+            budgetInsights = GenerateBudgetInsights();
             
             // Load monthly data for charts
             var currentYear = DateTime.Now.Year;
@@ -477,12 +475,11 @@
         }
         finally
         {
-            isLoading = false;
             StateHasChanged();
         }
     }
 
-    private async Task<List<BudgetInsight>> GenerateBudgetInsights()
+    private List<BudgetInsight> GenerateBudgetInsights()
     {
         var insights = new List<BudgetInsight>();
         
@@ -562,9 +559,9 @@
         await LoadDashboardData();
     }
 
-    private async Task RefreshInsights()
+    private void RefreshInsights()
     {
-        budgetInsights = await GenerateBudgetInsights();
+        budgetInsights = GenerateBudgetInsights();
         StateHasChanged();
     }
 
@@ -593,7 +590,7 @@
         Navigation.NavigateTo("/budget/alerts");
     }
 
-    private async Task ExecuteInsightAction(BudgetInsight insight)
+    private void ExecuteInsightAction(BudgetInsight insight)
     {
         switch (insight.ActionText)
         {

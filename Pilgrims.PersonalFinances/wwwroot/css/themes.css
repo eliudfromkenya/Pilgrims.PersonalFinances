@@ -259,3 +259,40 @@ body {
 * {
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
+
+/* Form Controls - Select & Dropdowns */
+select,
+.form-select {
+  background-color: var(--card-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+select:focus,
+.form-select:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.25);
+}
+
+select option {
+  background-color: var(--card-bg);
+  color: var(--text-primary);
+}
+
+/* Bootstrap Dropdown Overrides (if used) */
+.dropdown-menu {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 10px 25px -3px var(--shadow-color), 0 4px 6px -2px var(--shadow-color);
+}
+
+.dropdown-item {
+  color: var(--text-primary);
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+  background-color: var(--secondary-bg);
+  color: var(--text-accent);
+}

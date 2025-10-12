@@ -1,12 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using Pilgrims.PersonalFinances.Data;
-using Pilgrims.PersonalFinances.Models;
-using Pilgrims.PersonalFinances.Models.Enums;
-using Pilgrims.PersonalFinances.Services.Interfaces;
+using Pilgrims.PersonalFinances.Core.Models;
+using Pilgrims.PersonalFinances.Core.Models.Enums;
+using Pilgrims.PersonalFinances.Core.Services.Interfaces;
 using Pilgrims.PersonalFinances.Core.Interfaces;
 using System.Text.Json;
 
-namespace Pilgrims.PersonalFinances.Services;
+namespace Pilgrims.PersonalFinances.Core.Services;
 
 /// <summary>
 /// Service implementation for managing scheduled transactions with comprehensive CRUD operations
@@ -399,7 +399,7 @@ public class ScheduledTransactionService : IScheduledTransactionService
             {
                 var existingOverdueNotification = await _context.TransactionNotifications
                     .AnyAsync(tn => tn.ScheduledTransactionId == scheduledTransaction.Id &&
-                                   tn.NotificationType == Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.BudgetAlert &&
+                                   tn.NotificationType == Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.BudgetAlert &&
                                    !tn.IsSent);
 
                 if (!existingOverdueNotification)
@@ -418,7 +418,7 @@ public class ScheduledTransactionService : IScheduledTransactionService
                     {
                         var existingReminder = await _context.TransactionNotifications
                             .AnyAsync(tn => tn.ScheduledTransactionId == scheduledTransaction.Id &&
-                                           tn.NotificationType == Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.BillReminder &&
+                                           tn.NotificationType == Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.BillReminder &&
                                            tn.ScheduledDate.Date == reminderDate.Date);
 
                         if (!existingReminder)
@@ -750,3 +750,5 @@ public class ScheduledTransactionService : IScheduledTransactionService
 
     #endregion
 }
+
+

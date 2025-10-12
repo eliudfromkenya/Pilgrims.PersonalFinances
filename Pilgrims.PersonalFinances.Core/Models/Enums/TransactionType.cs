@@ -1,4 +1,4 @@
-namespace Pilgrims.PersonalFinances.Models.Enums
+namespace Pilgrims.PersonalFinances.Core.Models.Enums
 {
     /// <summary>
     /// Defines the types of transactions supported by the system

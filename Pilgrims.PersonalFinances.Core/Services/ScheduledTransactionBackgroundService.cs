@@ -1,12 +1,12 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
-using Pilgrims.PersonalFinances.Models;
+using Pilgrims.PersonalFinances.Core.Models;
 using Pilgrims.PersonalFinances.Data;
-using Pilgrims.PersonalFinances.Services.Interfaces;
-using Pilgrims.PersonalFinances.Models.Enums;
+using Pilgrims.PersonalFinances.Core.Services.Interfaces;
+using Pilgrims.PersonalFinances.Core.Models.Enums;
 
-namespace Pilgrims.PersonalFinances.Services;
+namespace Pilgrims.PersonalFinances.Core.Services;
 
 /// <summary>
 /// Background service that handles scheduled transaction processing and notifications

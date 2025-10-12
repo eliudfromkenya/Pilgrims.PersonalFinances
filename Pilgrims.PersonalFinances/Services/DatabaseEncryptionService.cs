@@ -1,9 +1,9 @@
 using Microsoft.Extensions.Logging;
-using Pilgrims.PersonalFinances.Services.Interfaces;
+using Pilgrims.PersonalFinances.Core.Services.Interfaces;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Pilgrims.PersonalFinances.Services;
+namespace Pilgrims.PersonalFinances.Core.Services;
 
 /// <summary>
 /// Service for managing database encryption with SQLCipher

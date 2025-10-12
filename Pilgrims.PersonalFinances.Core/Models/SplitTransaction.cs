@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Pilgrims.PersonalFinances.Models
+namespace Pilgrims.PersonalFinances.Core.Models
 {
     /// <summary>
     /// Represents a split portion of a transaction across different categories
@@ -50,7 +50,7 @@ namespace Pilgrims.PersonalFinances.Models
         /// <summary>
         /// Navigation property to the parent transaction
         /// </summary>
-        public virtual Pilgrims.PersonalFinances.Models.Transaction? Transaction { get; set; }
+        public virtual Transaction? Transaction { get; set; }
 
         /// <summary>
         /// Navigation property to the category

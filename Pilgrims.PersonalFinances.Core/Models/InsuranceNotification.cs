@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Pilgrims.PersonalFinances.Models.Enums;
+using Pilgrims.PersonalFinances.Core.Models.Enums;
 
-namespace Pilgrims.PersonalFinances.Models
+namespace Pilgrims.PersonalFinances.Core.Models
 {
     /// <summary>
     /// Represents notifications related to insurance policies and claims
@@ -46,7 +46,7 @@ namespace Pilgrims.PersonalFinances.Models
         /// Priority level of the notification
         /// </summary>
         [Required]
-        public Enums.NotificationPriority Priority { get; set; } = Enums.NotificationPriority.Medium;
+        public NotificationPriority Priority { get; set; } = NotificationPriority.Medium;
 
         /// <summary>
         /// When the notification should be sent
@@ -96,7 +96,7 @@ namespace Pilgrims.PersonalFinances.Models
                 InsuranceId = insurance.Id,
                 Title = $"Insurance Premium Due: {insurance.PolicyNumber}",
                 Message = $"Your {insurance.PolicyType} insurance premium of {insurance.PremiumAmount:C} is due on {dueDate:MMM dd, yyyy}. Policy: {insurance.PolicyNumber}",
-                NotificationType = (NotificationType)Enums.AppNotificationType.InsurancePremiumDue,
+                NotificationType = (NotificationType)AppNotificationType.InsurancePremiumDue,
                 Priority = NotificationPriority.High,
                 ScheduledDate = scheduledDate
             };
@@ -113,7 +113,7 @@ namespace Pilgrims.PersonalFinances.Models
                 InsuranceId = insurance.Id,
                 Title = $"Insurance Policy Expiring: {insurance.PolicyNumber}",
                 Message = $"Your {insurance.PolicyType} insurance policy expires on {insurance.PolicyEndDate:MMM dd, yyyy}. Please renew to maintain coverage.",
-                NotificationType = (NotificationType)Enums.AppNotificationType.InsurancePolicyExpiry,
+                NotificationType = (NotificationType)AppNotificationType.InsurancePolicyExpiry,
                 Priority = NotificationPriority.Critical,
                 ScheduledDate = scheduledDate
             };
@@ -130,7 +130,7 @@ namespace Pilgrims.PersonalFinances.Models
                 InsuranceClaimId = claim.Id,
                 Title = $"Claim Update: {claim.ClaimNumber}",
                 Message = $"Your insurance claim {claim.ClaimNumber} status has been updated to {claim.Status}. Amount: {claim.ClaimAmount:C}",
-                NotificationType = (NotificationType)Enums.AppNotificationType.InsuranceClaimUpdate,
+                NotificationType = (NotificationType)AppNotificationType.InsuranceClaimUpdate,
                 Priority = NotificationPriority.Medium,
                 ScheduledDate = DateTime.Now
             };
@@ -163,3 +163,4 @@ namespace Pilgrims.PersonalFinances.Models
         }
     }
 }
+

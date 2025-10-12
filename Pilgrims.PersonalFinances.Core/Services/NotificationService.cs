@@ -1,11 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Pilgrims.PersonalFinances.Data;
-using Pilgrims.PersonalFinances.Models;
-using Pilgrims.PersonalFinances.Models.Enums;
-using Pilgrims.PersonalFinances.Services.Interfaces;
+using Pilgrims.PersonalFinances.Core.Models;
+using Pilgrims.PersonalFinances.Core.Models.Enums;
+using Pilgrims.PersonalFinances.Core.Services.Interfaces;
 using Pilgrims.PersonalFinances.Core.Logging;
 
-namespace Pilgrims.PersonalFinances.Services;
+namespace Pilgrims.PersonalFinances.Core.Services;
 
 public class NotificationService : INotificationService
 {
@@ -54,7 +54,7 @@ public class NotificationService : INotificationService
             .ToListAsync();
     }
 
-    public async Task<List<TransactionNotification>> GetNotificationsByTypeAsync(Pilgrims.PersonalFinances.Models.Enums.AppNotificationType type)
+    public async Task<List<TransactionNotification>> GetNotificationsByTypeAsync(AppNotificationType type)
     {
         return await _context.TransactionNotifications
             .Include(n => n.ScheduledTransaction)
@@ -63,7 +63,7 @@ public class NotificationService : INotificationService
             .ToListAsync();
     }
 
-    public async Task<List<TransactionNotification>> GetNotificationsByPriorityAsync(Pilgrims.PersonalFinances.Models.Enums.NotificationPriority priority)
+    public async Task<List<TransactionNotification>> GetNotificationsByPriorityAsync(NotificationPriority priority)
     {
         return await _context.TransactionNotifications
             .Include(n => n.ScheduledTransaction)
@@ -239,13 +239,13 @@ public class NotificationService : INotificationService
             .CountAsync(n => !n.IsRead && !n.IsDismissed);
     }
 
-    public async Task<int> GetUnreadCountByTypeAsync(Pilgrims.PersonalFinances.Models.Enums.AppNotificationType type)
+    public async Task<int> GetUnreadCountByTypeAsync(AppNotificationType type)
     {
         return await _context.TransactionNotifications
             .CountAsync(n => n.NotificationType == type && !n.IsRead && !n.IsDismissed);
     }
 
-    public async Task<Dictionary<Pilgrims.PersonalFinances.Models.Enums.AppNotificationType, int>> GetNotificationCountsByTypeAsync()
+    public async Task<Dictionary<AppNotificationType, int>> GetNotificationCountsByTypeAsync()
     {
         return await _context.TransactionNotifications
             .Where(n => !n.IsDismissed)
@@ -257,13 +257,13 @@ public class NotificationService : INotificationService
 
     #region Notification Settings
 
-    public async Task<bool> IsNotificationEnabledAsync(Pilgrims.PersonalFinances.Models.Enums.AppNotificationType type)
+    public async Task<bool> IsNotificationEnabledAsync(AppNotificationType type)
     {
         // For now, return true for all types. In the future, this could be configurable per user.
         return await Task.FromResult(true);
     }
 
-    public async Task SetNotificationEnabledAsync(Pilgrims.PersonalFinances.Models.Enums.AppNotificationType type, bool enabled)
+    public async Task SetNotificationEnabledAsync(AppNotificationType type, bool enabled)
     {
         // For now, this is a no-op. In the future, this could store user preferences.
         await Task.CompletedTask;
@@ -278,9 +278,9 @@ public class NotificationService : INotificationService
         var daysUntilDue = (transaction.NextDueDate!.Value.Date - DateTime.Today).Days;
         var priority = daysUntilDue switch
         {
-            0 => Pilgrims.PersonalFinances.Models.Enums.NotificationPriority.High,
-            1 => Pilgrims.PersonalFinances.Models.Enums.NotificationPriority.Medium,
-            _ => Pilgrims.PersonalFinances.Models.Enums.NotificationPriority.Low
+            0 => NotificationPriority.High,
+            1 => NotificationPriority.Medium,
+            _ => NotificationPriority.Low
         };
 
         var timeDescription = daysUntilDue switch
@@ -723,3 +723,5 @@ public class NotificationService : INotificationService
 
     #endregion
 }
+
+

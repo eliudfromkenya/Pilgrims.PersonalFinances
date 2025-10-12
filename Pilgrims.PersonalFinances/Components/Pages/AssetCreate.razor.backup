@@ -1,6 +1,6 @@
 @page "/assets/create"
-@using Pilgrims.PersonalFinances.Models
-@using Pilgrims.PersonalFinances.Services.Interfaces
+@using Pilgrims.PersonalFinances.Core.Models
+@using Pilgrims.PersonalFinances.Core.Services.Interfaces
 @using System.ComponentModel.DataAnnotations
 @inject IAssetService AssetService
 @inject NavigationManager Navigation

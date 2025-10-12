@@ -1,6 +1,6 @@
-using Pilgrims.PersonalFinances.Models.DTOs;
+using Pilgrims.PersonalFinances.Core.Models.DTOs;
 
-namespace Pilgrims.PersonalFinances.Services.Interfaces
+namespace Pilgrims.PersonalFinances.Core.Services.Interfaces
 {
     /// <summary>
     /// Interface for comprehensive financial reporting and analytics services

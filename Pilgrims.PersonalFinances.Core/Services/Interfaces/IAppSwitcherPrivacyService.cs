@@ -1,4 +1,4 @@
-namespace Pilgrims.PersonalFinances.Services.Interfaces;
+namespace Pilgrims.PersonalFinances.Core.Services.Interfaces;
 
 /// <summary>
 /// Service for managing app switcher privacy to hide sensitive data when app is in background

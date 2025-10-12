@@ -1,6 +1,6 @@
 //using System.ComponentModel.DataAnnotations;
 
-//namespace Pilgrims.PersonalFinances.Models.Enums
+//namespace Pilgrims.PersonalFinances.Core.Models.Enums
 //{
 //    /// <summary>
 //    /// Types of financial reports available in the system

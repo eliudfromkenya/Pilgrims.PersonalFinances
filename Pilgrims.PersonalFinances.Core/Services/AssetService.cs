@@ -1,11 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Pilgrims.PersonalFinances.Data;
-using Pilgrims.PersonalFinances.Models;
-using Pilgrims.PersonalFinances.Models.Enums;
-using Pilgrims.PersonalFinances.Services.Extensions;
-using Pilgrims.PersonalFinances.Services.Interfaces;
+using Pilgrims.PersonalFinances.Core.Models;
+using Pilgrims.PersonalFinances.Core.Models.Enums;
+using Pilgrims.PersonalFinances.Core.Services.Extensions;
+using Pilgrims.PersonalFinances.Core.Services.Interfaces;
 
-namespace Pilgrims.PersonalFinances.Services;
+namespace Pilgrims.PersonalFinances.Core.Services;
 
 /// <summary>
 /// Comprehensive service for asset management with CRUD operations, depreciation tracking, and reporting
@@ -90,7 +90,7 @@ public class AssetService : IAssetService
         await _notificationService.CreateNotificationAsync(
             "New Asset Added",
             $"Asset '{asset.Name}' has been successfully added to your portfolio.",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.SystemAlert
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.SystemAlert
         );
 
         return asset;
@@ -396,7 +396,7 @@ public class AssetService : IAssetService
             await _notificationService.CreateNotificationAsync(
                 "Maintenance Record Added",
                 $"Maintenance record for '{asset.Name}' has been added.",
-                Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.SystemAlert
+                Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.SystemAlert
             );
         }
 
@@ -909,3 +909,5 @@ public class AssetService : IAssetService
 
     #endregion
 }
+
+

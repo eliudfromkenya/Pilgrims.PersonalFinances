@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Pilgrims.PersonalFinances.Models.Enums;
+using Pilgrims.PersonalFinances.Core.Models.Enums;
 
-namespace Pilgrims.PersonalFinances.Models;
+namespace Pilgrims.PersonalFinances.Core.Models;
 
 public class Notification : BaseEntity
 {
@@ -158,10 +158,10 @@ public class Notification : BaseEntity
 
         var nextDate = RecurrenceType switch
         {
-            Enums.RecurrenceType.Daily => ScheduledDate.AddDays(RecurrenceInterval ?? 1),
-            Enums.RecurrenceType.Weekly => ScheduledDate.AddDays((RecurrenceInterval ?? 1) * 7),
-            Enums.RecurrenceType.Monthly => ScheduledDate.AddMonths(RecurrenceInterval ?? 1),
-            Enums.RecurrenceType.Annually => ScheduledDate.AddYears(RecurrenceInterval ?? 1),
+            Pilgrims.PersonalFinances.Core.Models.Enums.RecurrenceType.Daily => ScheduledDate.AddDays(RecurrenceInterval ?? 1),
+            Pilgrims.PersonalFinances.Core.Models.Enums.RecurrenceType.Weekly => ScheduledDate.AddDays((RecurrenceInterval ?? 1) * 7),
+            Pilgrims.PersonalFinances.Core.Models.Enums.RecurrenceType.Monthly => ScheduledDate.AddMonths(RecurrenceInterval ?? 1),
+            Pilgrims.PersonalFinances.Core.Models.Enums.RecurrenceType.Annually => ScheduledDate.AddYears(RecurrenceInterval ?? 1),
             _ => ScheduledDate.AddDays(1)
         };
 
@@ -224,3 +224,4 @@ public class Notification : BaseEntity
         return result;
     }
 }
+

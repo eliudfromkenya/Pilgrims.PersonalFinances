@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Pilgrims.PersonalFinances.Models.Enums;
+using Pilgrims.PersonalFinances.Core.Models.Enums;
 
-namespace Pilgrims.PersonalFinances.Models
+namespace Pilgrims.PersonalFinances.Core.Models
 {
     /// <summary>
     /// Represents a generated report instance
@@ -260,16 +260,16 @@ namespace Pilgrims.PersonalFinances.Models
                 {
                     return DateRangePreset.Value switch
                     {
-                        Enums.DateRangePreset.Today => "Today",
-                        Enums.DateRangePreset.Yesterday => "Yesterday",
-                        Enums.DateRangePreset.ThisWeek => "This Week",
-                        Enums.DateRangePreset.LastWeek => "Last Week",
-                        Enums.DateRangePreset.ThisMonth => "This Month",
-                        Enums.DateRangePreset.LastMonth => "Last Month",
-                        Enums.DateRangePreset.ThisQuarter => "This Quarter",
-                        Enums.DateRangePreset.LastQuarter => "Last Quarter",
-                        Enums.DateRangePreset.ThisYear => "This Year",
-                        Enums.DateRangePreset.LastYear => "Last Year",
+                        Pilgrims.PersonalFinances.Core.Models.Enums.DateRangePreset.Today => "Today",
+                        Pilgrims.PersonalFinances.Core.Models.Enums.DateRangePreset.Yesterday => "Yesterday",
+                        Pilgrims.PersonalFinances.Core.Models.Enums.DateRangePreset.ThisWeek => "This Week",
+                        Pilgrims.PersonalFinances.Core.Models.Enums.DateRangePreset.LastWeek => "Last Week",
+                        Pilgrims.PersonalFinances.Core.Models.Enums.DateRangePreset.ThisMonth => "This Month",
+                        Pilgrims.PersonalFinances.Core.Models.Enums.DateRangePreset.LastMonth => "Last Month",
+                        Pilgrims.PersonalFinances.Core.Models.Enums.DateRangePreset.ThisQuarter => "This Quarter",
+                        Pilgrims.PersonalFinances.Core.Models.Enums.DateRangePreset.LastQuarter => "Last Quarter",
+                        Pilgrims.PersonalFinances.Core.Models.Enums.DateRangePreset.ThisYear => "This Year",
+                        Pilgrims.PersonalFinances.Core.Models.Enums.DateRangePreset.LastYear => "Last Year",
                         _ => "Custom Range"
                     };
                 }
@@ -400,3 +400,4 @@ namespace Pilgrims.PersonalFinances.Models
         }
     }
 }
+

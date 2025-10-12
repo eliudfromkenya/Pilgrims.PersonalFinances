@@ -1,6 +1,5 @@
 @page "/income-list"
-@using Pilgrims.PersonalFinances.Models
-@using Pilgrims.PersonalFinances.Services.Interfaces
+@using Pilgrims.PersonalFinances.Core.Services.Interfaces
 @inject IIncomeService IncomeService
 @inject NavigationManager Navigation
 @inject INotificationService NotificationService
@@ -462,3 +461,4 @@
         Navigation.NavigateTo("/income-create");
     }
 }
+

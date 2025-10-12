@@ -1,11 +1,12 @@
 @page "/accounts"
-@using Pilgrims.PersonalFinances.Models
-@using Pilgrims.PersonalFinances.Models.Enums
-@using Pilgrims.PersonalFinances.Services
+
+@using Pilgrims.PersonalFinances.Core.Models.Enums
+
 @using Pilgrims.PersonalFinances.Core.Messaging.Interfaces
 @inject IAccountService AccountService
 @inject NavigationManager NavigationManager
 @inject IMessagingService MessagingService
+@using Pilgrims.PersonalFinances.Core.Models
 
 <PageTitle>Accounts - Pilgrims Personal Finance</PageTitle>
 

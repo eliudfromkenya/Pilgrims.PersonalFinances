@@ -1,4 +1,4 @@
-namespace Pilgrims.PersonalFinances.Models
+namespace Pilgrims.PersonalFinances.Core.Models
 {
     /// <summary>
     /// Represents the result of a validation operation

@@ -1,10 +1,9 @@
 @page "/budget/templates"
-@using Pilgrims.PersonalFinances.Models
-@using Pilgrims.PersonalFinances.Models.Enums
-@using Pilgrims.PersonalFinances.Services
-@using Pilgrims.PersonalFinances.Services.Interfaces
+@using Pilgrims.PersonalFinances.Core.Models.Enums
+
+@using Pilgrims.PersonalFinances.Core.Services.Interfaces
 @using System.ComponentModel.DataAnnotations
-@using BudgetModel = Pilgrims.PersonalFinances.Models.Budget
+@using BudgetModel = Pilgrims.PersonalFinances.Core.Models.Budget
 @inject IBudgetService BudgetService
 @inject ITransactionService TransactionService
 @inject IAccountService AccountService
@@ -573,7 +572,7 @@
         activeMenuId = null;
     }
 
-    private async Task UseTemplate(BudgetModel template)
+    private void UseTemplate(BudgetModel template)
     {
         // Navigate to create budget page with template data
         var queryParams = new Dictionary<string, object?>
@@ -649,7 +648,7 @@
         templateModel = new();
     }
 
-    private async Task OnTemplateBudgetTypeChanged(ChangeEventArgs e)
+    private void OnTemplateBudgetTypeChanged(ChangeEventArgs e)
     {
         if (Enum.TryParse<BudgetType>(e.Value?.ToString(), out var budgetType))
         {

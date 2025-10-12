@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -13,6 +13,29 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.CreateTable(
+                name: "ApplicationSettings",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "TEXT", nullable: false),
+                    DefaultCurrency = table.Column<string>(type: "TEXT", maxLength: 10, nullable: false),
+                    DateFormat = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    NumberFormat = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    Theme = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    ShowCurrencyCode = table.Column<bool>(type: "INTEGER", nullable: false),
+                    CurrencyDecimalPlaces = table.Column<int>(type: "INTEGER", nullable: false),
+                    LastUpdatedVersion = table.Column<string>(type: "TEXT", maxLength: 20, nullable: true),
+                    LastModifiedByUserId = table.Column<int>(type: "INTEGER", maxLength: 50, nullable: true),
+                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    IsDirty = table.Column<bool>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ApplicationSettings", x => x.Id);
+                });
+
             migrationBuilder.CreateTable(
                 name: "AssetCategories",
                 columns: table => new
@@ -36,6 +59,30 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "AuditLogs",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "TEXT", nullable: false),
+                    UserId = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    Operation = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    EntityName = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    EntityId = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    OldValues = table.Column<string>(type: "TEXT", nullable: true),
+                    NewValues = table.Column<string>(type: "TEXT", nullable: true),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
+                    IpAddress = table.Column<string>(type: "TEXT", maxLength: 45, nullable: true),
+                    UserAgent = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
+                    Timestamp = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    IsDirty = table.Column<bool>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AuditLogs", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Creditors",
                 columns: table => new
                 {
@@ -49,12 +96,63 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                     AccountNumber = table.Column<string>(type: "TEXT", maxLength: 50, nullable: true),
                     Notes = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     IsDirty = table.Column<bool>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Creditors", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Currencies",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "TEXT", nullable: false),
+                    Country = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    CurrencyName = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    ISOCode = table.Column<string>(type: "TEXT", maxLength: 3, nullable: false),
+                    SymbolOrSign = table.Column<string>(type: "TEXT", maxLength: 10, nullable: false),
+                    Notes = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    IsDirty = table.Column<bool>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Currencies", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Goals",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "TEXT", nullable: false),
+                    Name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
+                    GoalType = table.Column<int>(type: "INTEGER", nullable: false),
+                    TargetAmount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    CurrentAmount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    StartDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    TargetDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
+                    IsCompleted = table.Column<bool>(type: "INTEGER", nullable: false),
+                    CompletedDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    Priority = table.Column<int>(type: "INTEGER", nullable: false),
+                    Category = table.Column<string>(type: "TEXT", maxLength: 50, nullable: true),
+                    Icon = table.Column<string>(type: "TEXT", maxLength: 20, nullable: true),
+                    Color = table.Column<string>(type: "TEXT", maxLength: 50, nullable: true),
+                    EnableReminders = table.Column<bool>(type: "INTEGER", nullable: false),
+                    ReminderFrequencyDays = table.Column<int>(type: "INTEGER", nullable: false),
+                    LastReminderDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    Notes = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    IsDirty = table.Column<bool>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Goals", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -74,6 +172,41 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_IncomeCategories", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Insurances",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "TEXT", nullable: false),
+                    PolicyNumber = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    InsuranceCompany = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    PolicyType = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    PolicyName = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    AgentName = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    AgentEmail = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    AgentPhone = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
+                    CoverageAmount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    PremiumAmount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    PremiumFrequency = table.Column<int>(type: "INTEGER", nullable: false),
+                    PolicyStartDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    PolicyEndDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    NextPremiumDueDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    DeductibleAmount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    Status = table.Column<int>(type: "INTEGER", nullable: false),
+                    BeneficiaryName = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    BeneficiaryRelationship = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    BeneficiaryPhone = table.Column<string>(type: "TEXT", maxLength: 15, nullable: false),
+                    BeneficiaryEmail = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Notes = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    IsDirty = table.Column<bool>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Insurances", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -105,6 +238,53 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_NotificationSettings", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Obligations",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "TEXT", nullable: false),
+                    Name = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Type = table.Column<int>(type: "INTEGER", nullable: false),
+                    OrganizationName = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    MembershipNumber = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: false),
+                    ContributionAmount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    CurrentBalance = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    OriginalAmount = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    InterestRate = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    MinimumPayment = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    ContributionFrequency = table.Column<int>(type: "INTEGER", nullable: false),
+                    StartDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    EndDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    NextContributionDueDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    LastPaymentDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    Status = table.Column<int>(type: "INTEGER", nullable: false),
+                    LateFeeAmount = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    GracePeriodDays = table.Column<int>(type: "INTEGER", nullable: true),
+                    TermInMonths = table.Column<int>(type: "INTEGER", nullable: true),
+                    CreditLimit = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    AvailableCredit = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    IsCompoundInterest = table.Column<bool>(type: "INTEGER", nullable: false),
+                    ContactPhone = table.Column<string>(type: "TEXT", maxLength: 15, nullable: false),
+                    ContactEmail = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    ContactAddress = table.Column<string>(type: "TEXT", maxLength: 300, nullable: false),
+                    ContactPerson = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    Notes = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: false),
+                    Website = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Priority = table.Column<int>(type: "INTEGER", nullable: false),
+                    ExpectedAnnualReturn = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    BenefitsDescription = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
+                    LastDividendDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    LastDividendAmount = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    IsDirty = table.Column<bool>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Obligations", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -176,6 +356,32 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "AuditEntries",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "TEXT", nullable: false),
+                    AuditLogId = table.Column<string>(type: "TEXT", nullable: false),
+                    PropertyName = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    OldValue = table.Column<string>(type: "TEXT", nullable: true),
+                    NewValue = table.Column<string>(type: "TEXT", nullable: true),
+                    DataType = table.Column<string>(type: "TEXT", maxLength: 50, nullable: true),
+                    IsSensitive = table.Column<bool>(type: "INTEGER", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    IsDirty = table.Column<bool>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AuditEntries", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_AuditEntries_AuditLogs_AuditLogId",
+                        column: x => x.AuditLogId,
+                        principalTable: "AuditLogs",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Debts",
                 columns: table => new
                 {
@@ -197,7 +403,7 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                     IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
                     PaidOffDate = table.Column<DateTime>(type: "TEXT", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     IsDirty = table.Column<bool>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
@@ -233,9 +439,9 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                     PaymentMethod = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
                     ReferenceNumber = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
                     IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
+                    IncomeCategoryId = table.Column<string>(type: "TEXT", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    IncomeCategoryId = table.Column<string>(type: "TEXT", nullable: true),
                     IsDirty = table.Column<bool>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
@@ -247,6 +453,195 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                         principalTable: "IncomeCategories",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.SetNull);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "InsuranceBeneficiaries",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "TEXT", nullable: false),
+                    InsuranceId = table.Column<string>(type: "TEXT", nullable: false),
+                    FullName = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Relationship = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    Phone = table.Column<string>(type: "TEXT", maxLength: 15, nullable: false),
+                    Email = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Address = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
+                    Percentage = table.Column<decimal>(type: "decimal(5,2)", precision: 5, scale: 2, nullable: false),
+                    DateOfBirth = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    IdentificationNumber = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    Notes = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
+                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    IsDirty = table.Column<bool>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_InsuranceBeneficiaries", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_InsuranceBeneficiaries_Insurances_InsuranceId",
+                        column: x => x.InsuranceId,
+                        principalTable: "Insurances",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "InsuranceClaims",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "TEXT", nullable: false),
+                    InsuranceId = table.Column<string>(type: "TEXT", nullable: false),
+                    ClaimNumber = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    ClaimDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    IncidentDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: false),
+                    IncidentLocation = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    ClaimAmount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    ApprovedAmount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: true),
+                    PaidAmount = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    Status = table.Column<int>(type: "INTEGER", nullable: false),
+                    SettlementDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    Notes = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    IsDirty = table.Column<bool>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_InsuranceClaims", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_InsuranceClaims_Insurances_InsuranceId",
+                        column: x => x.InsuranceId,
+                        principalTable: "Insurances",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "InsurancePremiumPayments",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "TEXT", nullable: false),
+                    InsuranceId = table.Column<string>(type: "TEXT", nullable: false),
+                    Amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    DueDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    PaymentDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    PaymentStatus = table.Column<int>(type: "INTEGER", nullable: false),
+                    PaymentMethod = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    TransactionReference = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    Notes = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
+                    LateFee = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    LateFeeAppliedDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    NextDueDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    IsDirty = table.Column<bool>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_InsurancePremiumPayments", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_InsurancePremiumPayments_Insurances_InsuranceId",
+                        column: x => x.InsuranceId,
+                        principalTable: "Insurances",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ObligationBenefits",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "TEXT", nullable: false),
+                    ObligationId = table.Column<string>(type: "TEXT", nullable: false),
+                    BenefitType = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    Amount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    ReceivedDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: false),
+                    ReferenceNumber = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    Notes = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
+                    Status = table.Column<int>(type: "INTEGER", nullable: false),
+                    ProcessedDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    ProcessedBy = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    IsDirty = table.Column<bool>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ObligationBenefits", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ObligationBenefits_Obligations_ObligationId",
+                        column: x => x.ObligationId,
+                        principalTable: "Obligations",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ObligationDocuments",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "TEXT", nullable: false),
+                    ObligationId = table.Column<string>(type: "TEXT", nullable: false),
+                    DocumentName = table.Column<string>(type: "TEXT", maxLength: 255, nullable: false),
+                    DocumentType = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    FilePath = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
+                    FileType = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    FileSize = table.Column<long>(type: "INTEGER", nullable: false),
+                    UploadDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: false),
+                    ExpiryDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    IsDirty = table.Column<bool>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ObligationDocuments", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ObligationDocuments_Obligations_ObligationId",
+                        column: x => x.ObligationId,
+                        principalTable: "Obligations",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ObligationPayments",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "TEXT", nullable: false),
+                    ObligationId = table.Column<string>(type: "TEXT", nullable: false),
+                    Amount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    DueDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    PaymentDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    PaymentStatus = table.Column<int>(type: "INTEGER", nullable: false),
+                    PaymentMethod = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    TransactionReference = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    Notes = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
+                    LateFee = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    LateFeeAppliedDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    PaymentPeriod = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    PrincipalAmount = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    InterestAmount = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    RemainingBalance = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    IsExtraPayment = table.Column<bool>(type: "INTEGER", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    IsDirty = table.Column<bool>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ObligationPayments", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ObligationPayments_Obligations_ObligationId",
+                        column: x => x.ObligationId,
+                        principalTable: "Obligations",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -362,6 +757,7 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "TEXT", nullable: false),
+                    UserId = table.Column<string>(type: "TEXT", nullable: false),
                     Name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
                     Description = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
                     AccountType = table.Column<int>(type: "INTEGER", nullable: false),
@@ -369,6 +765,8 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                     CurrentBalance = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     Currency = table.Column<string>(type: "TEXT", maxLength: 10, nullable: false),
                     IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
+                    ColorCode = table.Column<string>(type: "TEXT", maxLength: 7, nullable: false),
+                    Status = table.Column<int>(type: "INTEGER", nullable: false),
                     AccountNumber = table.Column<string>(type: "TEXT", maxLength: 50, nullable: true),
                     BankName = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
                     CreditLimit = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
@@ -380,7 +778,6 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                     AccountHolder = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
                     LastReconciledDate = table.Column<DateTime>(type: "TEXT", nullable: true),
                     ReconciledBalance = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
-                    UserId = table.Column<string>(type: "TEXT", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     IsDirty = table.Column<bool>(type: "INTEGER", nullable: false)
@@ -425,8 +822,7 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                         name: "FK_Categories_Users_UserId",
                         column: x => x.UserId,
                         principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -462,6 +858,127 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "InsuranceDocuments",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "TEXT", nullable: false),
+                    InsuranceId = table.Column<string>(type: "TEXT", nullable: false),
+                    ClaimId = table.Column<string>(type: "TEXT", nullable: true),
+                    DocumentName = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    DocumentType = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    FilePath = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
+                    FileType = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    FileSize = table.Column<long>(type: "INTEGER", nullable: false),
+                    UploadDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
+                    ExpiryDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    IsDirty = table.Column<bool>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_InsuranceDocuments", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_InsuranceDocuments_InsuranceClaims_ClaimId",
+                        column: x => x.ClaimId,
+                        principalTable: "InsuranceClaims",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_InsuranceDocuments_Insurances_InsuranceId",
+                        column: x => x.InsuranceId,
+                        principalTable: "Insurances",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "InsuranceNotifications",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "TEXT", nullable: false),
+                    InsuranceId = table.Column<string>(type: "TEXT", nullable: false),
+                    InsuranceClaimId = table.Column<string>(type: "TEXT", nullable: true),
+                    Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Message = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: false),
+                    NotificationType = table.Column<int>(type: "INTEGER", nullable: false),
+                    Priority = table.Column<int>(type: "INTEGER", nullable: false),
+                    ScheduledDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    SentDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    IsSent = table.Column<bool>(type: "INTEGER", nullable: false),
+                    IsRead = table.Column<bool>(type: "INTEGER", nullable: false),
+                    ReadDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    IsDismissed = table.Column<bool>(type: "INTEGER", nullable: false),
+                    AdditionalData = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    IsDirty = table.Column<bool>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_InsuranceNotifications", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_InsuranceNotifications_InsuranceClaims_InsuranceClaimId",
+                        column: x => x.InsuranceClaimId,
+                        principalTable: "InsuranceClaims",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_InsuranceNotifications_Insurances_InsuranceId",
+                        column: x => x.InsuranceId,
+                        principalTable: "Insurances",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ObligationNotifications",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "TEXT", nullable: false),
+                    ObligationId = table.Column<string>(type: "TEXT", nullable: false),
+                    ObligationPaymentId = table.Column<string>(type: "TEXT", nullable: true),
+                    ObligationBenefitId = table.Column<string>(type: "TEXT", nullable: true),
+                    Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Message = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: false),
+                    NotificationType = table.Column<int>(type: "INTEGER", nullable: false),
+                    Priority = table.Column<int>(type: "INTEGER", nullable: false),
+                    ScheduledDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    SentDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    IsSent = table.Column<bool>(type: "INTEGER", nullable: false),
+                    IsRead = table.Column<bool>(type: "INTEGER", nullable: false),
+                    ReadDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    IsDismissed = table.Column<bool>(type: "INTEGER", nullable: false),
+                    AdditionalData = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    IsDirty = table.Column<bool>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ObligationNotifications", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ObligationNotifications_ObligationBenefits_ObligationBenefitId",
+                        column: x => x.ObligationBenefitId,
+                        principalTable: "ObligationBenefits",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_ObligationNotifications_ObligationPayments_ObligationPaymentId",
+                        column: x => x.ObligationPaymentId,
+                        principalTable: "ObligationPayments",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_ObligationNotifications_Obligations_ObligationId",
+                        column: x => x.ObligationId,
+                        principalTable: "Obligations",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Investments",
                 columns: table => new
                 {
@@ -475,10 +992,10 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                     CurrentPrice = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 4, nullable: true),
                     PurchaseDate = table.Column<DateTime>(type: "TEXT", nullable: false),
                     Description = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     CreatedBy = table.Column<string>(type: "TEXT", nullable: true),
                     UpdatedBy = table.Column<string>(type: "TEXT", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     IsDirty = table.Column<bool>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
@@ -513,10 +1030,10 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                     IsReconciled = table.Column<bool>(type: "INTEGER", nullable: false),
                     ReconciledDate = table.Column<DateTime>(type: "TEXT", nullable: true),
                     ReconciledBy = table.Column<string>(type: "TEXT", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     CreatedBy = table.Column<string>(type: "TEXT", nullable: true),
                     UpdatedBy = table.Column<string>(type: "TEXT", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     IsDirty = table.Column<bool>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
@@ -535,6 +1052,7 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "TEXT", nullable: false),
+                    UserId = table.Column<string>(type: "TEXT", nullable: false),
                     Name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
                     Description = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
                     BudgetType = table.Column<int>(type: "INTEGER", nullable: false),
@@ -550,10 +1068,12 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                     CategoryId = table.Column<string>(type: "TEXT", nullable: true),
                     AccountId = table.Column<string>(type: "TEXT", nullable: true),
                     Tag = table.Column<string>(type: "TEXT", maxLength: 50, nullable: true),
+                    GoalId = table.Column<int>(type: "INTEGER", nullable: true),
                     AlertLevels = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
                     AlertsEnabled = table.Column<bool>(type: "INTEGER", nullable: false),
+                    IsTemplate = table.Column<bool>(type: "INTEGER", nullable: false),
                     LastAlertLevel = table.Column<int>(type: "INTEGER", nullable: true),
-                    UserId = table.Column<string>(type: "TEXT", nullable: true),
+                    GoalId1 = table.Column<string>(type: "TEXT", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     IsDirty = table.Column<bool>(type: "INTEGER", nullable: false)
@@ -573,6 +1093,11 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                         principalTable: "Categories",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_Budgets_Goals_GoalId1",
+                        column: x => x.GoalId1,
+                        principalTable: "Goals",
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Budgets_Users_UserId",
                         column: x => x.UserId,
@@ -614,6 +1139,7 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                     NextDueDate = table.Column<DateTime>(type: "TEXT", nullable: true),
                     SkippedDates = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: true),
                     AdjustForWeekends = table.Column<bool>(type: "INTEGER", nullable: false),
+                    DebtId = table.Column<string>(type: "TEXT", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     IsDirty = table.Column<bool>(type: "INTEGER", nullable: false)
@@ -638,6 +1164,11 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                         principalTable: "Categories",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_ScheduledTransactions_Debts_DebtId",
+                        column: x => x.DebtId,
+                        principalTable: "Debts",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -653,6 +1184,9 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                     Message = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
                     IsRead = table.Column<bool>(type: "INTEGER", nullable: false),
                     ReadDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
+                    Severity = table.Column<int>(type: "INTEGER", nullable: false),
+                    ThresholdPercentage = table.Column<decimal>(type: "decimal(5,2)", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     IsDirty = table.Column<bool>(type: "INTEGER", nullable: false)
@@ -679,6 +1213,7 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                     TagName = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
                     AllocatedAmount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     SpentAmount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    BudgetId1 = table.Column<string>(type: "TEXT", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     IsDirty = table.Column<bool>(type: "INTEGER", nullable: false)
@@ -698,6 +1233,11 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                         principalTable: "Budgets",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_BudgetCategories_Budgets_BudgetId1",
+                        column: x => x.BudgetId1,
+                        principalTable: "Budgets",
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_BudgetCategories_Categories_CategoryId",
                         column: x => x.CategoryId,
@@ -852,6 +1392,7 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                     RetryCount = table.Column<int>(type: "INTEGER", nullable: false),
                     MaxRetries = table.Column<int>(type: "INTEGER", nullable: false),
                     ErrorMessage = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
+                    SnoozedUntil = table.Column<DateTime>(type: "TEXT", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     IsDirty = table.Column<bool>(type: "INTEGER", nullable: false)
@@ -884,6 +1425,8 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                     IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
                     CreatedBy = table.Column<string>(type: "TEXT", nullable: true),
                     UpdatedBy = table.Column<string>(type: "TEXT", nullable: true),
+                    AssetId = table.Column<string>(type: "TEXT", nullable: true),
+                    AssetRegisterId1 = table.Column<string>(type: "TEXT", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     IsDirty = table.Column<bool>(type: "INTEGER", nullable: false)
@@ -949,6 +1492,7 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                     ServiceType = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
                     Description = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
                     ServiceDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    NextMaintenanceDate = table.Column<DateTime>(type: "TEXT", nullable: true),
                     Cost = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     ServiceProvider = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
                     ServiceProviderContact = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
@@ -1014,6 +1558,8 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                     ResponsiblePerson = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
                     CreatedBy = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
                     UpdatedBy = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
+                    Notes = table.Column<string>(type: "TEXT", nullable: true),
+                    Status = table.Column<string>(type: "TEXT", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     IsDirty = table.Column<bool>(type: "INTEGER", nullable: false)
@@ -1041,10 +1587,10 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                     Notes = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
                     IsRecurring = table.Column<bool>(type: "INTEGER", nullable: false),
                     RecurrenceIntervalDays = table.Column<int>(type: "INTEGER", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     CreatedBy = table.Column<string>(type: "TEXT", nullable: true),
                     UpdatedBy = table.Column<string>(type: "TEXT", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     IsDirty = table.Column<bool>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
@@ -1065,14 +1611,16 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                     Id = table.Column<string>(type: "TEXT", nullable: false),
                     Name = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
                     Description = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
-                    AssetCategoryId = table.Column<string>(type: "TEXT", nullable: true),
+                    AssetCategoryId = table.Column<string>(type: "TEXT", nullable: false),
                     PurchaseDate = table.Column<DateTime>(type: "TEXT", nullable: false),
                     PurchasePrice = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    CurrentValue = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    CurrentValue = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: true),
                     DepreciationMethod = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
                     DepreciationRate = table.Column<decimal>(type: "decimal(5,2)", nullable: true),
                     UsefulLifeYears = table.Column<int>(type: "INTEGER", nullable: true),
                     SalvageValue = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    Brand = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
+                    Model = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
                     PurchaseTransactionId = table.Column<string>(type: "TEXT", nullable: true),
                     IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
                     DisposalDate = table.Column<DateTime>(type: "TEXT", nullable: true),
@@ -1083,9 +1631,9 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                     Location = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
                     Condition = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
                     SerialNumber = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
+                    AssetRegisterId = table.Column<string>(type: "TEXT", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    AssetRegisterId = table.Column<string>(type: "TEXT", nullable: true),
                     IsDirty = table.Column<bool>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
@@ -1122,12 +1670,15 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                     RecurringPattern = table.Column<string>(type: "TEXT", nullable: true),
                     IsSplit = table.Column<bool>(type: "INTEGER", nullable: false),
                     ParentTransactionId = table.Column<string>(type: "TEXT", nullable: true),
-                    AssetId = table.Column<string>(type: "TEXT", nullable: true),
+                    CreatedBy = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
+                    UserId = table.Column<string>(type: "TEXT", nullable: true),
                     BudgetId = table.Column<string>(type: "TEXT", nullable: true),
                     DebtId = table.Column<string>(type: "TEXT", nullable: true),
+                    AssetId = table.Column<string>(type: "TEXT", nullable: true),
+                    GoalId = table.Column<int>(type: "INTEGER", nullable: true),
+                    GoalId1 = table.Column<string>(type: "TEXT", nullable: true),
                     InvestmentId = table.Column<string>(type: "TEXT", nullable: true),
                     ScheduledTransactionId = table.Column<string>(type: "TEXT", nullable: true),
-                    UserId = table.Column<string>(type: "TEXT", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     IsDirty = table.Column<bool>(type: "INTEGER", nullable: false)
@@ -1168,6 +1719,11 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                         principalTable: "Debts",
                         principalColumn: "Id");
                     table.ForeignKey(
+                        name: "FK_Transactions_Goals_GoalId1",
+                        column: x => x.GoalId1,
+                        principalTable: "Goals",
+                        principalColumn: "Id");
+                    table.ForeignKey(
                         name: "FK_Transactions_Investments_InvestmentId",
                         column: x => x.InvestmentId,
                         principalTable: "Investments",
@@ -1186,8 +1742,80 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                         name: "FK_Transactions_Users_UserId",
                         column: x => x.UserId,
                         principalTable: "Users",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Notification",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "TEXT", nullable: false),
+                    Type = table.Column<int>(type: "INTEGER", nullable: false),
+                    Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Message = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: false),
+                    ScheduledDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    SentDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    ReadDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    DismissedDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    SnoozedUntil = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    Status = table.Column<int>(type: "INTEGER", nullable: false),
+                    Priority = table.Column<int>(type: "INTEGER", nullable: false),
+                    IsRecurring = table.Column<bool>(type: "INTEGER", nullable: false),
+                    RecurrenceType = table.Column<int>(type: "INTEGER", nullable: true),
+                    RecurrenceInterval = table.Column<int>(type: "INTEGER", nullable: true),
+                    RecurrenceEndDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    TransactionId = table.Column<string>(type: "TEXT", nullable: true),
+                    BudgetId = table.Column<string>(type: "TEXT", nullable: true),
+                    DebtId = table.Column<string>(type: "TEXT", nullable: true),
+                    GoalId = table.Column<string>(type: "TEXT", nullable: true),
+                    ScheduledTransactionId = table.Column<string>(type: "TEXT", nullable: true),
+                    ActionData = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
+                    ActionUrl = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
+                    Icon = table.Column<string>(type: "TEXT", maxLength: 50, nullable: true),
+                    Color = table.Column<string>(type: "TEXT", maxLength: 50, nullable: true),
+                    EnableSound = table.Column<bool>(type: "INTEGER", nullable: false),
+                    EnableVibration = table.Column<bool>(type: "INTEGER", nullable: false),
+                    AdvanceNoticeDays = table.Column<int>(type: "INTEGER", nullable: false),
+                    MaxSnoozeCount = table.Column<int>(type: "INTEGER", nullable: false),
+                    CurrentSnoozeCount = table.Column<int>(type: "INTEGER", nullable: false),
+                    Notes = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    IsDirty = table.Column<bool>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Notification", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Notification_Budgets_BudgetId",
+                        column: x => x.BudgetId,
+                        principalTable: "Budgets",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_Notification_Debts_DebtId",
+                        column: x => x.DebtId,
+                        principalTable: "Debts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_Notification_Goals_GoalId",
+                        column: x => x.GoalId,
+                        principalTable: "Goals",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_Notification_ScheduledTransactions_ScheduledTransactionId",
+                        column: x => x.ScheduledTransactionId,
+                        principalTable: "ScheduledTransactions",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_Notification_Transactions_TransactionId",
+                        column: x => x.TransactionId,
+                        principalTable: "Transactions",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
                 });
 
             migrationBuilder.CreateTable(
@@ -1222,9 +1850,9 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                     BudgetId = table.Column<string>(type: "TEXT", nullable: true),
                     DebtId = table.Column<string>(type: "TEXT", nullable: true),
                     AccountId = table.Column<string>(type: "TEXT", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     NotificationRuleId1 = table.Column<string>(type: "TEXT", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     IsDirty = table.Column<bool>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
@@ -1234,17 +1862,20 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                         name: "FK_NotificationHistory_Accounts_AccountId",
                         column: x => x.AccountId,
                         principalTable: "Accounts",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
                     table.ForeignKey(
                         name: "FK_NotificationHistory_Budgets_BudgetId",
                         column: x => x.BudgetId,
                         principalTable: "Budgets",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
                     table.ForeignKey(
                         name: "FK_NotificationHistory_Debts_DebtId",
                         column: x => x.DebtId,
                         principalTable: "Debts",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
                     table.ForeignKey(
                         name: "FK_NotificationHistory_NotificationRules_NotificationRuleId",
                         column: x => x.NotificationRuleId,
@@ -1260,12 +1891,14 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                         name: "FK_NotificationHistory_ScheduledTransactions_ScheduledTransactionId",
                         column: x => x.ScheduledTransactionId,
                         principalTable: "ScheduledTransactions",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
                     table.ForeignKey(
                         name: "FK_NotificationHistory_Transactions_TransactionId",
                         column: x => x.TransactionId,
                         principalTable: "Transactions",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
                 });
 
             migrationBuilder.CreateTable(
@@ -1286,10 +1919,10 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                     ClearedDate = table.Column<DateTime>(type: "TEXT", nullable: true),
                     IsStatementOnly = table.Column<bool>(type: "INTEGER", nullable: false),
                     IsBookOnly = table.Column<bool>(type: "INTEGER", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     CreatedBy = table.Column<string>(type: "TEXT", nullable: true),
                     UpdatedBy = table.Column<string>(type: "TEXT", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     IsDirty = table.Column<bool>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
@@ -1374,9 +2007,211 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                 columns: new[] { "Id", "ColorCode", "CreatedAt", "Description", "IconName", "IsActive", "IsDirty", "Name", "ParentCategoryId", "UpdatedAt", "UserId" },
                 values: new object[,]
                 {
-                    { "1", "#FF6B6B", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, null, true, true, "Debt Payment", null, new DateTime(2025, 9, 21, 2, 41, 57, 282, DateTimeKind.Utc).AddTicks(339), null },
-                    { "2", "#FF4757", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, null, true, true, "Interest", null, new DateTime(2025, 9, 21, 2, 41, 57, 283, DateTimeKind.Utc).AddTicks(720), null },
-                    { "3", "#FF3838", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, null, true, true, "Credit Card", null, new DateTime(2025, 9, 21, 2, 41, 57, 283, DateTimeKind.Utc).AddTicks(732), null }
+                    { "1", "#FF6B6B", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, null, true, true, "Debt Payment", null, new DateTime(2025, 10, 11, 14, 1, 53, 918, DateTimeKind.Utc).AddTicks(3992), null },
+                    { "2", "#FF4757", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, null, true, true, "Interest", null, new DateTime(2025, 10, 11, 14, 1, 53, 918, DateTimeKind.Utc).AddTicks(9000), null },
+                    { "3", "#FF3838", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, null, true, true, "Credit Card", null, new DateTime(2025, 10, 11, 14, 1, 53, 918, DateTimeKind.Utc).AddTicks(9010), null }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Currencies",
+                columns: new[] { "Id", "Country", "CreatedAt", "CurrencyName", "ISOCode", "IsDirty", "Notes", "SymbolOrSign", "UpdatedAt" },
+                values: new object[,]
+                {
+                    { "1", "Afghanistan", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Afghani", "AFN", false, "Independent currency", "؋", null },
+                    { "10", "Austria", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Euro", "EUR", false, "Uses EUR (Eurozone member)", "€", null },
+                    { "100", "Liechtenstein", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Swiss Franc", "CHF", false, "Uses foreign currency", "Fr", null },
+                    { "101", "Lithuania", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Euro", "EUR", false, "Uses EUR (Eurozone member)", "€", null },
+                    { "102", "Luxembourg", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Euro", "EUR", false, "Uses EUR (Eurozone member)", "€", null },
+                    { "103", "Madagascar", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Malagasy Ariary", "MGA", false, "Independent currency", "Ar", null },
+                    { "104", "Malawi", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Malawian Kwacha", "MWK", false, "Independent currency", "MK", null },
+                    { "105", "Malaysia", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Malaysian Ringgit", "MYR", false, "Independent currency", "RM", null },
+                    { "106", "Maldives", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Maldivian Rufiyaa", "MVR", false, "Independent currency", "Rf", null },
+                    { "107", "Mali", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "West African CFA Franc", "XOF", false, "Shared currency (WAEMU)", "Fr", null },
+                    { "108", "Malta", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Euro", "EUR", false, "Uses EUR (Eurozone member)", "€", null },
+                    { "109", "Marshall Islands", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "United States Dollar", "USD", false, "Uses foreign currency", "$", null },
+                    { "11", "Azerbaijan", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Azerbaijani Manat", "AZN", false, "Independent currency", "₼", null },
+                    { "110", "Mauritania", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Mauritanian Ouguiya", "MRU", false, "Independent currency", "UM", null },
+                    { "111", "Mauritius", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Mauritian Rupee", "MUR", false, "Independent currency", "₨", null },
+                    { "112", "Mexico", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Mexican Peso", "MXN", false, "Independent currency", "$", null },
+                    { "113", "Micronesia", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "United States Dollar", "USD", false, "Uses foreign currency", "$", null },
+                    { "114", "Moldova", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Moldovan Leu", "MDL", false, "Independent currency", "L", null },
+                    { "115", "Monaco", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Euro", "EUR", false, "Uses EUR (Eurozone member)", "€", null },
+                    { "116", "Mongolia", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Mongolian Tögrög", "MNT", false, "Independent currency", "₮", null },
+                    { "117", "Montenegro", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Euro", "EUR", false, "Uses EUR (not official EU member)", "€", null },
+                    { "118", "Morocco", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Moroccan Dirham", "MAD", false, "Independent currency", "د.م", null },
+                    { "119", "Mozambique", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Mozambican Metical", "MZN", false, "Independent currency", "MT", null },
+                    { "12", "Bahamas", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Bahamian Dollar", "BSD", false, "Pegged 1:1 USD", "$", null },
+                    { "120", "Myanmar", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Burmese Kyat", "MMK", false, "Independent currency", "K", null },
+                    { "121", "Namibia", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Namibian Dollar", "NAD", false, "Pegged to South African Rand", "$", null },
+                    { "122", "Nauru", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Australian Dollar", "AUD", false, "Uses foreign currency", "$", null },
+                    { "123", "Nepal", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Nepalese Rupee", "NPR", false, "Pegged to Indian Rupee", "₨", null },
+                    { "124", "Netherlands", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Euro", "EUR", false, "Uses EUR (Eurozone member)", "€", null },
+                    { "125", "New Zealand", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "New Zealand Dollar", "NZD", false, "Independent currency", "$", null },
+                    { "126", "Nicaragua", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Nicaraguan Córdoba", "NIO", false, "Independent currency", "C$", null },
+                    { "127", "Niger", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "West African CFA Franc", "XOF", false, "Shared currency (WAEMU)", "Fr", null },
+                    { "128", "Nigeria", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Nigerian Naira", "NGN", false, "Independent currency", "₦", null },
+                    { "129", "North Macedonia", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Macedonian Denar", "MKD", false, "Independent currency", "ден", null },
+                    { "13", "Bahrain", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Bahraini Dinar", "BHD", false, "Pegged to USD", ".د.ب", null },
+                    { "130", "Norway", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Norwegian Krone", "NOK", false, "Independent currency", "kr", null },
+                    { "131", "Oman", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Omani Rial", "OMR", false, "Pegged to USD", "ر.ع.", null },
+                    { "132", "Pakistan", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Pakistani Rupee", "PKR", false, "Independent currency", "₨", null },
+                    { "133", "Palau", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "United States Dollar", "USD", false, "Uses foreign currency", "$", null },
+                    { "134", "Panama", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Panamanian Balboa", "PAB", false, "Pegged to USD (also uses USD)", "B/.", null },
+                    { "135", "Papua New Guinea", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Papua New Guinean Kina", "PGK", false, "Independent currency", "K", null },
+                    { "136", "Paraguay", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Paraguayan Guaraní", "PYG", false, "Independent currency", "₲", null },
+                    { "137", "Peru", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Peruvian Sol", "PEN", false, "Independent currency", "S/", null },
+                    { "138", "Philippines", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Philippine Peso", "PHP", false, "Independent currency", "₱", null },
+                    { "139", "Poland", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Polish Zloty", "PLN", false, "Independent currency", "zł", null },
+                    { "14", "Bangladesh", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Taka", "BDT", false, "Independent currency", "৳", null },
+                    { "140", "Portugal", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Euro", "EUR", false, "Uses EUR (Eurozone member)", "€", null },
+                    { "141", "Qatar", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Qatari Riyal", "QAR", false, "Pegged to USD", "ر.ق", null },
+                    { "142", "Romania", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Romanian Leu", "RON", false, "Independent currency", "lei", null },
+                    { "143", "Russia", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Russian Ruble", "RUB", false, "Independent currency", "₽", null },
+                    { "144", "Rwanda", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Rwandan Franc", "RWF", false, "Independent currency", "FRw", null },
+                    { "145", "Saint Kitts and Nevis", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "East Caribbean Dollar", "XCD", false, "Shared currency (Eastern Caribbean)", "$", null },
+                    { "146", "Saint Lucia", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "East Caribbean Dollar", "XCD", false, "Shared currency (Eastern Caribbean)", "$", null },
+                    { "147", "Saint Vincent and the Grenadines", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "East Caribbean Dollar", "XCD", false, "Shared currency (Eastern Caribbean)", "$", null },
+                    { "148", "Samoa", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Samoan Tala", "WST", false, "Independent currency", "WS$", null },
+                    { "149", "San Marino", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Euro", "EUR", false, "Uses EUR (Eurozone member)", "€", null },
+                    { "15", "Barbados", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Barbadian Dollar", "BBD", false, "Pegged 2:1 USD", "$", null },
+                    { "150", "Saudi Arabia", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Saudi Riyal", "SAR", false, "Pegged to USD", "ر.س", null },
+                    { "151", "Senegal", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "West African CFA Franc", "XOF", false, "Shared currency (WAEMU)", "CFA", null },
+                    { "152", "Serbia", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Serbian Dinar", "RSD", false, "Independent currency", "din", null },
+                    { "153", "Seychelles", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Seychellois Rupee", "SCR", false, "Independent currency", "₨", null },
+                    { "154", "Sierra Leone", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Sierra Leonean Leone", "SLL", false, "Independent currency", "Le", null },
+                    { "155", "Singapore", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Singapore Dollar", "SGD", false, "Independent currency", "$", null },
+                    { "156", "Slovakia", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Euro", "EUR", false, "Uses EUR (Eurozone member)", "€", null },
+                    { "157", "Slovenia", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Euro", "EUR", false, "Uses EUR (Eurozone member)", "€", null },
+                    { "158", "Solomon Islands", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Solomon Islands Dollar", "SBD", false, "Independent currency", "SI$", null },
+                    { "159", "Somalia", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Somali Shilling", "SOS", false, "Independent currency", "Sh", null },
+                    { "16", "Belarus", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Belarusian Ruble", "BYN", false, "Independent currency", "Br", null },
+                    { "160", "South Africa", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "South African Rand", "ZAR", false, "Independent currency", "R", null },
+                    { "161", "South Korea", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "South Korean Won", "KRW", false, "Independent currency", "₩", null },
+                    { "162", "South Sudan", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "South Sudanese Pound", "SSP", false, "Independent currency", "£", null },
+                    { "163", "Spain", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Euro", "EUR", false, "Uses EUR (Eurozone member)", "€", null },
+                    { "164", "Sri Lanka", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Sri Lankan Rupee", "LKR", false, "Independent currency", "₨", null },
+                    { "165", "Sudan", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Sudanese Pound", "SDG", false, "Independent currency", "ج.س", null },
+                    { "166", "Suriname", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Surinamese Dollar", "SRD", false, "Independent currency", "$", null },
+                    { "167", "Sweden", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Swedish Krona", "SEK", false, "Independent currency", "kr", null },
+                    { "168", "Switzerland", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Swiss Franc", "CHF", false, "Independent currency", "Fr", null },
+                    { "169", "Syria", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Syrian Pound", "SYP", false, "Independent currency", "£", null },
+                    { "17", "Belgium", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Euro", "EUR", false, "Uses EUR (Eurozone member)", "€", null },
+                    { "170", "Taiwan", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "New Taiwan Dollar", "TWD", false, "Independent currency", "NT$", null },
+                    { "171", "Tajikistan", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Tajikistani Somoni", "TJS", false, "Independent currency", "SM", null },
+                    { "172", "Tanzania", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Tanzanian Shilling", "TZS", false, "Independent currency", "Tsh", null },
+                    { "173", "Thailand", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Thai Baht", "THB", false, "Independent currency", "฿", null },
+                    { "174", "Timor-Leste", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "United States Dollar", "USD", false, "Uses foreign currency", "$", null },
+                    { "175", "Togo", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "West African CFA Franc", "XOF", false, "Shared currency (WAEMU)", "CFA", null },
+                    { "176", "Tonga", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Tongan Paʻanga", "TOP", false, "Independent currency", "T$", null },
+                    { "177", "Trinidad and Tobago", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Trinidad and Tobago Dollar", "TTD", false, "Independent currency", "TT$", null },
+                    { "178", "Tunisia", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Tunisian Dinar", "TND", false, "Independent currency", "د.ت", null },
+                    { "179", "Turkey", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Turkish Lira", "TRY", false, "Independent currency", "₺", null },
+                    { "18", "Belize", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Belize Dollar", "BZD", false, "Pegged 2:1 USD", "$", null },
+                    { "180", "Turkmenistan", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Turkmenistani Manat", "TMT", false, "Independent currency", "m", null },
+                    { "181", "Tuvalu", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Australian Dollar", "AUD", false, "Uses foreign currency", "$", null },
+                    { "182", "Uganda", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Ugandan Shilling", "UGX", false, "Independent currency", "Ush", null },
+                    { "183", "Ukraine", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Ukrainian Hryvnia", "UAH", false, "Independent currency", "₴", null },
+                    { "184", "United Arab Emirates", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "UAE Dirham", "AED", false, "Pegged to USD", "د.إ", null },
+                    { "185", "United Kingdom", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "British Pound Sterling", "GBP", false, "Independent currency", "£", null },
+                    { "186", "United States", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "United States Dollar", "USD", false, "World's primary reserve currency", "$", null },
+                    { "187", "Uruguay", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Uruguayan Peso", "UYU", false, "Independent currency", "$", null },
+                    { "188", "Uzbekistan", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Uzbekistani Som", "UZS", false, "Independent currency", "so'm", null },
+                    { "189", "Vanuatu", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Vanuatu Vatu", "VUV", false, "Independent currency", "Vt", null },
+                    { "19", "Benin", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "West African CFA Franc", "XOF", false, "Shared currency (West African Union)", "Fr", null },
+                    { "190", "Vatican City", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Euro", "EUR", false, "Uses EUR (Vatican agreement)", "€", null },
+                    { "191", "Venezuela", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Venezuelan Bolívar", "VES", false, "Independent currency", "Bs.S", null },
+                    { "192", "Vietnam", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Vietnamese Dong", "VND", false, "Independent currency", "₫", null },
+                    { "193", "Yemen", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Yemeni Rial", "YER", false, "Independent currency", "﷼", null },
+                    { "194", "Zambia", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Zambian Kwacha", "ZMW", false, "Independent currency", "ZK", null },
+                    { "195", "Zimbabwe", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "United States Dollar", "USD", false, "Uses foreign currency (multi-currency system)", "$", null },
+                    { "2", "Albania", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Lek", "ALL", false, "Independent currency", "L", null },
+                    { "20", "Bhutan", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Ngultrum", "BTN", false, "Pegged 1:1 INR", "Nu.", null },
+                    { "21", "Bolivia", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Boliviano", "BOB", false, "Independent currency", "Bs.", null },
+                    { "22", "Bosnia & Herzegovina", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Convertible Mark", "BAM", false, "Pegged to EUR", "KM", null },
+                    { "23", "Botswana", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Pula", "BWP", false, "Independent currency", "P", null },
+                    { "24", "Brazil", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Brazilian Real", "BRL", false, "Independent currency", "R$", null },
+                    { "25", "Brunei", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Brunei Dollar", "BND", false, "Pegged to SGD", "$", null },
+                    { "26", "Bulgaria", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Bulgarian Lev", "BGN", false, "Independent currency", "лв", null },
+                    { "27", "Burkina Faso", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "West African CFA Franc", "XOF", false, "Shared currency (West African Union)", "Fr", null },
+                    { "28", "Burundi", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Burundian Franc", "BIF", false, "Independent currency", "Fr", null },
+                    { "29", "Cambodia", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Riel", "KHR", false, "Independent currency", "៛", null },
+                    { "3", "Algeria", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Algerian Dinar", "DZD", false, "Independent currency", "دج", null },
+                    { "30", "Cameroon", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Central African CFA Franc", "XAF", false, "Shared currency (Central African Union)", "Fr", null },
+                    { "31", "Canada", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Canadian Dollar", "CAD", false, "Independent currency", "$", null },
+                    { "32", "Cape Verde", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Cape Verdean Escudo", "CVE", false, "Pegged to EUR", "$", null },
+                    { "33", "Central African Republic", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Central African CFA Franc", "XAF", false, "Shared currency (Central African Union)", "Fr", null },
+                    { "34", "Chad", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Central African CFA Franc", "XAF", false, "Shared currency (Central African Union)", "Fr", null },
+                    { "35", "Chile", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Chilean Peso", "CLP", false, "Independent currency", "$", null },
+                    { "36", "China", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Renminbi (Yuan)", "CNY", false, "Independent currency", "¥", null },
+                    { "37", "Colombia", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Colombian Peso", "COP", false, "Independent currency", "$", null },
+                    { "38", "Comoros", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Comorian Franc", "KMF", false, "Pegged to EUR", "Fr", null },
+                    { "39", "Congo (DRC)", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Congolese Franc", "CDF", false, "Independent currency", "Fr", null },
+                    { "4", "Andorra", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Euro", "EUR", false, "Uses EUR (no national currency)", "€", null },
+                    { "40", "Congo (Republic)", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Central African CFA Franc", "XAF", false, "Shared currency (Central African Union)", "Fr", null },
+                    { "41", "Costa Rica", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Costa Rican Colón", "CRC", false, "Independent currency", "₡", null },
+                    { "42", "Croatia", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Euro", "EUR", false, "Adopted EUR in 2023", "€", null },
+                    { "43", "Cuba", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Cuban Peso", "CUP", false, "Independent currency", "$", null },
+                    { "44", "Cyprus", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Euro", "EUR", false, "Uses EUR (Eurozone member)", "€", null },
+                    { "45", "Czech Republic", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Czech Koruna", "CZK", false, "Independent currency", "Kč", null },
+                    { "46", "Denmark", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Danish Krone", "DKK", false, "Independent currency", "kr", null },
+                    { "47", "Djibouti", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Djiboutian Franc", "DJF", false, "Pegged to USD", "Fr", null },
+                    { "48", "Dominica", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "East Caribbean Dollar", "XCD", false, "Shared currency (Eastern Caribbean)", "$", null },
+                    { "49", "Dominican Republic", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Dominican Peso", "DOP", false, "Independent currency", "$", null },
+                    { "5", "Angola", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Kwanza", "AOA", false, "Independent currency", "Kz", null },
+                    { "50", "Ecuador", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "US Dollar", "USD", false, "Dollarized economy", "$", null },
+                    { "51", "Egypt", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Egyptian Pound", "EGP", false, "Independent currency", "£ / ج.م", null },
+                    { "52", "El Salvador", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "US Dollar / Bitcoin", "USD / BTC", false, "Officially USD + BTC", "$ / ₿", null },
+                    { "53", "Equatorial Guinea", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Central African CFA Franc", "XAF", false, "Shared currency (Central African Union)", "Fr", null },
+                    { "54", "Eritrea", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Nakfa", "ERN", false, "Independent currency", "Nfk", null },
+                    { "55", "Estonia", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Euro", "EUR", false, "Uses EUR (Eurozone member)", "€", null },
+                    { "56", "Eswatini (Swaziland)", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Lilangeni", "SZL", false, "Pegged to ZAR", "E", null },
+                    { "57", "Ethiopia", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Ethiopian Birr", "ETB", false, "Independent currency", "Br", null },
+                    { "58", "Fiji", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Fijian Dollar", "FJD", false, "Independent currency", "$", null },
+                    { "59", "Finland", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Euro", "EUR", false, "Uses EUR (Eurozone member)", "€", null },
+                    { "6", "Antigua & Barbuda", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "East Caribbean Dollar", "XCD", false, "Shared currency (Eastern Caribbean)", "$", null },
+                    { "60", "France", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Euro", "EUR", false, "Uses EUR (Eurozone member)", "€", null },
+                    { "61", "Gabon", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Central African CFA Franc", "XAF", false, "Shared currency (Central African Union)", "Fr", null },
+                    { "62", "Gambia", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Gambian Dalasi", "GMD", false, "Independent currency", "D", null },
+                    { "63", "Georgia", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Georgian Lari", "GEL", false, "Independent currency", "₾", null },
+                    { "64", "Germany", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Euro", "EUR", false, "Uses EUR (Eurozone member)", "€", null },
+                    { "65", "Ghana", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Ghanaian Cedi", "GHS", false, "Independent currency", "₵", null },
+                    { "66", "Greece", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Euro", "EUR", false, "Uses EUR (Eurozone member)", "€", null },
+                    { "67", "Grenada", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "East Caribbean Dollar", "XCD", false, "Shared currency (Eastern Caribbean)", "$", null },
+                    { "68", "Guatemala", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Guatemalan Quetzal", "GTQ", false, "Independent currency", "Q", null },
+                    { "69", "Guinea", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Guinean Franc", "GNF", false, "Independent currency", "Fr", null },
+                    { "7", "Argentina", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Argentine Peso", "ARS", false, "Independent currency", "$", null },
+                    { "70", "Guinea-Bissau", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "West African CFA Franc", "XOF", false, "Shared currency (West African Union)", "Fr", null },
+                    { "71", "Guyana", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Guyanese Dollar", "GYD", false, "Independent currency", "$", null },
+                    { "72", "Haiti", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Haitian Gourde", "HTG", false, "Independent currency", "G", null },
+                    { "73", "Honduras", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Honduran Lempira", "HNL", false, "Independent currency", "L", null },
+                    { "74", "Hungary", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Hungarian Forint", "HUF", false, "Independent currency", "Ft", null },
+                    { "75", "Iceland", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Icelandic Krona", "ISK", false, "Independent currency", "kr", null },
+                    { "76", "India", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Indian Rupee", "INR", false, "Independent currency", "₹", null },
+                    { "77", "Indonesia", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Indonesian Rupiah", "IDR", false, "Independent currency", "Rp", null },
+                    { "78", "Iran", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Iranian Rial", "IRR", false, "Independent currency", "﷼", null },
+                    { "79", "Iraq", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Iraqi Dinar", "IQD", false, "Independent currency", "ع.د", null },
+                    { "8", "Armenia", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Armenian Dram", "AMD", false, "Independent currency", "֏", null },
+                    { "80", "Ireland", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Euro", "EUR", false, "Uses EUR (Eurozone member)", "€", null },
+                    { "81", "Israel", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Israeli New Shekel", "ILS", false, "Independent currency", "₪", null },
+                    { "82", "Italy", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Euro", "EUR", false, "Uses EUR (Eurozone member)", "€", null },
+                    { "83", "Ivory Coast (Côte d'Ivoire)", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "West African CFA Franc", "XOF", false, "Shared currency (West African Union)", "Fr", null },
+                    { "84", "Jamaica", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Jamaican Dollar", "JMD", false, "Independent currency", "$", null },
+                    { "85", "Japan", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Japanese Yen", "JPY", false, "Independent currency", "¥", null },
+                    { "86", "Jordan", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Jordanian Dinar", "JOD", false, "Pegged to USD", "د.ا", null },
+                    { "87", "Kazakhstan", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Kazakhstani Tenge", "KZT", false, "Independent currency", "₸", null },
+                    { "88", "Kenya", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Kenyan Shilling", "KES", false, "Independent currency", "Ksh", null },
+                    { "89", "Kiribati", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Australian Dollar", "AUD", false, "Uses foreign currency", "$", null },
+                    { "9", "Australia", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Australian Dollar", "AUD", false, "Independent currency", "$", null },
+                    { "90", "Korea, North", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "North Korean Won", "KPW", false, "Independent currency", "₩", null },
+                    { "91", "Korea, South", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "South Korean Won", "KRW", false, "Independent currency", "₩", null },
+                    { "92", "Kuwait", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Kuwaiti Dinar", "KWD", false, "One of the strongest currencies", "د.ك", null },
+                    { "93", "Kyrgyzstan", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Kyrgyzstani Som", "KGS", false, "Independent currency", "с", null },
+                    { "94", "Laos", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Lao Kip", "LAK", false, "Independent currency", "₭", null },
+                    { "95", "Latvia", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Euro", "EUR", false, "Uses EUR (Eurozone member)", "€", null },
+                    { "96", "Lebanon", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Lebanese Pound", "LBP", false, "Pegged/managed", "ل.ل", null },
+                    { "97", "Lesotho", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Lesotho Loti", "LSL", false, "Pegged to South African Rand", "L", null },
+                    { "98", "Liberia", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Liberian Dollar", "LRD", false, "Independent currency", "$", null },
+                    { "99", "Libya", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Libyan Dinar", "LYD", false, "Independent currency", "ل.د", null }
                 });
 
             migrationBuilder.CreateIndex(
@@ -1397,15 +2232,30 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ApplicationSettings_IsActive",
+                table: "ApplicationSettings",
+                column: "IsActive");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_AssetCategories_Name",
                 table: "AssetCategories",
                 column: "Name",
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_AssetDocuments_AssetId",
+                table: "AssetDocuments",
+                column: "AssetId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_AssetDocuments_AssetRegisterId",
                 table: "AssetDocuments",
                 column: "AssetRegisterId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AssetDocuments_AssetRegisterId1",
+                table: "AssetDocuments",
+                column: "AssetRegisterId1");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AssetInsurances_AssetId",
@@ -1498,6 +2348,11 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                 filter: "[SerialNumber] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
+                name: "IX_AuditEntries_AuditLogId",
+                table: "AuditEntries",
+                column: "AuditLogId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_BudgetAlerts_BudgetId",
                 table: "BudgetAlerts",
                 column: "BudgetId");
@@ -1512,6 +2367,11 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                 table: "BudgetCategories",
                 columns: new[] { "BudgetId", "CategoryId" },
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BudgetCategories_BudgetId1",
+                table: "BudgetCategories",
+                column: "BudgetId1");
 
             migrationBuilder.CreateIndex(
                 name: "IX_BudgetCategories_CategoryId",
@@ -1537,6 +2397,11 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                 name: "IX_Budgets_EndDate",
                 table: "Budgets",
                 column: "EndDate");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Budgets_GoalId1",
+                table: "Budgets",
+                column: "GoalId1");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Budgets_IsActive",
@@ -1597,6 +2462,21 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                 filter: "[AccountNumber] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Goals_GoalType",
+                table: "Goals",
+                column: "GoalType");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Goals_IsActive",
+                table: "Goals",
+                column: "IsActive");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Goals_TargetDate",
+                table: "Goals",
+                column: "TargetDate");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_IncomeCategories_Name",
                 table: "IncomeCategories",
                 column: "Name",
@@ -1621,6 +2501,103 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                 name: "IX_Incomes_ReceivedDate",
                 table: "Incomes",
                 column: "ReceivedDate");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_InsuranceBeneficiaries_FullName",
+                table: "InsuranceBeneficiaries",
+                column: "FullName");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_InsuranceBeneficiaries_InsuranceId",
+                table: "InsuranceBeneficiaries",
+                column: "InsuranceId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_InsuranceBeneficiaries_IsActive",
+                table: "InsuranceBeneficiaries",
+                column: "IsActive");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_InsuranceClaims_ClaimDate",
+                table: "InsuranceClaims",
+                column: "ClaimDate");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_InsuranceClaims_ClaimNumber",
+                table: "InsuranceClaims",
+                column: "ClaimNumber",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_InsuranceClaims_InsuranceId",
+                table: "InsuranceClaims",
+                column: "InsuranceId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_InsuranceClaims_Status",
+                table: "InsuranceClaims",
+                column: "Status");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_InsuranceDocuments_ClaimId",
+                table: "InsuranceDocuments",
+                column: "ClaimId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_InsuranceDocuments_DocumentType",
+                table: "InsuranceDocuments",
+                column: "DocumentType");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_InsuranceDocuments_InsuranceId",
+                table: "InsuranceDocuments",
+                column: "InsuranceId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_InsuranceDocuments_UploadDate",
+                table: "InsuranceDocuments",
+                column: "UploadDate");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_InsuranceNotifications_InsuranceClaimId",
+                table: "InsuranceNotifications",
+                column: "InsuranceClaimId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_InsuranceNotifications_InsuranceId",
+                table: "InsuranceNotifications",
+                column: "InsuranceId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_InsuranceNotifications_IsSent",
+                table: "InsuranceNotifications",
+                column: "IsSent");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_InsuranceNotifications_ScheduledDate",
+                table: "InsuranceNotifications",
+                column: "ScheduledDate");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_InsurancePremiumPayments_InsuranceId",
+                table: "InsurancePremiumPayments",
+                column: "InsuranceId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Insurances_PolicyEndDate",
+                table: "Insurances",
+                column: "PolicyEndDate");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Insurances_PolicyNumber",
+                table: "Insurances",
+                column: "PolicyNumber",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Insurances_Status",
+                table: "Insurances",
+                column: "Status");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Investments_AccountId",
@@ -1651,6 +2628,46 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                 name: "IX_MaintenanceRecords_NextMaintenanceDate",
                 table: "MaintenanceRecords",
                 column: "NextMaintenanceDate");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Notification_BudgetId",
+                table: "Notification",
+                column: "BudgetId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Notification_DebtId",
+                table: "Notification",
+                column: "DebtId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Notification_GoalId",
+                table: "Notification",
+                column: "GoalId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Notification_ScheduledDate",
+                table: "Notification",
+                column: "ScheduledDate");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Notification_ScheduledTransactionId",
+                table: "Notification",
+                column: "ScheduledTransactionId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Notification_Status",
+                table: "Notification",
+                column: "Status");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Notification_TransactionId",
+                table: "Notification",
+                column: "TransactionId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Notification_Type",
+                table: "Notification",
+                column: "Type");
 
             migrationBuilder.CreateIndex(
                 name: "IX_NotificationHistory_AccountId",
@@ -1751,6 +2768,76 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                 name: "IX_NotificationSettings_NotificationType",
                 table: "NotificationSettings",
                 column: "NotificationType");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ObligationBenefits_ObligationId",
+                table: "ObligationBenefits",
+                column: "ObligationId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ObligationBenefits_ReceivedDate",
+                table: "ObligationBenefits",
+                column: "ReceivedDate");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ObligationBenefits_Status",
+                table: "ObligationBenefits",
+                column: "Status");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ObligationDocuments_ObligationId",
+                table: "ObligationDocuments",
+                column: "ObligationId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ObligationNotifications_IsSent",
+                table: "ObligationNotifications",
+                column: "IsSent");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ObligationNotifications_ObligationBenefitId",
+                table: "ObligationNotifications",
+                column: "ObligationBenefitId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ObligationNotifications_ObligationId",
+                table: "ObligationNotifications",
+                column: "ObligationId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ObligationNotifications_ObligationPaymentId",
+                table: "ObligationNotifications",
+                column: "ObligationPaymentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ObligationNotifications_ScheduledDate",
+                table: "ObligationNotifications",
+                column: "ScheduledDate");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ObligationPayments_ObligationId_PaymentDate",
+                table: "ObligationPayments",
+                columns: new[] { "ObligationId", "PaymentDate" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ObligationPayments_PaymentDate",
+                table: "ObligationPayments",
+                column: "PaymentDate");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Obligations_Name",
+                table: "Obligations",
+                column: "Name");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Obligations_Status",
+                table: "Obligations",
+                column: "Status");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Obligations_Type",
+                table: "Obligations",
+                column: "Type");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ReconciliationItems_ReconciliationSessionId",
@@ -1858,6 +2945,11 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                 column: "CategoryId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ScheduledTransactions_DebtId",
+                table: "ScheduledTransactions",
+                column: "DebtId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ScheduledTransactions_IsActive",
                 table: "ScheduledTransactions",
                 column: "IsActive");
@@ -1933,6 +3025,11 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                 column: "DebtId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Transactions_GoalId1",
+                table: "Transactions",
+                column: "GoalId1");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Transactions_InvestmentId",
                 table: "Transactions",
                 column: "InvestmentId");
@@ -2003,6 +3100,20 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                 onDelete: ReferentialAction.Cascade);
 
             migrationBuilder.AddForeignKey(
+                name: "FK_AssetDocuments_AssetRegisters_AssetRegisterId1",
+                table: "AssetDocuments",
+                column: "AssetRegisterId1",
+                principalTable: "AssetRegisters",
+                principalColumn: "Id");
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_AssetDocuments_Assets_AssetId",
+                table: "AssetDocuments",
+                column: "AssetId",
+                principalTable: "Assets",
+                principalColumn: "Id");
+
+            migrationBuilder.AddForeignKey(
                 name: "FK_AssetInsurances_Assets_AssetId",
                 table: "AssetInsurances",
                 column: "AssetId",
@@ -2039,7 +3150,8 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                 table: "Assets",
                 column: "PurchaseTransactionId",
                 principalTable: "Transactions",
-                principalColumn: "Id");
+                principalColumn: "Id",
+                onDelete: ReferentialAction.SetNull);
         }
 
         /// <inheritdoc />
@@ -2066,6 +3178,9 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                 table: "Transactions");
 
             migrationBuilder.DropTable(
+                name: "ApplicationSettings");
+
+            migrationBuilder.DropTable(
                 name: "AssetDocuments");
 
             migrationBuilder.DropTable(
@@ -2073,6 +3188,9 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
 
             migrationBuilder.DropTable(
                 name: "AssetMaintenances");
+
+            migrationBuilder.DropTable(
+                name: "AuditEntries");
 
             migrationBuilder.DropTable(
                 name: "BudgetAlerts");
@@ -2084,16 +3202,40 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                 name: "BudgetDebt");
 
             migrationBuilder.DropTable(
+                name: "Currencies");
+
+            migrationBuilder.DropTable(
                 name: "DebtPayments");
 
             migrationBuilder.DropTable(
                 name: "Incomes");
 
             migrationBuilder.DropTable(
+                name: "InsuranceBeneficiaries");
+
+            migrationBuilder.DropTable(
+                name: "InsuranceDocuments");
+
+            migrationBuilder.DropTable(
+                name: "InsuranceNotifications");
+
+            migrationBuilder.DropTable(
+                name: "InsurancePremiumPayments");
+
+            migrationBuilder.DropTable(
                 name: "MaintenanceRecords");
 
             migrationBuilder.DropTable(
+                name: "Notification");
+
+            migrationBuilder.DropTable(
                 name: "NotificationHistory");
+
+            migrationBuilder.DropTable(
+                name: "ObligationDocuments");
+
+            migrationBuilder.DropTable(
+                name: "ObligationNotifications");
 
             migrationBuilder.DropTable(
                 name: "ReconciliationItems");
@@ -2117,7 +3259,13 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                 name: "UserSessions");
 
             migrationBuilder.DropTable(
+                name: "AuditLogs");
+
+            migrationBuilder.DropTable(
                 name: "IncomeCategories");
+
+            migrationBuilder.DropTable(
+                name: "InsuranceClaims");
 
             migrationBuilder.DropTable(
                 name: "AssetRegisters");
@@ -2126,13 +3274,25 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                 name: "NotificationRules");
 
             migrationBuilder.DropTable(
+                name: "ObligationBenefits");
+
+            migrationBuilder.DropTable(
+                name: "ObligationPayments");
+
+            migrationBuilder.DropTable(
                 name: "ReconciliationSessions");
 
             migrationBuilder.DropTable(
                 name: "ReportTemplates");
 
             migrationBuilder.DropTable(
+                name: "Insurances");
+
+            migrationBuilder.DropTable(
                 name: "NotificationSettings");
+
+            migrationBuilder.DropTable(
+                name: "Obligations");
 
             migrationBuilder.DropTable(
                 name: "Users");
@@ -2150,22 +3310,25 @@ namespace Pilgrims.PersonalFinances.Core.Migrations
                 name: "Budgets");
 
             migrationBuilder.DropTable(
-                name: "Debts");
-
-            migrationBuilder.DropTable(
                 name: "Investments");
 
             migrationBuilder.DropTable(
                 name: "ScheduledTransactions");
 
             migrationBuilder.DropTable(
-                name: "Creditors");
+                name: "Goals");
 
             migrationBuilder.DropTable(
                 name: "Accounts");
 
             migrationBuilder.DropTable(
                 name: "Categories");
+
+            migrationBuilder.DropTable(
+                name: "Debts");
+
+            migrationBuilder.DropTable(
+                name: "Creditors");
         }
     }
 }

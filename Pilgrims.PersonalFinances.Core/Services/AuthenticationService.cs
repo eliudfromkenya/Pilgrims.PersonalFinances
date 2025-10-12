@@ -2,11 +2,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Pilgrims.PersonalFinances.Data;
-using Pilgrims.PersonalFinances.Models;
+using Pilgrims.PersonalFinances.Core.Models;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Pilgrims.PersonalFinances.Services
+namespace Pilgrims.PersonalFinances.Core.Services
 {
     /// <summary>
     /// Implementation of authentication services

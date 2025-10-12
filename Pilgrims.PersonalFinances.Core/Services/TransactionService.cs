@@ -1,13 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using Pilgrims.PersonalFinances.Data;
-using Pilgrims.PersonalFinances.Models;
-using Pilgrims.PersonalFinances.Models.Enums;
-using Pilgrims.PersonalFinances.Services.Interfaces;
+using Pilgrims.PersonalFinances.Core.Models;
+using Pilgrims.PersonalFinances.Core.Models.Enums;
+using Pilgrims.PersonalFinances.Core.Services.Interfaces;
 using Pilgrims.PersonalFinances.Core.Logging;
 using Pilgrims.PersonalFinances.Core.Interfaces;
 using System.Text.Json;
 
-namespace Pilgrims.PersonalFinances.Services;
+namespace Pilgrims.PersonalFinances.Core.Services;
 
 /// <summary>
 /// Service implementation for managing transactions with comprehensive CRUD operations
@@ -72,7 +72,7 @@ public class TransactionService : ITransactionService
         }
 
         _context.Transactions.Add(transaction);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync().ConfigureAwait(false);
 
         // Log success
         _logger.LogInformation("Transaction Created: {Description} with amount {Amount}", transaction.Description, transaction.Amount);
@@ -97,7 +97,7 @@ public class TransactionService : ITransactionService
 
         transaction.TouchUpdatedAt();
         _context.Entry(existingTransaction).CurrentValues.SetValues(transaction);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync().ConfigureAwait(false);
 
         // Log success
         _logger.LogInformation("Transaction Updated: {Description} with amount {Amount}", transaction.Description, transaction.Amount);
@@ -111,7 +111,7 @@ public class TransactionService : ITransactionService
         if (transaction == null) return false;
 
         _context.Transactions.Remove(transaction);
-        return await _context.SaveChangesAsync() > 0;
+        return await _context.SaveChangesAsync().ConfigureAwait(false) > 0;
     }
 
     public async Task<bool> DeleteTransactionsAsync(IEnumerable<string> ids)
@@ -123,7 +123,7 @@ public class TransactionService : ITransactionService
         if (!transactions.Any()) return false;
 
         _context.Transactions.RemoveRange(transactions);
-        var result = await _context.SaveChangesAsync();
+        var result = await _context.SaveChangesAsync().ConfigureAwait(false);
 
         return result > 0;
     }
@@ -324,7 +324,7 @@ public class TransactionService : ITransactionService
         splitTransaction.TouchUpdatedAt();
 
         _context.SplitTransactions.Add(splitTransaction);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync().ConfigureAwait(false);
 
         return splitTransaction;
     }
@@ -337,7 +337,7 @@ public class TransactionService : ITransactionService
 
         splitTransaction.TouchUpdatedAt();
         _context.Entry(existing).CurrentValues.SetValues(splitTransaction);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync().ConfigureAwait(false);
 
         return splitTransaction;
     }
@@ -348,7 +348,7 @@ public class TransactionService : ITransactionService
         if (splitTransaction == null) return false;
 
         _context.SplitTransactions.Remove(splitTransaction);
-        return await _context.SaveChangesAsync() > 0;
+        return await _context.SaveChangesAsync().ConfigureAwait(false) > 0;
     }
 
     #endregion
@@ -504,7 +504,7 @@ public class TransactionService : ITransactionService
             transaction.TouchUpdatedAt();
         }
 
-        var result = await _context.SaveChangesAsync() > 0;
+        var result = await _context.SaveChangesAsync().ConfigureAwait(false) > 0;
 
         if (result)
         {
@@ -529,7 +529,7 @@ public class TransactionService : ITransactionService
             transaction.TouchUpdatedAt();
         }
 
-        var result = await _context.SaveChangesAsync() > 0;
+        var result = await _context.SaveChangesAsync().ConfigureAwait(false) > 0;
 
         if (result)
         {
@@ -598,7 +598,7 @@ public class TransactionService : ITransactionService
         // For now, we'll just save the metadata
 
         _context.TransactionAttachments.Add(attachment);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync().ConfigureAwait(false);
 
         // Log success
         _logger.LogInformation("Attachment Added: {FileName} for transaction {TransactionId}", attachment.FileName, attachment.TransactionId);
@@ -612,7 +612,7 @@ public class TransactionService : ITransactionService
         if (attachment == null) return false;
 
         _context.TransactionAttachments.Remove(attachment);
-        var result = await _context.SaveChangesAsync() > 0;
+        var result = await _context.SaveChangesAsync().ConfigureAwait(false) > 0;
 
         if (result)
         {

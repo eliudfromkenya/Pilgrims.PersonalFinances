@@ -1,14 +1,18 @@
-namespace Pilgrims.PersonalFinances.Models.Enums
+namespace Pilgrims.PersonalFinances.Core.Models.Enums
 {
+    /// <summary>
+    /// Represents types of investments supported by the system
+    /// </summary>
     public enum InvestmentType
     {
-        Stock = 1,
-        Bond = 2,
-        MutualFund = 3,
-        ETF = 4,
-        Cryptocurrency = 5,
-        RealEstate = 6,
-        Commodity = 7,
-        Other = 8
+        Stock = 0,
+        Bond = 1,
+        MutualFund = 2,
+        ETF = 3,
+        RealEstate = 4,
+        Crypto = 5,
+        Commodity = 6,
+        CashEquivalent = 7,
+        Other = 99
     }
 }

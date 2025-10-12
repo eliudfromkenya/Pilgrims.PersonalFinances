@@ -1,6 +1,6 @@
-using Pilgrims.PersonalFinances.Models;
+using Pilgrims.PersonalFinances.Core.Models;
 
-namespace Pilgrims.PersonalFinances.Models.DTOs
+namespace Pilgrims.PersonalFinances.Core.Models.DTOs
 {
     public class ReconciliationReportDto
     {

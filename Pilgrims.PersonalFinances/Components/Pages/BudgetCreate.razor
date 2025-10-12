@@ -1,10 +1,8 @@
 @page "/budget/create"
 @page "/budget/edit/{budgetId:int}"
-@using Pilgrims.PersonalFinances.Models
-@using Pilgrims.PersonalFinances.Models.Enums
-@using Pilgrims.PersonalFinances.Services.Interfaces
-@using Pilgrims.PersonalFinances.Services
-@using System.ComponentModel.DataAnnotations
+@using Pilgrims.PersonalFinances.Core.Models
+@using Pilgrims.PersonalFinances.Core.Models.Enums
+@using Pilgrims.PersonalFinances.Core.Services.Interfaces
 @inject IBudgetService BudgetService
 @inject ITransactionService TransactionService
 @inject IAccountService AccountService
@@ -402,7 +400,7 @@
     [Parameter] public int? BudgetId { get; set; }
     
     private BudgetCreateModel budgetModel = new();
-    private Pilgrims.PersonalFinances.Models.Budget? budget;
+    private Pilgrims.PersonalFinances.Core.Models.Budget? budget;
     private List<Category>? categories;
     private IEnumerable<Account>? accounts;
     private bool isSubmitting = false;
@@ -480,7 +478,7 @@
         budgetModel.EnableAlerts = true;
     }
 
-    private async Task OnBudgetTypeChanged(ChangeEventArgs e)
+    private void OnBudgetTypeChanged(ChangeEventArgs e)
     {
         if (Enum.TryParse<BudgetType>(e.Value?.ToString(), out var budgetType))
         {
@@ -490,7 +488,6 @@
             budgetModel.CategoryId = null;
             budgetModel.AccountId = null;
             budgetModel.Tags = null;
-            
             StateHasChanged();
         }
     }
@@ -502,7 +499,7 @@
             isSubmitting = true;
             StateHasChanged();
 
-            var budgetToSave = new Pilgrims.PersonalFinances.Models.Budget
+            var budgetToSave = new Pilgrims.PersonalFinances.Core.Models.Budget
             {
                 Id = IsEditMode ? BudgetId!.Value.ToString() : Guid.NewGuid().ToString(),
                 Name = budgetModel.Name,
@@ -528,7 +525,7 @@
                 SetDatesBasedOnPeriod(budgetToSave);
             }
 
-            Pilgrims.PersonalFinances.Models.Budget savedBudget;
+            Pilgrims.PersonalFinances.Core.Models.Budget savedBudget;
             if (IsEditMode)
             {
                 savedBudget = await BudgetService.UpdateBudgetAsync(budgetToSave);
@@ -559,7 +556,7 @@
         }
     }
 
-    private void SetDatesBasedOnPeriod(Pilgrims.PersonalFinances.Models.Budget budget)
+    private void SetDatesBasedOnPeriod(Pilgrims.PersonalFinances.Core.Models.Budget budget)
     {
         var now = DateTime.Now;
         

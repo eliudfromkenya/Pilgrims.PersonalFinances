@@ -1,4 +1,3 @@
-@using Pilgrims.PersonalFinances.Models
 @using Pilgrims.PersonalFinances.Core.ViewModels
 @using Pilgrims.PersonalFinances.Core.Messaging.Interfaces
 @inject NotificationBellViewModel ViewModel
@@ -112,16 +111,16 @@
         await ViewModel.InitializeCommand.ExecuteAsync(null);
     }
 
-    private string GetNotificationIconBg(Pilgrims.PersonalFinances.Models.Enums.AppNotificationType type)
+    private string GetNotificationIconBg(Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType type)
     {
         return type switch
         {
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.BillReminder => "bg-blue-100 text-blue-600",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.BudgetAlert => "bg-red-100 text-red-600",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.DebtPayment => "bg-yellow-100 text-yellow-600",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.IncomeExpectation => "bg-green-100 text-green-600",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.ReconciliationReminder => "bg-purple-100 text-purple-600",
-            Pilgrims.PersonalFinances.Models.Enums.AppNotificationType.SystemAlert => "bg-purple-100 text-purple-600",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.BillReminder => "bg-blue-100 text-blue-600",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.BudgetAlert => "bg-red-100 text-red-600",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.DebtPayment => "bg-yellow-100 text-yellow-600",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.IncomeExpectation => "bg-green-100 text-green-600",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.ReconciliationReminder => "bg-purple-100 text-purple-600",
+            Pilgrims.PersonalFinances.Core.Models.Enums.AppNotificationType.SystemAlert => "bg-purple-100 text-purple-600",
             _ => "bg-gray-100 text-gray-600"
         };
     }

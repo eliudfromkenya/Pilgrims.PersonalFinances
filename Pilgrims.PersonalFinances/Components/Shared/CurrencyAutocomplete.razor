@@ -1,3 +1,4 @@
+@using System.Threading
 @using Pilgrims.PersonalFinances.Core.Data
 @using Pilgrims.PersonalFinances.Core.Models
 @using Pilgrims.PersonalFinances.Data
@@ -13,14 +14,15 @@
            @onblur="OnBlur"
            placeholder="@Placeholder"
            class="@CssClass"
+           style="background: var(--card-bg); border-color: var(--border-color); color: var(--text-primary);"
            autocomplete="off" />
     
     @if (showDropdown && filteredCurrencies.Any())
     {
-        <div class="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+        <div class="absolute z-50 w-full mt-1 dropdown-menu rounded-lg max-h-60 overflow-y-auto">
             @foreach (var currency in filteredCurrencies.Take(10))
             {
-                <div class="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer flex items-center justify-between"
+                <div class="dropdown-item px-4 py-2 cursor-pointer flex items-center justify-between"
                      @onclick="() => SelectCurrency(currency)"
                      @onmousedown:preventDefault="true">
                     <div>
@@ -41,7 +43,7 @@
     
     @if (showDropdown && !filteredCurrencies.Any() && !string.IsNullOrEmpty(searchText))
     {
-        <div class="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg">
+        <div class="absolute z-50 w-full mt-1 dropdown-menu rounded-lg">
             <div class="px-4 py-2 text-gray-500 dark:text-gray-400">
                 No currencies found matching "@searchText"
             </div>
@@ -55,7 +57,7 @@
     [Parameter] public EventCallback ValueChangedCallback { get; set; }
     [Parameter] public EventCallback ValueChangedAfter { get; set; }
     [Parameter] public string Placeholder { get; set; } = "Search currencies...";
-    [Parameter] public string CssClass { get; set; } = "w-full px-3 py-2 bg-white/50 dark:bg-gray-700/50 border border-white/20 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent";
+    [Parameter] public string CssClass { get; set; } = "w-full px-3 py-2 rounded-lg border focus:ring-2 focus:ring-slate-500 focus:border-transparent";
 
     private string searchText = string.Empty;
     private bool showDropdown = false;

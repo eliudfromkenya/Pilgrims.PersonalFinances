@@ -1,4 +1,4 @@
-namespace Pilgrims.PersonalFinances.Services.Interfaces;
+namespace Pilgrims.PersonalFinances.Core.Services.Interfaces;
 
 /// <summary>
 /// Service for managing automatic app locking functionality

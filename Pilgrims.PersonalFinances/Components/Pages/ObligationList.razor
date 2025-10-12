@@ -1,7 +1,6 @@
 @page "/obligations"
-@using Pilgrims.PersonalFinances.Models
-@using Pilgrims.PersonalFinances.Models.Enums
-@using Pilgrims.PersonalFinances.Services.Interfaces
+@using Pilgrims.PersonalFinances.Core.Models.Enums
+@using Pilgrims.PersonalFinances.Core.Services.Interfaces
 @inject IObligationService ObligationService
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
@@ -503,7 +502,7 @@
         var debtObligations = obligations.Where(o => o.IsDebt && o.InterestRate.HasValue).ToList();
         if (debtObligations.Any())
         {
-            averageInterestRate = debtObligations.Average(o => o.InterestRate.Value);
+            averageInterestRate = debtObligations.Average(o => o.InterestRate.GetValueOrDefault());
         }
     }
 

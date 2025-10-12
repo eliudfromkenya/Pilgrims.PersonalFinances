@@ -1,10 +1,10 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Pilgrims.PersonalFinances.Services.Extensions;
-using Pilgrims.PersonalFinances.Services.Interfaces;
+using Pilgrims.PersonalFinances.Core.Services.Extensions;
+using Pilgrims.PersonalFinances.Core.Services.Interfaces;
 
-namespace Pilgrims.PersonalFinances.Services
+namespace Pilgrims.PersonalFinances.Core.Services
 {
     /// <summary>
     /// Background service for managing insurance-related notifications

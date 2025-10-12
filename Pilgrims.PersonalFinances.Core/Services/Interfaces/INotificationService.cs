@@ -1,7 +1,7 @@
-using Pilgrims.PersonalFinances.Models;
-using Pilgrims.PersonalFinances.Models.Enums;
+using Pilgrims.PersonalFinances.Core.Models;
+using Pilgrims.PersonalFinances.Core.Models.Enums;
 
-namespace Pilgrims.PersonalFinances.Services.Interfaces;
+namespace Pilgrims.PersonalFinances.Core.Services.Interfaces;
 
 public interface INotificationService
 {
@@ -35,13 +35,13 @@ public interface INotificationService
     
     // Notification Statistics
     Task<int> GetUnreadCountAsync();
-    Task<int> GetUnreadCountByTypeAsync(Pilgrims.PersonalFinances.Models.Enums.AppNotificationType type);
-    Task<Dictionary<Pilgrims.PersonalFinances.Models.Enums.AppNotificationType, int>> GetNotificationCountsByTypeAsync();
+    Task<int> GetUnreadCountByTypeAsync(AppNotificationType type);
+    Task<Dictionary<AppNotificationType, int>> GetNotificationCountsByTypeAsync();
     
     // Notification Settings
-    Task<bool> IsNotificationEnabledAsync(Pilgrims.PersonalFinances.Models.Enums.AppNotificationType type);
-    Task SetNotificationEnabledAsync(Pilgrims.PersonalFinances.Models.Enums.AppNotificationType type, bool enabled);
-    Task<NotificationSettings> GetNotificationSettingsAsync(Pilgrims.PersonalFinances.Models.Enums.AppNotificationType type);
+    Task<bool> IsNotificationEnabledAsync(AppNotificationType type);
+    Task SetNotificationEnabledAsync(AppNotificationType type, bool enabled);
+    Task<NotificationSettings> GetNotificationSettingsAsync(AppNotificationType type);
     Task SaveNotificationSettingsAsync(NotificationSettings settings);
     Task<List<NotificationSettings>> GetAllNotificationSettingsAsync();
     Task SaveAllNotificationSettingsAsync(List<NotificationSettings> settings);
@@ -70,3 +70,5 @@ public interface INotificationService
     event EventHandler<string>? NotificationRead;
     event EventHandler<string>? NotificationDismissed;
 }
+
+

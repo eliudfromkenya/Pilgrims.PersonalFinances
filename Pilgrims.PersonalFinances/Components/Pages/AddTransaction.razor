@@ -1,9 +1,7 @@
 @page "/transactions/add"
-@using Pilgrims.PersonalFinances.Models
-@using Pilgrims.PersonalFinances.Models.DTOs
-@using Pilgrims.PersonalFinances.Models.Enums
-@using Pilgrims.PersonalFinances.Services.Interfaces
-@using Pilgrims.PersonalFinances.Services
+@using Pilgrims.PersonalFinances.Core.Models.DTOs
+@using Pilgrims.PersonalFinances.Core.Models.Enums
+@using Pilgrims.PersonalFinances.Core.Services.Interfaces
 @using Pilgrims.PersonalFinances.Components.Shared
 @inject ITransactionService TransactionService
 @inject IAccountService AccountService
@@ -491,7 +489,7 @@
     private Transaction transaction = new() { Date = DateTime.Today, Status = TransactionStatus.Pending };
     private List<Account> accounts = new();
     private List<Category> categories = new();
-    private List<TransactionTemplate> templates = new();
+    private List<Pilgrims.PersonalFinances.Core.Models.TransactionTemplate> templates = new();
     
     // Split transaction
     private bool isSplitTransaction = false;
@@ -741,7 +739,7 @@
         showTemplateModal = true;
     }
     
-    private void ApplyTemplate(TransactionTemplate template)
+    private void ApplyTemplate(Pilgrims.PersonalFinances.Core.Models.TransactionTemplate template)
     {
         transaction.Amount = template.Amount;
         transaction.Type = template.Type;
@@ -758,7 +756,7 @@
         var templateName = await JSRuntime.InvokeAsync<string>("prompt", "Enter template name:");
         if (!string.IsNullOrWhiteSpace(templateName))
         {
-            var template = new Models.TransactionTemplate
+            var template = new Pilgrims.PersonalFinances.Core.Models.TransactionTemplate
             {
                 Name = templateName,
                 Description = transaction.Description,
@@ -804,25 +802,5 @@
         };
     }
     
-    // DTO for split transactions
-    public class SplitTransactionDto
-    {
-        public string TransactionId { get; set; } = "";
-        public decimal Amount { get; set; }
-        public string CategoryId { get; set; } = "";
-        public string Description { get; set; } = "";
-    }
-    
-    // DTO for transaction templates
-    public class TransactionTemplate
-    {
-        public string Id { get; set; } = "";
-        public string Name { get; set; } = "";
-        public string Description { get; set; } = "";
-        public decimal Amount { get; set; }
-        public TransactionType Type { get; set; }
-        public string? CategoryId { get; set; }
-        public string? Payee { get; set; }
-        public string? Tags { get; set; }
-    }
+
 }
