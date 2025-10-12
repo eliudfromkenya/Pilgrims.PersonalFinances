@@ -13,6 +13,7 @@ using Serilog;
 using Pilgrims.PersonalFinances.Core.Interfaces;
 using Pilgrims.PersonalFinances.Core.Services;
 using Microsoft.Extensions.DependencyInjection;
+using Pilgrims.PersonalFinances.Services;
 
 namespace Pilgrims.PersonalFinances
 {

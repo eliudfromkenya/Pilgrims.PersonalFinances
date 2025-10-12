@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Pilgrims.PersonalFinances.Data;
-using Pilgrims.PersonalFinances.Models;
+using Pilgrims.PersonalFinances.Core.Models;
 using Pilgrims.PersonalFinances.Core.Models.Enums;
 
 namespace GoalTest

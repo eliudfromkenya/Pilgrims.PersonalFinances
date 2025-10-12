@@ -2,8 +2,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Pilgrims.PersonalFinances.Core.Messaging.Interfaces;
 using Pilgrims.PersonalFinances.Data;
-using Pilgrims.PersonalFinances.Models;
+using Pilgrims.PersonalFinances.Core.Models;
 using Pilgrims.PersonalFinances.Core.Services.Interfaces;
+using Pilgrims.PersonalFinances.Core.Models.Enums;
 
 namespace Pilgrims.PersonalFinances.Demo
 {
@@ -36,7 +37,7 @@ namespace Pilgrims.PersonalFinances.Demo
                 var account = new Account
                 {
                     Name = "Demo Checking Account",
-                    AccountType = Models.Enums.AccountType.Checking,
+                    AccountType = AccountType.Checking,
                     Balance = 1000.00m,
                     Currency = "USD",
                     IsActive = true

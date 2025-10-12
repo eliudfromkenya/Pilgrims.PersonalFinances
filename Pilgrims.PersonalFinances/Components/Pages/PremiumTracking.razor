@@ -556,15 +556,17 @@
         filteredPayments = filteredPayments.OrderBy(p => p.DueDate).ToList();
     }
 
-    private async Task OnSearchChanged(ChangeEventArgs e)
+    private Task OnSearchChanged(ChangeEventArgs e)
     {
         searchTerm = e.Value?.ToString() ?? string.Empty;
         ApplyFilters();
+        return Task.CompletedTask;
     }
 
-    private async Task OnFilterChanged(ChangeEventArgs e)
+    private Task OnFilterChanged(ChangeEventArgs e)
     {
         ApplyFilters();
+        return Task.CompletedTask;
     }
 
     private void OnFilterChanged()

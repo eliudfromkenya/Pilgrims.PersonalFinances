@@ -498,7 +498,8 @@
             // Get upcoming payments (next 30 days)
             upcomingPayments = obligations
                 .Where(o => o.Status == ObligationStatus.Active && 
-                           o.NextContributionDueDate <= DateTime.Today.AddDays(30))
+                           o.NextContributionDueDate.HasValue &&
+                           o.NextContributionDueDate.Value <= DateTime.Today.AddDays(30))
                 .OrderBy(o => o.NextContributionDueDate)
                 .ToList();
 
@@ -785,7 +786,7 @@
         public decimal PaymentHistoryScore { get; set; }
     }
 
-    private async Task<ObligationAnalytics> CalculateAnalyticsAsync()
+    private Task<ObligationAnalytics> CalculateAnalyticsAsync()
     {
         var analytics = new ObligationAnalytics();
         
@@ -827,6 +828,6 @@
         analytics.FinancialHealthScore = 750; // Default score
         analytics.PaymentHistoryScore = 95; // Default score
         
-        return analytics;
+        return Task.FromResult(analytics);
     }
 }

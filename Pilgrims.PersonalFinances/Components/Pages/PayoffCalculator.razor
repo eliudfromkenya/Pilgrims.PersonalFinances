@@ -577,10 +577,10 @@
         StateHasChanged();
     }
 
-    private async Task InitializeCharts()
+    private Task InitializeCharts()
     {
-        if (payoffResults == null) return;
-
+        if (payoffResults == null) return Task.CompletedTask;
+    
         try
         {
             var chartData = GeneratePayoffChartData();
@@ -589,6 +589,7 @@
                 "payoffTimelineChart",
                 chartData
             ));
+            MessagingService.Send("Charts initialized.");
         }
         catch (Exception ex)
         {
@@ -597,7 +598,10 @@
                 $"Error initializing charts: {ex.Message}"
             ));
         }
+    
+        return Task.CompletedTask;
     }
+
 
     private object GeneratePayoffChartData()
     {

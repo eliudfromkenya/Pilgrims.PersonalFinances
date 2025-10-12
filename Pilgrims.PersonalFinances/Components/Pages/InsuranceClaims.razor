@@ -446,15 +446,15 @@
             // Convert to ClaimInfo objects
             allClaims = claims.Select(c => new ClaimInfo
             {
-                Id = c.Id,
-                ClaimNumber = c.ClaimNumber,
-                Description = c.Description,
+                Id = c.Id ?? string.Empty,
+                ClaimNumber = c.ClaimNumber ?? string.Empty,
+                Description = c.Description ?? string.Empty,
                 ClaimedAmount = c.ClaimAmount,
                 ApprovedAmount = c.ApprovedAmount,
                 Status = c.Status,
                 ClaimDate = c.ClaimDate,
                 IncidentDate = c.IncidentDate,
-                IncidentLocation = c.IncidentLocation,
+                IncidentLocation = c.IncidentLocation ?? string.Empty,
                 SettlementDate = c.SettlementDate,
                 PolicyName = allPolicies.FirstOrDefault(p => p.Id == c.InsuranceId)?.PolicyName ?? "Unknown Policy",
                 PolicyType = allPolicies.FirstOrDefault(p => p.Id == c.InsuranceId)?.PolicyType ?? "Unknown"
@@ -551,15 +551,17 @@
         filteredClaims = filteredClaims.OrderByDescending(c => c.ClaimDate).ToList();
     }
 
-    private async Task OnSearchChanged(ChangeEventArgs e)
+    private Task OnSearchChanged(ChangeEventArgs e)
     {
         searchTerm = e.Value?.ToString() ?? string.Empty;
         ApplyFilters();
+        return Task.CompletedTask;
     }
 
-    private async Task OnFilterChanged(ChangeEventArgs e)
+    private Task OnFilterChanged(ChangeEventArgs e)
     {
         ApplyFilters();
+        return Task.CompletedTask;
     }
 
     private void SetDateFilter(DateFilter filter)

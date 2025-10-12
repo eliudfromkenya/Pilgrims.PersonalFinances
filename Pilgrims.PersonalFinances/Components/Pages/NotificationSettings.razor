@@ -266,7 +266,7 @@
         await LoadNotificationSettings();
     }
 
-    private async Task LoadNotificationSettings()
+    private Task LoadNotificationSettings()
     {
         // Initialize notification categories with default settings
         notificationCategories = new List<NotificationCategorySettings>
@@ -353,6 +353,7 @@
 
         // TODO: Load actual settings from database
         StateHasChanged();
+        return Task.CompletedTask;
     }
 
     private async Task SaveAllSettings()
@@ -394,7 +395,13 @@
     private async Task ResetToDefaults()
     {
         await LoadNotificationSettings();
+        // Reset advanced settings to defaults
+        autoCleanupDays = 30;
+        enableQuietHours = false;
+        quietHoursStart = new TimeOnly(22, 0);
+        quietHoursEnd = new TimeOnly(8, 0);
         await MessagingService.ShowInfoToastAsync("Settings reset to defaults");
+        StateHasChanged();
     }
 
     private void ToggleChannel(NotificationCategorySettings category, NotificationChannel channel, bool isChecked)
