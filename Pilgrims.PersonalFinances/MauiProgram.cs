@@ -44,6 +44,7 @@ namespace Pilgrims.PersonalFinances
             // Messaging & Logging
             builder.Services.AddSingleton<IMessenger>(WeakReferenceMessenger.Default);
             builder.Services.AddSingleton<IMessagingService, MessagingService>();
+            builder.Services.AddSingleton<NotificationHandler>();
             builder.Services.AddSingleton<Serilog.ILogger>(sp => new LoggerConfiguration().CreateLogger());
             builder.Services.AddSingleton<ILoggingService, LoggingService>();
 

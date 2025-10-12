@@ -337,7 +337,7 @@
             await AccountService.CreateAccountAsync(account);
             
             // Show success message and navigate back
-            await JSRuntime.InvokeVoidAsync("alert", "Account created successfully!");
+            await JSRuntime.InvokeVoidAsync("showAlertToast", "Success", "Account created successfully!");
             NavigationManager.NavigateTo("/accounts");
         }
         catch (Exception ex)

@@ -13,10 +13,18 @@ namespace Pilgrims.PersonalFinances.Core.Messaging.Services
                                       IRecipient<SystemNotificationMessage>
     {
         private readonly IJSRuntime _jsRuntime;
+        private readonly IMessenger _messenger;
 
-        public NotificationHandler(IJSRuntime jsRuntime)
+        public NotificationHandler(IJSRuntime jsRuntime, IMessenger messenger)
         {
             _jsRuntime = jsRuntime ?? throw new ArgumentNullException(nameof(jsRuntime));
+            _messenger = messenger ?? throw new ArgumentNullException(nameof(messenger));
+
+            // Register this handler as a recipient for all supported message types
+            _messenger.Register<ToastNotificationMessage>(this);
+            _messenger.Register<ConfirmationDialogMessage>(this);
+            _messenger.Register<AlertDialogMessage>(this);
+            _messenger.Register<SystemNotificationMessage>(this);
         }
 
         /// <summary>
@@ -24,27 +32,29 @@ namespace Pilgrims.PersonalFinances.Core.Messaging.Services
         /// </summary>
         public void Receive(ToastNotificationMessage message)
         {
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    var toastTypeString = message.Value.Type switch
-                    {
-                        "success" => "success",
-                        "error" => "error", 
-                        "warning" => "warning",
-                        "info" => "info",
-                        _ => "info"
-                    };
+            _ = ShowToastAsync(message);
+        }
 
-                    await _jsRuntime.InvokeVoidAsync("showToast", message.Value.Message, toastTypeString);
-                }
-                catch (Exception ex)
+        private async Task ShowToastAsync(ToastNotificationMessage message)
+        {
+            try
+            {
+                var toastTypeString = message.Value.Type switch
                 {
-                    // Log error but don't throw to prevent breaking the application
-                    Console.WriteLine($"Error showing toast notification: {ex.Message}");
-                }
-            });
+                    "success" => "success",
+                    "error" => "error", 
+                    "warning" => "warning",
+                    "info" => "info",
+                    _ => "info"
+                };
+
+                await _jsRuntime.InvokeVoidAsync("showToast", message.Value.Message, toastTypeString);
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't throw to prevent breaking the application
+                Console.WriteLine($"Error showing toast notification: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -52,21 +62,30 @@ namespace Pilgrims.PersonalFinances.Core.Messaging.Services
         /// </summary>
         public void Receive(ConfirmationDialogMessage message)
         {
-            _ = Task.Run(async () =>
+            _ = HandleConfirmationAsync(message);
+        }
+
+        private async Task HandleConfirmationAsync(ConfirmationDialogMessage message)
+        {
+            try
             {
-                try
-                {
-                    var result = await _jsRuntime.InvokeAsync<bool>("confirm", 
-                        $"{message.Value.Title}\n\n{message.Value.Message}");
-                    
-                    message.ResponseSource.SetResult(result);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error showing confirmation dialog: {ex.Message}");
-                    message.ResponseSource.SetResult(false);
-                }
-            });
+                var title = message.Value.Title ?? "Confirm";
+                var confirmText = message.Value.ConfirmText ?? "Yes";
+                var cancelText = message.Value.CancelText ?? "No";
+
+                var result = await _jsRuntime.InvokeAsync<bool>("showConfirmationToast",
+                    title,
+                    message.Value.Message,
+                    confirmText,
+                    cancelText);
+
+                message.ResponseSource.TrySetResult(result);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error showing confirmation dialog: {ex.Message}");
+                message.ResponseSource.TrySetResult(false);
+            }
         }
 
         /// <summary>
@@ -74,21 +93,28 @@ namespace Pilgrims.PersonalFinances.Core.Messaging.Services
         /// </summary>
         public void Receive(AlertDialogMessage message)
         {
-            _ = Task.Run(async () =>
+            _ = HandleAlertAsync(message);
+        }
+
+        private async Task HandleAlertAsync(AlertDialogMessage message)
+        {
+            try
             {
-                try
-                {
-                    await _jsRuntime.InvokeVoidAsync("alert", 
-                        $"{message.Value.Title}\n\n{message.Value.Message}");
-                    
-                    message.ResponseSource.SetResult(true);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error showing alert dialog: {ex.Message}");
-                    message.ResponseSource.SetResult(false);
-                }
-            });
+                var title = message.Value.Title ?? "Alert";
+                var buttonText = message.Value.ConfirmText ?? "OK";
+
+                var result = await _jsRuntime.InvokeAsync<bool>("showAlertToast",
+                    title,
+                    message.Value.Message,
+                    buttonText);
+
+                message.ResponseSource.TrySetResult(result);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error showing alert dialog: {ex.Message}");
+                message.ResponseSource.TrySetResult(false);
+            }
         }
 
         /// <summary>
@@ -96,29 +122,29 @@ namespace Pilgrims.PersonalFinances.Core.Messaging.Services
         /// </summary>
         public void Receive(SystemNotificationMessage message)
         {
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    // For now, we'll use toast notifications for system notifications
-                    // This can be extended to use native system notifications in the future
-                    var toastType = message.Value.Type switch
-                    {
-                        "success" => "success",
-                        "error" => "error",
-                        "warning" => "warning",
-                        "info" => "info",
-                        _ => "info"
-                    };
+            _ = HandleSystemNotificationAsync(message);
+        }
 
-                    await _jsRuntime.InvokeVoidAsync("showToast", 
-                        $"{message.Value.Title}: {message.Value.Message}", toastType);
-                }
-                catch (Exception ex)
+        private async Task HandleSystemNotificationAsync(SystemNotificationMessage message)
+        {
+            try
+            {
+                var toastType = message.Value.Type switch
                 {
-                    Console.WriteLine($"Error showing system notification: {ex.Message}");
-                }
-            });
+                    "success" => "success",
+                    "error" => "error",
+                    "warning" => "warning",
+                    "info" => "info",
+                    _ => "info"
+                };
+
+                await _jsRuntime.InvokeVoidAsync("showToast", 
+                    $"{message.Value.Title}: {message.Value.Message}", toastType);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error showing system notification: {ex.Message}");
+            }
         }
     }
 }

@@ -394,7 +394,7 @@
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error loading account details: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("showAlertToast", "Error", $"Error loading account details: {ex.Message}");
         }
         finally
         {
@@ -490,7 +490,7 @@
 
     private async Task ExportData()
     {
-        await JSRuntime.InvokeVoidAsync("alert", "Export functionality would be implemented here");
+        await JSRuntime.InvokeVoidAsync("showAlertToast", "Export", "Export functionality would be implemented here");
     }
 
     // Placeholder Transaction class - would be moved to Models folder

@@ -509,12 +509,12 @@
                 account.Status = AccountStatus.Inactive;
                 await AccountService.UpdateAccountAsync(account);
                 
-                await JSRuntime.InvokeVoidAsync("alert", "Account archived successfully!");
+                await JSRuntime.InvokeVoidAsync("showAlertToast", "Success", "Account archived successfully!");
                 NavigationManager.NavigateTo("/accounts");
             }
             catch (Exception ex)
             {
-                await JSRuntime.InvokeVoidAsync("alert", $"Error archiving account: {ex.Message}");
+                await JSRuntime.InvokeVoidAsync("showAlertToast", "Error", $"Error archiving account: {ex.Message}");
             }
         }
     }

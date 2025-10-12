@@ -238,7 +238,7 @@
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">Name *</label>
-                    <input @bind="editingCreditor.Name" 
+                    <input @bind="editingCreditor!.Name" 
                            class="w-full px-3 py-2 rounded-lg border"
                            style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);"
                            placeholder="Creditor name" />
@@ -246,7 +246,7 @@
                 
                 <div>
                     <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">Phone</label>
-                    <input @bind="editingCreditor.Phone" 
+                    <input @bind="editingCreditor!.Phone" 
                            class="w-full px-3 py-2 rounded-lg border"
                            style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);"
                            placeholder="Phone number" />
@@ -254,7 +254,7 @@
                 
                 <div>
                     <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">Email</label>
-                    <input @bind="editingCreditor.Email" type="email"
+                    <input @bind="editingCreditor!.Email" type="email"
                            class="w-full px-3 py-2 rounded-lg border"
                            style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);"
                            placeholder="Email address" />
@@ -262,7 +262,7 @@
                 
                 <div>
                     <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">Website</label>
-                    <input @bind="editingCreditor.Website" type="url"
+                    <input @bind="editingCreditor!.Website" type="url"
                            class="w-full px-3 py-2 rounded-lg border"
                            style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);"
                            placeholder="https://example.com" />
@@ -270,7 +270,7 @@
                 
                 <div>
                     <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">Customer Service Phone</label>
-                    <input @bind="editingCreditor.CustomerServicePhone" 
+                    <input @bind="editingCreditor!.CustomerServicePhone" 
                            class="w-full px-3 py-2 rounded-lg border"
                            style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);"
                            placeholder="Customer service number" />
@@ -278,7 +278,7 @@
                 
                 <div>
                     <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">Address</label>
-                    <textarea @bind="editingCreditor.Address" rows="3"
+                    <textarea @bind="editingCreditor!.Address" rows="3"
                               class="w-full px-3 py-2 rounded-lg border"
                               style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);"
                               placeholder="Mailing address"></textarea>
@@ -286,7 +286,7 @@
                 
                 <div>
                     <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">Notes</label>
-                    <textarea @bind="editingCreditor.Notes" rows="2"
+                    <textarea @bind="editingCreditor!.Notes" rows="2"
                               class="w-full px-3 py-2 rounded-lg border"
                               style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-primary);"
                               placeholder="Additional notes"></textarea>

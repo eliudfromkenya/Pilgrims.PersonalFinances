@@ -187,7 +187,7 @@ namespace Pilgrims.PersonalFinances.Core.Services
                 // Create transfer transactions
                 var transferOut = new Transaction
                 {
-                    AccountId = fromAccountId.ToString(),
+                    AccountId = fromAccountId?.ToString() ?? string.Empty,
                     Amount = -amount,
                     Type = TransactionType.Transfer,
                     Description = $"Transfer to {toAccount.Name}: {description}",
@@ -196,7 +196,7 @@ namespace Pilgrims.PersonalFinances.Core.Services
 
                 var transferIn = new Transaction
                 {
-                    AccountId = toAccountId.ToString(),
+                    AccountId = toAccountId?.ToString() ?? string.Empty,
                     Amount = amount,
                     Type = TransactionType.Transfer,
                     Description = $"Transfer from {fromAccount.Name}: {description}",

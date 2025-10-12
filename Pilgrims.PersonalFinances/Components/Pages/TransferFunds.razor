@@ -428,7 +428,7 @@
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error loading accounts: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("showAlertToast", "Error", $"Error loading accounts: {ex.Message}");
         }
         finally
         {
@@ -436,25 +436,27 @@
         }
     }
 
-    private async Task OnFromAccountChanged(ChangeEventArgs e)
+    private Task OnFromAccountChanged(ChangeEventArgs e)
     {
         fromAccount = availableAccounts.FirstOrDefault(a => a.Id == e.Value?.ToString());
-
+    
         // Reset to account if it's the same as from account
         if (transferModel.ToAccountId == e.Value?.ToString())
         {
             transferModel.ToAccountId = null;
             toAccount = null;
         }
-
+    
         StateHasChanged();
+        return Task.CompletedTask;
     }
 
-    private async Task OnToAccountChanged(ChangeEventArgs e)
+    private Task OnToAccountChanged(ChangeEventArgs e)
     {
         var accountId = e.Value?.ToString();
         toAccount = availableAccounts.FirstOrDefault(a => a.Id == accountId);
         StateHasChanged();
+        return Task.CompletedTask;
     }
 
     private List<Account> GetAvailableToAccounts()
@@ -531,12 +533,12 @@
                 transferModel.TransferDate
             );
             
-            await JSRuntime.InvokeVoidAsync("alert", "Transfer completed successfully!");
+            await JSRuntime.InvokeVoidAsync("showAlertToast", "Success", "Transfer completed successfully!");
             NavigationManager.NavigateTo("/accounts");
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error processing transfer: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("showAlertToast", "Error", $"Error processing transfer: {ex.Message}");
         }
         finally
         {
@@ -546,7 +548,7 @@
 
     private async Task HandleInvalidSubmit()
     {
-        await JSRuntime.InvokeVoidAsync("alert", "Please fix the validation errors before submitting.");
+        await JSRuntime.InvokeVoidAsync("showAlertToast", "Validation", "Please fix the validation errors before submitting.");
     }
 
     private void Cancel()

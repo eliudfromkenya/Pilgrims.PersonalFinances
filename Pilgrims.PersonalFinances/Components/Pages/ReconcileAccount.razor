@@ -385,7 +385,7 @@
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error loading account: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("showAlertToast", "Error", $"Error loading account: {ex.Message}");
         }
         finally
         {
@@ -444,12 +444,12 @@
             // Record the reconciliation
             RecordReconciliation(difference);
             
-            await JSRuntime.InvokeVoidAsync("alert", "Account reconciliation completed successfully!");
+            await JSRuntime.InvokeVoidAsync("showAlertToast", "Success", "Account reconciliation completed successfully!");
             NavigationManager.NavigateTo($"/accounts/{AccountId}");
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error completing reconciliation: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("showAlertToast", "Error", $"Error completing reconciliation: {ex.Message}");
         }
         finally
         {
@@ -459,7 +459,7 @@
 
     private async Task HandleInvalidSubmit()
     {
-        await JSRuntime.InvokeVoidAsync("alert", "Please fix the validation errors before submitting.");
+        await JSRuntime.InvokeVoidAsync("showAlertToast", "Validation", "Please fix the validation errors before submitting.");
     }
 
     private void CreateAdjustmentTransaction(decimal amount)

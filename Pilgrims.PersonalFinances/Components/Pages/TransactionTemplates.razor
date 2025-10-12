@@ -488,7 +488,7 @@
             string.IsNullOrWhiteSpace(templateForm.Type) ||
             templateForm.CategoryId == Guid.Empty)
         {
-            await JSRuntime.InvokeVoidAsync("alert", "Please fill in all required fields.");
+            await JSRuntime.InvokeVoidAsync("showAlertToast", "Validation", "Please fill in all required fields.");
             return;
         }
 
@@ -521,8 +521,8 @@
 
     private async Task DeleteTemplate(Pilgrims.PersonalFinances.Core.Models.TransactionTemplate template)
     {
-        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", 
-            $"Are you sure you want to delete the template '{template.Name}'?");
+        var confirmed = await JSRuntime.InvokeAsync<bool>("showConfirmationToast", 
+            "Delete Template", $"Are you sure you want to delete the template '{template.Name}'?", "Delete", "Cancel");
         
         if (confirmed)
         {
@@ -575,7 +575,7 @@
     private async Task ImportTemplates()
     {
         // This would typically open a file dialog or import modal
-        await JSRuntime.InvokeVoidAsync("alert", "Import functionality would be implemented here.");
+        await JSRuntime.InvokeVoidAsync("showAlertToast", "Import", "Import functionality would be implemented here.");
     }
 
     private string GetTemplateTypeIcon(TransactionType type) => type switch

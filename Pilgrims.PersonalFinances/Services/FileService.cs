@@ -295,13 +295,15 @@ public class FileService : IFileService
     /// </summary>
     public string GetFileTypeIcon(string contentType)
     {
-        return contentType?.ToLowerInvariant() switch
+        if (string.IsNullOrWhiteSpace(contentType)) return "📎";
+        var type = contentType.ToLowerInvariant();
+        return type switch
         {
-            var type when type.StartsWith("image/") => "🖼️",
+            _ when type.StartsWith("image/") => "🖼️",
             "application/pdf" => "📄",
             "text/plain" => "📝",
-            var type when type.Contains("word") => "📝",
-            var type when type.Contains("excel") => "📊",
+            _ when type.Contains("word") => "📝",
+            _ when type.Contains("excel") => "📊",
             _ => "📎"
         };
     }

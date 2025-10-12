@@ -48,14 +48,14 @@
     private CultureInfo currentCulture = new CultureInfo("en");
     private IEnumerable<CultureInfo> supportedCultures = new List<CultureInfo>();
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
         try
         {
             // CultureManager is already initialized in MainLayout, so we just get the current state
             currentCulture = LocalizationService.GetCurrentCulture();
             supportedCultures = LocalizationService.GetAvailableCultures();
-
+    
             // Subscribe to culture changes
             LocalizationService.CultureChanged += OnCultureChanged;
         }

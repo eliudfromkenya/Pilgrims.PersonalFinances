@@ -586,7 +586,7 @@
             {
                 if (!ValidateSplitTransactions())
                 {
-                    await JSRuntime.InvokeVoidAsync("alert", "Split transaction amounts must equal the total transaction amount.");
+                    await JSRuntime.InvokeVoidAsync("showAlertToast", "Validation", "Split transaction amounts must equal the total transaction amount.");
                     return;
                 }
                 transaction.IsSplit = true;
@@ -633,12 +633,12 @@
                 }
             }
             
-            await JSRuntime.InvokeVoidAsync("alert", "Transaction saved successfully!");
+            await JSRuntime.InvokeVoidAsync("showAlertToast", "Success", "Transaction saved successfully!");
             Navigation.NavigateTo("/transactions");
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error saving transaction: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("showAlertToast", "Error", $"Error saving transaction: {ex.Message}");
         }
         finally
         {
@@ -711,7 +711,7 @@
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", $"File {file.Name} is too large. Maximum size is 10MB.");
+                await JSRuntime.InvokeVoidAsync("showAlertToast", "Validation", $"File {file.Name} is too large. Maximum size is 10MB.");
             }
         }
     }
@@ -768,7 +768,7 @@
             };
             
             await TransactionService.CreateTransactionTemplateAsync(template);
-            await JSRuntime.InvokeVoidAsync("alert", "Template saved successfully!");
+            await JSRuntime.InvokeVoidAsync("showAlertToast", "Template saved successfully!");
         }
     }
     

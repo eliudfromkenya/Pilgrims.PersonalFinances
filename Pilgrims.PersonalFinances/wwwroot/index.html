@@ -14,6 +14,29 @@
     <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png" />
     <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png" />
     
+    <!-- Toastr CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" integrity="sha512-5tHn2iXQyEw1uwYkKqkGmG0zFJeG8uCcxRzE8H1OwwaIY8+KcMdsbqO6VQHqYQz9kFZQy9o7T8cZ6cJqVv7fpg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <style>
+      /* Toastr theme alignment with Tailwind palette */
+      .toast {
+        border-radius: 0.5rem;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      }
+      .toast-title { font-weight: 700; }
+      .toast-message { font-weight: 500; }
+      .toast-success { background-color: #10b981 !important; color: #ffffff !important; }
+      .toast-error { background-color: #ef4444 !important; color: #ffffff !important; }
+      .toast-info { background-color: #3b82f6 !important; color: #ffffff !important; }
+      .toast-warning { background-color: #f59e0b !important; color: #111827 !important; }
+
+      /* Dark mode adjustments */
+      .dark .toast { box-shadow: 0 10px 25px rgba(255,255,255,0.1); }
+      .dark .toast-warning { color: #f9fafb !important; }
+      .toast-close-button { filter: brightness(0.95); }
+    </style>
+    
     <style>
         /* Loading Container with Stunning Background */
         .loading-container {
@@ -468,8 +491,26 @@
         <a class="dismiss">🗙</a>
     </div>
 
-    <script src="_framework/blazor.webview.js"></script>
+    <!-- Conditionally load Blazor WebView script (skipped in static preview) -->
+    <script>
+        try {
+            if (window.chrome && window.chrome.webview) {
+                var s = document.createElement('script');
+                s.src = '_framework/blazor.webview.js';
+                document.head.appendChild(s);
+            } else {
+                console.warn('Blazor WebView script skipped in static preview mode.');
+            }
+        } catch (e) {
+            console.warn('Blazor WebView detection failed:', e);
+        }
+    </script>
     <script src="js/financial-animations.js"></script>
+
+    <!-- jQuery (required by Toastr) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaXwZ2fZObo9O0pCFjzG9RbQqFv8G3E4Pkjl+S6xZ9Vv5C0lqQfE7vWv1r5vK1jVn3bG8R9jvFQ0YhWZg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <!-- Toastr JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js" integrity="sha512-h2+G8pSxJHfH3WnZC9r8IY2YvG2E1pMQuVgI2WwA1gkGk1pH3Ykz3f3yB2u3P3p4K9i9QzQFfJc3tYzY4xJm2+Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="js/export.js"></script>
     <script>
         // Initialize particle background

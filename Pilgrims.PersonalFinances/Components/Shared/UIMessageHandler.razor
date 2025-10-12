@@ -11,27 +11,27 @@
     protected override async Task OnInitializedAsync()
     {
         // Register to UI messages
-        MessagingService.Register<ShowAlertMessage>(this, (recipient, message) => HandleAlertMessage(message));
-        MessagingService.Register<ShowConfirmationMessage>(this, (recipient, message) => HandleConfirmationMessage(message));
-        MessagingService.Register<DownloadFileMessage>(this, (recipient, message) => HandleDownloadFileMessage(message));
-        MessagingService.Register<PrintMessage>(this, (recipient, message) => HandlePrintMessage(message));
-        MessagingService.Register<InitializeJavaScriptMessage>(this, (recipient, message) => HandleInitializeJavaScriptMessage(message));
-        MessagingService.Register<UpdateJavaScriptMessage>(this, (recipient, message) => HandleUpdateJavaScriptMessage(message));
-        MessagingService.Register<LocalStorageMessage>(this, (recipient, message) => HandleLocalStorageMessage(message));
-        MessagingService.Register<ToggleDarkModeMessage>(this, (recipient, message) => HandleToggleDarkModeMessage(message));
-        MessagingService.Register<ConsoleLogMessage>(this, (recipient, message) => HandleConsoleLogMessage(message));
+        MessagingService.Register<ShowAlertMessage>(this, (recipient, message) => _ = HandleAlertMessage(message));
+        MessagingService.Register<ShowConfirmationMessage>(this, (recipient, message) => _ = HandleConfirmationMessage(message));
+        MessagingService.Register<DownloadFileMessage>(this, (recipient, message) => _ = HandleDownloadFileMessage(message));
+        MessagingService.Register<PrintMessage>(this, (recipient, message) => _ = HandlePrintMessage(message));
+        MessagingService.Register<InitializeJavaScriptMessage>(this, (recipient, message) => _ = HandleInitializeJavaScriptMessage(message));
+        MessagingService.Register<UpdateJavaScriptMessage>(this, (recipient, message) => _ = HandleUpdateJavaScriptMessage(message));
+        MessagingService.Register<LocalStorageMessage>(this, (recipient, message) => _ = HandleLocalStorageMessage(message));
+        MessagingService.Register<ToggleDarkModeMessage>(this, (recipient, message) => _ = HandleToggleDarkModeMessage(message));
+        MessagingService.Register<ConsoleLogMessage>(this, (recipient, message) => _ = HandleConsoleLogMessage(message));
 
         await base.OnInitializedAsync();
     }
 
     private async Task HandleAlertMessage(ShowAlertMessage message)
     {
-        await JSRuntime.InvokeVoidAsync("alert", message.Message);
+        await JSRuntime.InvokeAsync<bool>("showAlertToast", message.Title, message.Message, "OK");
     }
 
     private async Task HandleConfirmationMessage(ShowConfirmationMessage message)
     {
-        var result = await JSRuntime.InvokeAsync<bool>("confirm", message.Message);
+        var result = await JSRuntime.InvokeAsync<bool>("showConfirmationToast", message.Title, message.Message, "Yes", "No");
         message.OnResult?.Invoke(result);
     }
 
