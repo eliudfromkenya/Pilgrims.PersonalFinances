@@ -502,7 +502,7 @@
         var debtObligations = obligations.Where(o => o.IsDebt && o.InterestRate.HasValue).ToList();
         if (debtObligations.Any())
         {
-            averageInterestRate = debtObligations.Average(o => o.InterestRate.Value);
+            averageInterestRate = debtObligations.Average(o => o.InterestRate.GetValueOrDefault());
         }
     }
 

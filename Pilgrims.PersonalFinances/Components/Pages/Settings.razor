@@ -543,7 +543,7 @@
         }
     }
 
-    private async Task OnCurrencyChanged(string newCurrency)
+    private void OnCurrencyChanged(string newCurrency)
     {
         selectedCurrency = newCurrency;
         Logger.LogDebug("Currency selection changed to: {Currency}", newCurrency);

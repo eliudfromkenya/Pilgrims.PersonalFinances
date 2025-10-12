@@ -371,7 +371,7 @@
             if (account != null)
             {
                 // Check if account has transactions
-                hasTransactions = await AccountService.HasTransactionsAsync(AccountId);
+                hasTransactions = await AccountService.HasTransactionsAsync(account.Id);
                 
                 // Map account to edit model
                 editModel = new EditAccountModel
@@ -392,7 +392,7 @@
         }
         catch (Exception ex)
         {
-            await MessagingService.ShowAlertAsync("Error loading account: {ex.Message}");
+            await MessagingService.ShowAlertAsync($"Error loading account: {ex.Message}");
         }
         finally
         {

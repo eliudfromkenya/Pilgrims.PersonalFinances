@@ -443,7 +443,6 @@
     private IEnumerable<Budget>? activeBudgets;
     private List<BudgetInsight>? budgetInsights;
     private IEnumerable<MonthlyBudgetPerformanceDto>? monthlyData;
-    private bool isLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
@@ -454,7 +453,6 @@
     {
         try
         {
-            isLoading = true;
             StateHasChanged();
 
             // Load dashboard data
@@ -477,12 +475,11 @@
         }
         finally
         {
-            isLoading = false;
             StateHasChanged();
         }
     }
 
-    private async Task<List<BudgetInsight>> GenerateBudgetInsights()
+    private Task<List<BudgetInsight>> GenerateBudgetInsights()
     {
         var insights = new List<BudgetInsight>();
         
@@ -554,7 +551,7 @@
             }
         }
 
-        return insights;
+        return Task.FromResult(insights);
     }
 
     private async Task RefreshDashboard()

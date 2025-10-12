@@ -348,6 +348,12 @@
 
     private async Task MarkAsRead(string? notificationId)
     {
+        if (notificationId is null)
+        {
+            MessagingService.ShowErrorToast("Invalid notification identifier.");
+            return;
+        }
+    
         try
         {
             await NotificationService.MarkAsReadAsync(notificationId);
@@ -386,6 +392,12 @@
 
     private async Task DismissNotification(string? notificationId)
     {
+        if (notificationId is null)
+        {
+            MessagingService.ShowErrorToast("Invalid notification identifier.");
+            return;
+        }
+    
         try
         {
             await NotificationService.DismissNotificationAsync(notificationId);
@@ -405,6 +417,12 @@
 
     private async Task DeleteNotification(string? notificationId)
     {
+        if (notificationId is null)
+        {
+            MessagingService.ShowErrorToast("Invalid notification identifier.");
+            return;
+        }
+    
         try
         {
             await NotificationService.DeleteNotificationAsync(notificationId);
@@ -421,6 +439,11 @@
 
     private void NavigateToTransaction(string? scheduledTransactionId)
     {
+        if (string.IsNullOrWhiteSpace(scheduledTransactionId))
+        {
+            MessagingService.ShowErrorToast("Invalid scheduled transaction identifier.");
+            return;
+        }
         Navigation.NavigateTo($"/recurring-transactions/edit/{scheduledTransactionId}");
     }
 

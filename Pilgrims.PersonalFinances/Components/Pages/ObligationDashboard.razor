@@ -520,7 +520,7 @@
             debtByType = obligations
                 .Where(o => o.IsDebt && o.CurrentBalance.HasValue)
                 .GroupBy(o => o.Type)
-                .ToDictionary(g => g.Key, g => g.Sum(o => o.CurrentBalance.Value));
+                .ToDictionary(g => g.Key, g => g.Sum(o => o.CurrentBalance.GetValueOrDefault()));
         }
         catch (Exception ex)
         {
