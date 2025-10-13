@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Pilgrims.PersonalFinances.Core.Localization.Interfaces;
+using Pilgrims.PersonalFinances.Core.Services.Interfaces;
 using System.Globalization;
 
 namespace Pilgrims.PersonalFinances.Core.Localization.Services
@@ -10,6 +11,7 @@ namespace Pilgrims.PersonalFinances.Core.Localization.Services
     public class CultureManager : ICultureManager
     {
         private readonly ILogger<CultureManager> _logger;
+        private readonly IPreferencesService _preferences;
         private const string CulturePreferenceKey = "SelectedCulture";
 
         /// <summary>
@@ -36,26 +38,23 @@ namespace Pilgrims.PersonalFinances.Core.Localization.Services
             { "es", "Español" }
         };
 
-        public CultureManager(ILogger<CultureManager> logger)
+        public CultureManager(ILogger<CultureManager> logger, IPreferencesService preferences)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _preferences = preferences ?? throw new ArgumentNullException(nameof(preferences));
         }
 
         public async Task<CultureInfo> GetSavedCultureAsync()
         {
             try
             {
-                // In a real application, this would read from user preferences, database, or local storage
-                // For now, we'll use a simple approach with Preferences (if available) or default to system culture
-                
-                var savedCultureCode = await GetStoredCultureCodeAsync();
+                var savedCultureCode = await GetStoredCultureCodeAsync().ConfigureAwait(false);
                 
                 if (!string.IsNullOrEmpty(savedCultureCode) && IsCultureSupported(savedCultureCode))
                 {
                     return new CultureInfo(savedCultureCode);
                 }
 
-                // Fall back to system culture if supported, otherwise default
                 var systemCulture = CultureInfo.CurrentUICulture;
                 if (IsCultureSupported(systemCulture))
                 {
@@ -81,7 +80,7 @@ namespace Pilgrims.PersonalFinances.Core.Localization.Services
                     return;
                 }
 
-                await StoreSelectedCultureAsync(culture.Name);
+                await StoreSelectedCultureAsync(culture.Name).ConfigureAwait(false);
                 _logger.LogInformation("Culture preference saved: {Culture}", culture.Name);
             }
             catch (Exception ex)
@@ -147,7 +146,7 @@ namespace Pilgrims.PersonalFinances.Core.Localization.Services
         {
             try
             {
-                var savedCulture = await GetSavedCultureAsync();
+                var savedCulture = await GetSavedCultureAsync().ConfigureAwait(false);
                 
                 // Set the current culture
                 CultureInfo.CurrentCulture = savedCulture;
@@ -173,16 +172,8 @@ namespace Pilgrims.PersonalFinances.Core.Localization.Services
         {
             try
             {
-#if ANDROID || IOS || MACCATALYST || WINDOWS
-                // Use MAUI Preferences API for mobile/desktop platforms
-                var storedValue = Microsoft.Maui.Storage.Preferences.Get(CulturePreferenceKey, (string?)null);
-                return await Task.FromResult(storedValue);
-#else
-                // For other platforms (like Blazor Server), use a simple in-memory approach
-                // In production, you might want to use browser localStorage or server-side storage
-                await Task.Delay(1); // Simulate async operation
-                return _inMemoryCultureCode;
-#endif
+                var storedValue = await _preferences.GetAsync(CulturePreferenceKey).ConfigureAwait(false);
+                return storedValue;
             }
             catch (Exception ex)
             {
@@ -198,16 +189,7 @@ namespace Pilgrims.PersonalFinances.Core.Localization.Services
         {
             try
             {
-#if ANDROID || IOS || MACCATALYST || WINDOWS
-                // Use MAUI Preferences API for mobile/desktop platforms
-                Microsoft.Maui.Storage.Preferences.Set(CulturePreferenceKey, cultureCode);
-                await Task.CompletedTask;
-#else
-                // For other platforms (like Blazor Server), use a simple in-memory approach
-                // In production, you might want to use browser localStorage or server-side storage
-                _inMemoryCultureCode = cultureCode;
-                await Task.Delay(1); // Simulate async operation
-#endif
+                await _preferences.SetAsync(CulturePreferenceKey, cultureCode).ConfigureAwait(false);
                 _logger.LogInformation("Culture code stored: {CultureCode}", cultureCode);
             }
             catch (Exception ex)
@@ -216,10 +198,5 @@ namespace Pilgrims.PersonalFinances.Core.Localization.Services
                 throw;
             }
         }
-
-#if !ANDROID && !IOS && !MACCATALYST && !WINDOWS
-        // In-memory storage for non-MAUI platforms
-        private static string? _inMemoryCultureCode;
-#endif
     }
 }

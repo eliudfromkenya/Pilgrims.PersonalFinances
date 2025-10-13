@@ -1,24 +1,50 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFrameworks>net9.0;net9.0-android</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <!-- Android-specific properties -->
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net9.0-android'">
+    <ResolveAssemblyReferencesFindRelatedFiles>false</ResolveAssemblyReferencesFindRelatedFiles>
+    <CopyOutputSymbolsToPublishDirectory>false</CopyOutputSymbolsToPublishDirectory>
+    <IncludeSymbolsInPublishOutput>false</IncludeSymbolsInPublishOutput>
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+
+  <!-- Exclude problematic packages on Android -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0-android'">
+    <PackageReference Update="Serilog.Sinks.SQLite" ExcludeAssets="all" />
+    <PackageReference Update="System.Data.SQLite.Core" ExcludeAssets="all" />
+    <PackageReference Update="Stub.System.Data.SQLite.Core.NetStandard" ExcludeAssets="all" />
+    <PackageReference Update="SQLitePCLRaw.bundle_e_sqlite3" ExcludeAssets="all" />
+    <PackageReference Update="Microsoft.EntityFrameworkCore.Sqlite" ExcludeAssets="all" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.9" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.9" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.9" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.9" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.9" />
     <PackageReference Include="Microsoft.Extensions.Localization" Version="9.0.9" />
     <PackageReference Include="Serilog" Version="4.3.0" />
     <PackageReference Include="Serilog.Extensions.Logging" Version="9.0.2" />
-    <PackageReference Include="Serilog.Sinks.SQLite" Version="6.0.0" />
-    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.10" />
+    <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
+    <!-- Removed Serilog.Sinks.SQLite and SQLitePCLRaw.bundle_e_sqlite3 from unconditional references -->
+    <!-- Removed Microsoft.EntityFrameworkCore.Sqlite from unconditional references -->
     <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="9.0.9" />
     <PackageReference Include="Microsoft.JSInterop" Version="9.0.9" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 
+  <!-- Include SQLite-related packages only for non-Android TFM to avoid native DLLs in Android builds -->
+  <ItemGroup Condition="'$(TargetFramework)' != 'net9.0-android'">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.9" />
+    <PackageReference Include="Serilog.Sinks.SQLite" Version="6.0.0" />
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.10" />
+  </ItemGroup>
 </Project>

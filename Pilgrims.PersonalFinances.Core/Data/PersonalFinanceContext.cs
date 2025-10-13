@@ -5,6 +5,7 @@ using Pilgrims.PersonalFinances.Core.Models;
 using Pilgrims.PersonalFinances.Core.Models.Enums;
 using Pilgrims.PersonalFinances.Core.Data;
 using Pilgrims.PersonalFinances.Core.Interceptors;
+using NotificationModel = Pilgrims.PersonalFinances.Core.Models.Notification;
 
 namespace Pilgrims.PersonalFinances.Data;
 
@@ -32,7 +33,11 @@ public class PersonalFinanceContext : DbContext
             // For now, use standard SQLite connection
             // TODO: Integrate with DatabaseEncryptionService for SQLCipher support
             var connectionString = $"Data Source={dbPath};";
+#if ANDROID
+            optionsBuilder.UseInMemoryDatabase("PersonalFinance");
+#else
             optionsBuilder.UseSqlite(connectionString);
+#endif
         }
         
         // Add audit interceptor if available
@@ -574,7 +579,7 @@ public class PersonalFinanceContext : DbContext
         });
 
         // Configure Notification entity
-        modelBuilder.Entity<Notification>(entity =>
+        modelBuilder.Entity<NotificationModel>(entity =>
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Type).IsRequired();
