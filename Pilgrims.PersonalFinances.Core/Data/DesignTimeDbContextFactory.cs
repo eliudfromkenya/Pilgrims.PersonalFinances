@@ -13,7 +13,11 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<PersonalFi
         var tempDbPath = Path.Combine(Path.GetTempPath(), "PersonalFinance_Migration.db");
         var connectionString = $"Data Source={tempDbPath};";
         
+#if ANDROID
+        optionsBuilder.UseInMemoryDatabase("PersonalFinance_Migration");
+#else
         optionsBuilder.UseSqlite(connectionString);
+#endif
         
         return new PersonalFinanceContext(optionsBuilder.Options);
     }

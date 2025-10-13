@@ -1,7 +1,3 @@
-using System;
-using Pilgrims.PersonalFinances.Core.Models;
-using Pilgrims.PersonalFinances.Core.Models;
-
 namespace Pilgrims.PersonalFinances.Core.Models
 {
     /// <summary>

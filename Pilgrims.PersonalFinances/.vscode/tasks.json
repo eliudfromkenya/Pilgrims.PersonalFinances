@@ -1,0 +1,17 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "assets:copy",
+      "type": "shell",
+      "command": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"$root = (Get-Location).Path; $src = Join-Path $root 'node_modules'; $destJs = Join-Path $root 'wwwroot/js'; $destCss = Join-Path $root 'wwwroot/css'; New-Item -ItemType Directory -Force -Path $destJs | Out-Null; New-Item -ItemType Directory -Force -Path $destCss | Out-Null; Copy-Item -Path (Join-Path $src 'jquery/dist/jquery.min.js') -Destination (Join-Path $destJs 'jquery.min.js') -Force; Copy-Item -Path (Join-Path $src 'toastr/build/toastr.min.js') -Destination (Join-Path $destJs 'toastr.min.js') -Force; Copy-Item -Path (Join-Path $src 'toastr/build/toastr.min.css') -Destination (Join-Path $destCss 'toastr.min.css') -Force\"",
+      "problemMatcher": []
+    },
+    {
+      "label": "tailwind:watch",
+      "type": "npm",
+      "script": "watch:css",
+      "problemMatcher": []
+    }
+  ]
+}

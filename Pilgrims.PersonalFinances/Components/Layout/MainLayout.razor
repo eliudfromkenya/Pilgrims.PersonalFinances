@@ -1,11 +1,12 @@
 @using Pilgrims.PersonalFinances.Components.Shared
 @using Pilgrims.PersonalFinances.Components.Layout
 @using Pilgrims.PersonalFinances.Core.Messaging.Services
+@using Pilgrims.PersonalFinances.Core.Messaging.Interfaces
 
 @inherits LayoutComponentBase
 @inject IThemeService ThemeService
 @inject IJSRuntime JSRuntime
-@inject NotificationHandler NotificationHandler
+@inject IJsInteropInitializationService JsInit
 @implements IDisposable
 
 <div class="page min-h-screen bg-blue-50 dark:bg-slate-900 transition-colors duration-300" id="app-container">
@@ -75,11 +76,24 @@
         await ApplyTheme();
     }
 
-    private async void OnThemeChanged(string theme)
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Mark JS interop as ready once the first render has occurred
+            JsInit.MarkReady();
+        }
+        return Task.CompletedTask;
+    }
+
+    private void OnThemeChanged(string theme)
     {
         isDarkMode = theme.Contains("dark");
-        await ApplyTheme();
-        StateHasChanged();
+        _ = InvokeAsync(async () =>
+        {
+            await ApplyTheme();
+            StateHasChanged();
+        });
     }
 
     private async Task ToggleDarkMode()

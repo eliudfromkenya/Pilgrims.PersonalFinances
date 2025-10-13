@@ -1,6 +1,5 @@
 using Serilog;
 using Serilog.Events;
-using Serilog.Sinks.SQLite;
 using System.IO;
 
 namespace Pilgrims.PersonalFinances.Core.Logging
@@ -20,21 +19,33 @@ namespace Pilgrims.PersonalFinances.Core.Logging
             // Ensure logs directory exists
             Directory.CreateDirectory(LogsDirectory);
 
-            var logger = new LoggerConfiguration()
+            var config = new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
                 .MinimumLevel.Override("System", LogEventLevel.Information)
                 .Enrich.FromLogContext()
                 .Enrich.WithProperty("Application", "Pilgrims Personal Finances")
-                .Enrich.WithProperty("Version", GetApplicationVersion())
+                .Enrich.WithProperty("Version", GetApplicationVersion());
+
+#if ANDROID
+            // On Android, avoid SQLite sink due to native interop packaging issues; use rolling file sink instead
+            var logger = config
+                .WriteTo.File(
+                    path: Path.Combine(LogsDirectory, "log-.txt"),
+                    rollingInterval: RollingInterval.Day,
+                    restrictedToMinimumLevel: LogEventLevel.Verbose)
+                .CreateLogger();
+#else
+            // On non-Android platforms, use SQLite sink for structured log storage
+            var logger = config
                 .WriteTo.SQLite(
                     sqliteDbPath: LogDatabasePath,
                     tableName: "Logs",
                     restrictedToMinimumLevel: LogEventLevel.Verbose,
                     formatProvider: null,
-                    storeTimestampInUtc: true
-                )
+                    storeTimestampInUtc: true)
                 .CreateLogger();
+#endif
 
             return logger;
         }

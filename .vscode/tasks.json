@@ -36,6 +36,13 @@
                 "${workspaceFolder}/Pilgrims.PersonalFinances/Pilgrims.PersonalFinances.csproj"
             ],
             "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "tailwind:watch",
+            "type": "npm",
+            "script": "watch:css",
+            "path": "",
+            "problemMatcher": []
         }
     ]
 }

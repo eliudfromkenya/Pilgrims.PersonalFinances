@@ -240,13 +240,23 @@ public class AppSwitcherPrivacyService : IAppSwitcherPrivacyService
         }
     }
 
-    private async void OnAppEnteringBackground()
+    private void OnAppEnteringBackground()
     {
         try
         {
             _logger.LogDebug("App entering background");
             AppEnteringBackground?.Invoke(this, EventArgs.Empty);
-            await ShowPrivacyOverlayAsync();
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await ShowPrivacyOverlayAsync().ConfigureAwait(false);
+                }
+                catch (Exception inner)
+                {
+                    _logger.LogError(inner, "Error showing privacy overlay asynchronously");
+                }
+            });
         }
         catch (Exception ex)
         {
@@ -254,13 +264,23 @@ public class AppSwitcherPrivacyService : IAppSwitcherPrivacyService
         }
     }
 
-    private async void OnAppReturningToForeground()
+    private void OnAppReturningToForeground()
     {
         try
         {
             _logger.LogDebug("App returning to foreground");
-            await HidePrivacyOverlayAsync();
-            AppReturningToForeground?.Invoke(this, EventArgs.Empty);
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await HidePrivacyOverlayAsync().ConfigureAwait(false);
+                    AppReturningToForeground?.Invoke(this, EventArgs.Empty);
+                }
+                catch (Exception inner)
+                {
+                    _logger.LogError(inner, "Error hiding privacy overlay asynchronously");
+                }
+            });
         }
         catch (Exception ex)
         {

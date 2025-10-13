@@ -70,6 +70,19 @@ namespace Pilgrims.PersonalFinances.Core.Messaging.Messages
         {
             ResponseSource = new TaskCompletionSource<bool>();
         }
+
+        public AlertDialogMessage(Exception ex, string title = "Error Occured")
+           : base(new NotificationMessageData
+           {
+               Message = (ex?.InnerException ?? ex)?.Message ?? "An error occured",
+               Title = title,
+               ConfirmText = "OK",
+               Type = "error",
+               Timestamp = DateTime.UtcNow
+           })
+        {
+            ResponseSource = new TaskCompletionSource<bool>();
+        }
     }
 
     /// <summary>

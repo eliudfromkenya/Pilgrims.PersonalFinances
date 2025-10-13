@@ -38,15 +38,21 @@ namespace Pilgrims.PersonalFinances
             {
                 var dbPath = Path.Combine(FileSystem.AppDataDirectory, "PersonalFinance.db");
                 var connectionString = $"Data Source={dbPath};";
+#if ANDROID
+                options.UseInMemoryDatabase("PersonalFinance");
+#else
                 options.UseSqlite(connectionString, b => b.MigrationsAssembly("Pilgrims.PersonalFinances.Core"));
+#endif
             });
 
             // Messaging & Logging
             builder.Services.AddSingleton<IMessenger>(WeakReferenceMessenger.Default);
             builder.Services.AddSingleton<IMessagingService, MessagingService>();
-            builder.Services.AddSingleton<NotificationHandler>();
+            builder.Services.AddScoped<NotificationHandler>();
             builder.Services.AddSingleton<Serilog.ILogger>(sp => new LoggerConfiguration().CreateLogger());
             builder.Services.AddSingleton<ILoggingService, LoggingService>();
+            // JS interop readiness gate
+            builder.Services.AddSingleton<IJsInteropInitializationService, JsInteropInitializationService>();
 
             // Add Services
             builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
@@ -68,6 +74,8 @@ namespace Pilgrims.PersonalFinances
             builder.Services.AddScoped<IExportService, ExportService>();
             builder.Services.AddScoped<IComparisonService, ComparisonService>();
             builder.Services.AddScoped<ILocalizationService, LocalizationService>();
+            // Register preferences abstraction
+            builder.Services.AddSingleton<IPreferencesService, PreferencesService>();
             builder.Services.AddScoped<IAccountTypeService, AccountTypeService>();
             // ViewModels
             builder.Services.AddScoped<NotificationBellViewModel>();
@@ -84,11 +92,13 @@ namespace Pilgrims.PersonalFinances
             // Build app and apply migrations at startup
             var app = builder.Build();
 
+#if !ANDROID
             using (var scope = app.Services.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<PersonalFinanceContext>();
                 db.Database.Migrate();
             }
+#endif
 
             return app;
         }

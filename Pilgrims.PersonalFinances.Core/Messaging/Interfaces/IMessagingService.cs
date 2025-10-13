@@ -34,6 +34,13 @@ namespace Pilgrims.PersonalFinances.Core.Messaging.Interfaces
         Task ShowAlertAsync(string message, string title = "Alert", string buttonText = "OK");
 
         /// <summary>
+        /// Shows an error alert dialog
+        /// </summary>
+        /// <param name="ex">The alert error message being thrown</param>
+        /// <param name="title">The dialog title</param>
+        Task ShowErrorAsync(Exception ex, string title = "Error");
+
+        /// <summary>
         /// Shows a system notification
         /// </summary>
         /// <param name="message">The notification message</param>
