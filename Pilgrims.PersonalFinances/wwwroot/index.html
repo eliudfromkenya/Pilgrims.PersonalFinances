@@ -6,7 +6,7 @@
     <title>Pilgrims.PersonalFinances</title>
     <base href="/" />
     <link rel="icon" type="image/png" href="favicon.png" />
-    <link href="css/tailwind-output.css" rel="stylesheet" />
+    <link href="css/app.css" rel="stylesheet" />
     <link href="css/themes.css" rel="stylesheet" />
     <link href="css/dashboard-effects.css" rel="stylesheet" />
     <link href="css/financial-ui.css" rel="stylesheet" />
@@ -15,7 +15,13 @@
     <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png" />
     
     <!-- Toastr CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" integrity="sha512-5tHn2iXQyEw1uwYkKqkGmG0zFJeG8uCcxRzE8H1OwwaIY8+KcMdsbqO6VQHqYQz9kFZQy9o7T8cZ6cJqVv7fpg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="css/toastr.min.css" />
+
+    <!-- jQuery/Toastr/Interop Scripts (moved to head) -->
+    <script src="js/jquery.min.js"></script>
+    <script src="js/toastr.min.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/export.js"></script>
 
     <style>
       /* Toastr theme alignment with Tailwind palette */
@@ -35,6 +41,7 @@
       .dark .toast { box-shadow: 0 10px 25px rgba(255,255,255,0.1); }
       .dark .toast-warning { color: #f9fafb !important; }
       .toast-close-button { filter: brightness(0.95); }
+      #toast-container { z-index: 100000 !important; pointer-events: auto; }
     </style>
     
     <style>
@@ -507,11 +514,7 @@
     </script>
     <script src="js/financial-animations.js"></script>
 
-    <!-- jQuery (required by Toastr) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaXwZ2fZObo9O0pCFjzG9RbQqFv8G3E4Pkjl+S6xZ9Vv5C0lqQfE7vWv1r5vK1jVn3bG8R9jvFQ0YhWZg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <!-- Toastr JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js" integrity="sha512-h2+G8pSxJHfH3WnZC9r8IY2YvG2E1pMQuVgI2WwA1gkGk1pH3Ykz3f3yB2u3P3p4K9i9QzQFfJc3tYzY4xJm2+Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="js/export.js"></script>
+    <!-- Scripts moved to head to ensure early availability -->
     <script>
         // Initialize particle background
         function initParticleBackground() {
@@ -624,6 +627,33 @@
 
         // Start particle background when page loads
         document.addEventListener('DOMContentLoaded', initParticleBackground);
+    </script>
+    <script>
+        // Demo notifications in static preview only (skip in MAUI WebView)
+        document.addEventListener('DOMContentLoaded', function () {
+            try {
+                if (!window.chrome || !window.chrome.webview) {
+                    if (typeof window.updateToastrTheme === 'function') {
+                        window.updateToastrTheme();
+                    }
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('info', 'Notifications initialized');
+                    }
+                    if (typeof window.showAlertToast === 'function') {
+                        window.showAlertToast('Welcome', 'Custom alert demo', 'info');
+                    }
+                    if (typeof window.showConfirmationToast === 'function') {
+                        window.showConfirmationToast('Continue?', 'Confirm demo', 'warning').then(function (result) {
+                            if (typeof window.showToast === 'function') {
+                                window.showToast(result ? 'success' : 'error', result ? 'Confirmed' : 'Cancelled');
+                            }
+                        });
+                    }
+                }
+            } catch (e) {
+                console.warn('Demo notifications failed:', e);
+            }
+        });
     </script>
 </body>
 

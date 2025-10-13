@@ -9,11 +9,13 @@ namespace Pilgrims.PersonalFinances.Core.Messaging.Messages
     {
         public string Message { get; }
         public string Title { get; }
+        public Action<bool>? OnResult { get; }
 
-        public ShowAlertMessage(string message, string title = "Alert")
+        public ShowAlertMessage(string message, string title = "Alert", Action<bool>? onResult = null)
         {
             Message = message;
             Title = title;
+            OnResult = onResult;
         }
     }
 
@@ -24,13 +26,17 @@ namespace Pilgrims.PersonalFinances.Core.Messaging.Messages
     {
         public string Message { get; }
         public string Title { get; }
+        public string ConfirmText { get; }
+        public string CancelText { get; }
         public Action<bool>? OnResult { get; }
 
-        public ShowConfirmationMessage(string message, string title = "Confirm", Action<bool>? onResult = null)
+        public ShowConfirmationMessage(string message, string title = "Confirm", Action<bool>? onResult = null, string confirmText = "Yes", string cancelText = "No")
         {
             Message = message;
             Title = title;
             OnResult = onResult;
+            ConfirmText = confirmText;
+            CancelText = cancelText;
         }
     }
 

@@ -3,6 +3,7 @@
 @using Pilgrims.PersonalFinances.Core.Messaging.Messages
 @inject IJSRuntime JSRuntime
 @inject IMessagingService MessagingService
+@inject IJsInteropInitializationService JsInit
 @implements IDisposable
 
 @* This component handles UI messages and executes JavaScript operations *@
@@ -11,38 +12,63 @@
     protected override async Task OnInitializedAsync()
     {
         // Register to UI messages
-        MessagingService.Register<ShowAlertMessage>(this, (recipient, message) => _ = HandleAlertMessage(message));
-        MessagingService.Register<ShowConfirmationMessage>(this, (recipient, message) => _ = HandleConfirmationMessage(message));
-        MessagingService.Register<DownloadFileMessage>(this, (recipient, message) => _ = HandleDownloadFileMessage(message));
-        MessagingService.Register<PrintMessage>(this, (recipient, message) => _ = HandlePrintMessage(message));
-        MessagingService.Register<InitializeJavaScriptMessage>(this, (recipient, message) => _ = HandleInitializeJavaScriptMessage(message));
-        MessagingService.Register<UpdateJavaScriptMessage>(this, (recipient, message) => _ = HandleUpdateJavaScriptMessage(message));
-        MessagingService.Register<LocalStorageMessage>(this, (recipient, message) => _ = HandleLocalStorageMessage(message));
-        MessagingService.Register<ToggleDarkModeMessage>(this, (recipient, message) => _ = HandleToggleDarkModeMessage(message));
-        MessagingService.Register<ConsoleLogMessage>(this, (recipient, message) => _ = HandleConsoleLogMessage(message));
+        MessagingService.Register<ShowAlertMessage>(this, HandleAlertMessage);
+        MessagingService.Register<ShowConfirmationMessage>(this, HandleConfirmationMessage);
+        MessagingService.Register<DownloadFileMessage>(this, HandleDownloadFileMessage);
+        MessagingService.Register<PrintMessage>(this, HandlePrintMessage);
+        MessagingService.Register<InitializeJavaScriptMessage>(this, HandleInitializeJavaScriptMessage);
+        MessagingService.Register<UpdateJavaScriptMessage>(this, HandleUpdateJavaScriptMessage);
+        MessagingService.Register<LocalStorageMessage>(this, HandleLocalStorageMessage);
+        MessagingService.Register<ToggleDarkModeMessage>(this, HandleToggleDarkModeMessage);
+        MessagingService.Register<ConsoleLogMessage>(this, HandleConsoleLogMessage);
 
         await base.OnInitializedAsync();
     }
 
-    private async Task HandleAlertMessage(ShowAlertMessage message)
+    // Alert
+    private void HandleAlertMessage(object recipient, ShowAlertMessage message)
     {
-        await JSRuntime.InvokeAsync<bool>("showAlertToast", message.Title, message.Message, "OK");
+        _ = HandleAlertMessageAsync(recipient, message);
     }
-
-    private async Task HandleConfirmationMessage(ShowConfirmationMessage message)
+    private async Task HandleAlertMessageAsync(object recipient, ShowAlertMessage message)
     {
-        var result = await JSRuntime.InvokeAsync<bool>("showConfirmationToast", message.Title, message.Message, "Yes", "No");
+        await JsInit.WaitReadyAsync();
+        var result = await JSRuntime.InvokeAsync<bool>("showAlertToast", message.Title, message.Message, "OK");
         message.OnResult?.Invoke(result);
     }
 
-    private async Task HandleDownloadFileMessage(DownloadFileMessage message)
+    // Confirmation
+    private void HandleConfirmationMessage(object recipient, ShowConfirmationMessage message)
     {
+        _ = HandleConfirmationMessageAsync(recipient, message);
+    }
+    private async Task HandleConfirmationMessageAsync(object recipient, ShowConfirmationMessage message)
+    {
+        await JsInit.WaitReadyAsync();
+        var result = await JSRuntime.InvokeAsync<bool>("showConfirmationToast", message.Title, message.Message, message.ConfirmText, message.CancelText);
+        message.OnResult?.Invoke(result);
+    }
+
+    // Download
+    private void HandleDownloadFileMessage(object recipient, DownloadFileMessage message)
+    {
+        _ = HandleDownloadFileMessageAsync(recipient, message);
+    }
+    private async Task HandleDownloadFileMessageAsync(object recipient, DownloadFileMessage message)
+    {
+        await JsInit.WaitReadyAsync();
         var base64Data = Convert.ToBase64String(message.FileData);
         await JSRuntime.InvokeVoidAsync("downloadFile", message.FileName, base64Data);
     }
 
-    private async Task HandlePrintMessage(PrintMessage message)
+    // Print
+    private void HandlePrintMessage(object recipient, PrintMessage message)
     {
+        _ = HandlePrintMessageAsync(recipient, message);
+    }
+    private async Task HandlePrintMessageAsync(object recipient, PrintMessage message)
+    {
+        await JsInit.WaitReadyAsync();
         if (message.PrintEntirePage)
         {
             await JSRuntime.InvokeVoidAsync("window.print");
@@ -53,8 +79,14 @@
         }
     }
 
-    private async Task HandleInitializeJavaScriptMessage(InitializeJavaScriptMessage message)
+    // Initialize JS component
+    private void HandleInitializeJavaScriptMessage(object recipient, InitializeJavaScriptMessage message)
     {
+        _ = HandleInitializeJavaScriptMessageAsync(recipient, message);
+    }
+    private async Task HandleInitializeJavaScriptMessageAsync(object recipient, InitializeJavaScriptMessage message)
+    {
+        await JsInit.WaitReadyAsync();
         try
         {
             switch (message.ComponentType.ToLower())
@@ -88,8 +120,14 @@
         }
     }
 
-    private async Task HandleUpdateJavaScriptMessage(UpdateJavaScriptMessage message)
+    // Update JS component
+    private void HandleUpdateJavaScriptMessage(object recipient, UpdateJavaScriptMessage message)
     {
+        _ = HandleUpdateJavaScriptMessageAsync(recipient, message);
+    }
+    private async Task HandleUpdateJavaScriptMessageAsync(object recipient, UpdateJavaScriptMessage message)
+    {
+        await JsInit.WaitReadyAsync();
         try
         {
             switch (message.ComponentType.ToLower())
@@ -111,8 +149,14 @@
         }
     }
 
-    private async Task HandleLocalStorageMessage(LocalStorageMessage message)
+    // Local storage
+    private void HandleLocalStorageMessage(object recipient, LocalStorageMessage message)
     {
+        _ = HandleLocalStorageMessageAsync(recipient, message);
+    }
+    private async Task HandleLocalStorageMessageAsync(object recipient, LocalStorageMessage message)
+    {
+        await JsInit.WaitReadyAsync();
         try
         {
             switch (message.Action)
@@ -138,8 +182,14 @@
         }
     }
 
-    private async Task HandleToggleDarkModeMessage(ToggleDarkModeMessage message)
+    // Dark mode toggle
+    private void HandleToggleDarkModeMessage(object recipient, ToggleDarkModeMessage message)
     {
+        _ = HandleToggleDarkModeMessageAsync(recipient, message);
+    }
+    private async Task HandleToggleDarkModeMessageAsync(object recipient, ToggleDarkModeMessage message)
+    {
+        await JsInit.WaitReadyAsync();
         try
         {
             const string appContainer = "app";
@@ -153,6 +203,8 @@
                 await JSRuntime.InvokeVoidAsync("eval", $"document.getElementById('{appContainer}')?.classList.remove('dark')");
                 await JSRuntime.InvokeVoidAsync("eval", "document.documentElement.classList.remove('dark')");
             }
+            // Sync Toastr theme after toggling dark mode
+            await JSRuntime.InvokeVoidAsync("updateToastrTheme");
         }
         catch (Exception ex)
         {
@@ -160,8 +212,14 @@
         }
     }
 
-    private async Task HandleConsoleLogMessage(ConsoleLogMessage message)
+    // Console logging
+    private void HandleConsoleLogMessage(object recipient, ConsoleLogMessage message)
     {
+        _ = HandleConsoleLogMessageAsync(recipient, message);
+    }
+    private async Task HandleConsoleLogMessageAsync(object recipient, ConsoleLogMessage message)
+    {
+        await JsInit.WaitReadyAsync();
         try
         {
             var method = message.Level.ToString().ToLower();

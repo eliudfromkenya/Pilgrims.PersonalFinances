@@ -1,26 +1,25 @@
 using CommunityToolkit.Mvvm.Messaging;
-using Microsoft.JSInterop;
 using Pilgrims.PersonalFinances.Core.Messaging.Messages;
+using Pilgrims.PersonalFinances.Core.Messaging.Interfaces;
 
 namespace Pilgrims.PersonalFinances.Core.Messaging.Services
 {
     /// <summary>
     /// Handles notification messages and executes the appropriate UI actions
     /// </summary>
-    public class NotificationHandler : IRecipient<ToastNotificationMessage>, 
-                                      IRecipient<ConfirmationDialogMessage>, 
-                                      IRecipient<AlertDialogMessage>,
-                                      IRecipient<SystemNotificationMessage>
+    public class NotificationHandler : IRecipient<ToastNotificationMessage>,
+                                       IRecipient<ConfirmationDialogMessage>,
+                                       IRecipient<AlertDialogMessage>,
+                                       IRecipient<SystemNotificationMessage>
     {
-        private readonly IJSRuntime _jsRuntime;
         private readonly IMessenger _messenger;
+        private readonly IMessagingService _messagingService;
 
-        public NotificationHandler(IJSRuntime jsRuntime, IMessenger messenger)
+        public NotificationHandler(IMessenger messenger, IMessagingService messagingService)
         {
-            _jsRuntime = jsRuntime ?? throw new ArgumentNullException(nameof(jsRuntime));
             _messenger = messenger ?? throw new ArgumentNullException(nameof(messenger));
+            _messagingService = messagingService ?? throw new ArgumentNullException(nameof(messagingService));
 
-            // Register this handler as a recipient for all supported message types
             _messenger.Register<ToastNotificationMessage>(this);
             _messenger.Register<ConfirmationDialogMessage>(this);
             _messenger.Register<AlertDialogMessage>(this);
@@ -32,29 +31,15 @@ namespace Pilgrims.PersonalFinances.Core.Messaging.Services
         /// </summary>
         public void Receive(ToastNotificationMessage message)
         {
-            _ = ShowToastAsync(message);
-        }
-
-        private async Task ShowToastAsync(ToastNotificationMessage message)
-        {
-            try
+            var type = message.Value.Type switch
             {
-                var toastTypeString = message.Value.Type switch
-                {
-                    "success" => "success",
-                    "error" => "error", 
-                    "warning" => "warning",
-                    "info" => "info",
-                    _ => "info"
-                };
-
-                await _jsRuntime.InvokeVoidAsync("showToast", message.Value.Message, toastTypeString);
-            }
-            catch (Exception ex)
-            {
-                // Log error but don't throw to prevent breaking the application
-                Console.WriteLine($"Error showing toast notification: {ex.Message}");
-            }
+                "success" => ToastType.Success,
+                "error" => ToastType.Error,
+                "warning" => ToastType.Warning,
+                "info" => ToastType.Info,
+                _ => ToastType.Info
+            };
+            _messagingService.ShowToast(message.Value.Message, type, message.Value.DurationMs);
         }
 
         /// <summary>
@@ -73,12 +58,9 @@ namespace Pilgrims.PersonalFinances.Core.Messaging.Services
                 var confirmText = message.Value.ConfirmText ?? "Yes";
                 var cancelText = message.Value.CancelText ?? "No";
 
-                var result = await _jsRuntime.InvokeAsync<bool>("showConfirmationToast",
-                    title,
-                    message.Value.Message,
-                    confirmText,
-                    cancelText);
-
+                var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                _messenger.Send(new ShowConfirmationMessage(message.Value.Message, title, result => tcs.TrySetResult(result), confirmText, cancelText));
+                var result = await tcs.Task.ConfigureAwait(false);
                 message.ResponseSource.TrySetResult(result);
             }
             catch (Exception ex)
@@ -101,13 +83,9 @@ namespace Pilgrims.PersonalFinances.Core.Messaging.Services
             try
             {
                 var title = message.Value.Title ?? "Alert";
-                var buttonText = message.Value.ConfirmText ?? "OK";
-
-                var result = await _jsRuntime.InvokeAsync<bool>("showAlertToast",
-                    title,
-                    message.Value.Message,
-                    buttonText);
-
+                var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                _messenger.Send(new ShowAlertMessage(message.Value.Message, title, result => tcs.TrySetResult(result)));
+                var result = await tcs.Task.ConfigureAwait(false);
                 message.ResponseSource.TrySetResult(result);
             }
             catch (Exception ex)
@@ -122,29 +100,16 @@ namespace Pilgrims.PersonalFinances.Core.Messaging.Services
         /// </summary>
         public void Receive(SystemNotificationMessage message)
         {
-            _ = HandleSystemNotificationAsync(message);
-        }
-
-        private async Task HandleSystemNotificationAsync(SystemNotificationMessage message)
-        {
-            try
+            var toastType = message.Value.Type switch
             {
-                var toastType = message.Value.Type switch
-                {
-                    "success" => "success",
-                    "error" => "error",
-                    "warning" => "warning",
-                    "info" => "info",
-                    _ => "info"
-                };
+                "success" => ToastType.Success,
+                "error" => ToastType.Error,
+                "warning" => ToastType.Warning,
+                "info" => ToastType.Info,
+                _ => ToastType.Info
+            };
 
-                await _jsRuntime.InvokeVoidAsync("showToast", 
-                    $"{message.Value.Title}: {message.Value.Message}", toastType);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error showing system notification: {ex.Message}");
-            }
+            _messagingService.ShowToast($"{message.Value.Title}: {message.Value.Message}", toastType, message.Value.DurationMs);
         }
     }
 }

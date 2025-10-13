@@ -211,121 +211,33 @@ window.copyToClipboard = async (text) => {
 };
 
 // Show toast notification via Toastr (supports both (message, type) and (type, message) signatures)
-window.showToast = (arg1, arg2, arg3) => {
-    try {
-        if (typeof toastr === 'undefined') {
-            // Fallback to alert if Toastr not available
-            const msg = (['success','error','warning','info'].includes(arg1) && typeof arg2 === 'string') ? arg2 : arg1;
-            alert(msg);
-            return;
-        }
-        let message = '';
-        let type = 'info';
-        let duration = 5000;
-        const isType = (v) => typeof v === 'string' && ['success','error','warning','info'].includes(v.toLowerCase());
-        if (isType(arg1) && typeof arg2 === 'string') {
-            type = arg1.toLowerCase();
-            message = arg2;
-            if (typeof arg3 === 'number') duration = arg3;
-        } else {
-            message = typeof arg1 === 'string' ? arg1 : String(arg1);
-            if (isType(arg2)) type = arg2.toLowerCase();
-            if (typeof arg2 === 'number') duration = arg2;
-            if (typeof arg3 === 'number') duration = arg3;
-        }
-        const opts = Object.assign({}, toastr.options, { timeOut: duration, extendedTimeOut: Math.min(1000, Math.floor(duration / 5)) });
-        toastr.options = opts;
-        switch (type) {
-            case 'success': toastr.success(message); break;
-            case 'error': toastr.error(message); break;
-            case 'warning': toastr.warning(message); break;
-            default: toastr.info(message); break;
-        }
-    } catch (error) {
-        console.error('Error showing toast:', error);
+// Removed: legacy implementation. Delegating to Notifications module.
+window.showToast = function(arg1, arg2, arg3) {
+    if (window.Notifications && typeof window.Notifications.showToast === 'function') {
+        window.Notifications.showToast(arg1, arg2, arg3);
+    } else {
+        console.error('Notifications module not available for showToast');
     }
 };
 
-// Show alert styled via Toastr, returns a Promise<boolean>
-window.showAlertToast = (title = 'Alert', message = '', buttonText = 'OK') => {
-    return new Promise((resolve) => {
-        try {
-            if (typeof toastr === 'undefined') {
-                alert(`${title}\n\n${message}`);
-                resolve(true);
-                return;
-            }
-            const html = `<div style="margin-top:0.5rem">${message}</div>
-                          <div style="margin-top:0.75rem; display:flex; gap:0.5rem; justify-content:flex-end">
-                            <button class="toastr-btn-ok" style="padding:0.375rem 0.75rem; border-radius:0.375rem; background:#3b82f6; color:#fff; font-weight:600">${buttonText}</button>
-                          </div>`;
-            const $toast = toastr.info(html, title, {
-                timeOut: 0,
-                extendedTimeOut: 0,
-                tapToDismiss: false,
-                closeButton: true,
-                progressBar: true,
-                escapeHtml: false,
-                positionClass: 'toast-top-center'
-            });
-            // Bind click handler
-            if ($toast && $toast.find) {
-                $toast.find('.toastr-btn-ok').on('click', () => {
-                    resolve(true);
-                    $toast.remove();
-                });
-            } else {
-                // Fallback resolve if jQuery not present
-                resolve(true);
-            }
-        } catch (e) {
-            console.error('Error showing alert toast:', e);
-            resolve(false);
-        }
-    });
+// Show alert styled via Toastr, returns a Promise<boolean)
+// Removed: legacy implementation. Delegating to Notifications module.
+window.showAlertToast = function(title = 'Alert', message = '', buttonText = 'OK') {
+    if (window.Notifications && typeof window.Notifications.showAlertToast === 'function') {
+        return window.Notifications.showAlertToast(title, message, buttonText);
+    }
+    console.error('Notifications module not available for showAlertToast');
+    return Promise.resolve(false);
 };
 
-// Show confirmation styled via Toastr, returns a Promise<boolean>
-window.showConfirmationToast = (title = 'Confirm', message = '', confirmText = 'Yes', cancelText = 'No') => {
-    return new Promise((resolve) => {
-        try {
-            if (typeof toastr === 'undefined') {
-                const result = confirm(`${title}\n\n${message}`);
-                resolve(!!result);
-                return;
-            }
-            const html = `<div style="margin-top:0.5rem">${message}</div>
-                          <div style="margin-top:0.75rem; display:flex; gap:0.5rem; justify-content:flex-end">
-                            <button class="toastr-btn-confirm" style="padding:0.375rem 0.75rem; border-radius:0.375rem; background:#10b981; color:#fff; font-weight:600">${confirmText}</button>
-                            <button class="toastr-btn-cancel" style="padding:0.375rem 0.75rem; border-radius:0.375rem; background:#ef4444; color:#fff; font-weight:600">${cancelText}</button>
-                          </div>`;
-            const $toast = toastr.info(html, title, {
-                timeOut: 0,
-                extendedTimeOut: 0,
-                tapToDismiss: false,
-                closeButton: true,
-                progressBar: true,
-                escapeHtml: false,
-                positionClass: 'toast-top-center'
-            });
-            if ($toast && $toast.find) {
-                $toast.find('.toastr-btn-confirm').on('click', () => {
-                    resolve(true);
-                    $toast.remove();
-                });
-                $toast.find('.toastr-btn-cancel').on('click', () => {
-                    resolve(false);
-                    $toast.remove();
-                });
-            } else {
-                // If we cannot attach handlers, default to false
-                resolve(false);
-            }
-        } catch (e) {
-            console.error('Error showing confirmation toast:', e);
-            resolve(false);
-        }
-    });
+// Show confirmation styled via Toastr, returns a Promise<boolean)
+// Removed: legacy implementation. Delegating to Notifications module.
+window.showConfirmationToast = function(title = 'Confirm', message = '', confirmText = 'Yes', cancelText = 'No') {
+    if (window.Notifications && typeof window.Notifications.showConfirmationToast === 'function') {
+        return window.Notifications.showConfirmationToast(title, message, confirmText, cancelText);
+    }
+    console.error('Notifications module not available for showConfirmationToast');
+    return Promise.resolve(false);
 };
 
 // Initialize export functionality when DOM is loaded

@@ -585,7 +585,7 @@ public class AssetService : IAssetService
         if (asset.PurchaseDate > asOfDate)
             return asset.PurchasePrice ?? 0m;
 
-        var yearsElapsed = (decimal)(asOfDate - asset.PurchaseDate.Value).Days / 365.25m;
+        decimal yearsElapsed = await Task.FromResult(((asOfDate - asset.PurchaseDate)?.Days ?? 1 / 365.25m));
 
         return asset.DepreciationMethod?.ToLower() switch
         {
