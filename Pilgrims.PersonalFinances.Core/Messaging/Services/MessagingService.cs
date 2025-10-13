@@ -10,10 +10,12 @@ namespace Pilgrims.PersonalFinances.Core.Messaging.Services
     public class MessagingService : IMessagingService
     {
         private readonly IMessenger _messenger;
+        private readonly NotificationHandler  _messageHandler;
 
         public MessagingService(IMessenger messenger)
         {
             _messenger = messenger ?? throw new ArgumentNullException(nameof(messenger));
+            _messageHandler = new NotificationHandler(messenger, this); // Ensure the handler is instantiated to receive messages
         }
 
         /// <summary>
@@ -97,6 +99,15 @@ namespace Pilgrims.PersonalFinances.Core.Messaging.Services
         public void Send<TMessage>(TMessage message) where TMessage : class
         {
             _messenger.Send(message);
+        }
+
+        public async Task ShowErrorAsync(Exception ex, string title = "Error")
+        {
+            var alertMessage = new AlertDialogMessage(ex, title);
+            _messenger.Send(alertMessage);
+
+            // Wait for the response from the UI handler
+            await alertMessage.ResponseSource.Task.ConfigureAwait(false);
         }
     }
 }

@@ -261,7 +261,7 @@
 @code {
     private CreateAccountModel accountModel = new();
     private bool isSubmitting = false;
-    
+
     private readonly string[] predefinedColors = {
         "#3B82F6", "#EF4444", "#10B981", "#F59E0B", "#8B5CF6",
         "#EC4899", "#06B6D4", "#84CC16", "#F97316", "#6366F1"
@@ -335,14 +335,14 @@
             };
 
             await AccountService.CreateAccountAsync(account);
-            
+
             // Show success message and navigate back
             await JSRuntime.InvokeVoidAsync("showAlertToast", "Success", "Account created successfully!");
             NavigationManager.NavigateTo("/accounts");
         }
         catch (Exception ex)
         {
-            await MessagingService.ShowAlertAsync($"Error creating account: {ex.Message}");
+            await MessagingService.ShowErrorAsync(ex, $"Error creating saving account");
         }
         finally
         {
@@ -352,7 +352,7 @@
 
     private async Task HandleInvalidSubmit()
     {
-        await MessagingService.ShowAlertAsync("Please fix the validation errors before submitting.");
+        await MessagingService.ShowErrorAsync(new Exception("Please fix the validation errors before submitting."), "Fix Validation Errors");
     }
 
     private void Cancel()

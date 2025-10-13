@@ -10,12 +10,14 @@ namespace Pilgrims.PersonalFinances.Core.Messaging.Messages
         public string Message { get; }
         public string Title { get; }
         public Action<bool>? OnResult { get; }
+        public string Type { get; }
 
-        public ShowAlertMessage(string message, string title = "Alert", Action<bool>? onResult = null)
+        public ShowAlertMessage(string message, string title = "Alert", Action<bool>? onResult = null, string type = "info")
         {
             Message = message;
             Title = title;
             OnResult = onResult;
+            Type = type;
         }
     }
 

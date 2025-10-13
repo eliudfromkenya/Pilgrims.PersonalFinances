@@ -84,7 +84,7 @@ namespace Pilgrims.PersonalFinances.Core.Messaging.Services
             {
                 var title = message.Value.Title ?? "Alert";
                 var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-                _messenger.Send(new ShowAlertMessage(message.Value.Message, title, result => tcs.TrySetResult(result)));
+                _messenger.Send(new ShowAlertMessage(message.Value.Message, title, result => tcs.TrySetResult(result), message.Value.Type));
                 var result = await tcs.Task.ConfigureAwait(false);
                 message.ResponseSource.TrySetResult(result);
             }

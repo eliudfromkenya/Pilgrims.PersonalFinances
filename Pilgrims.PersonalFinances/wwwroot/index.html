@@ -42,6 +42,11 @@
       .dark .toast-warning { color: #f9fafb !important; }
       .toast-close-button { filter: brightness(0.95); }
       #toast-container { z-index: 100000 !important; pointer-events: auto; }
+      /* Increase toast width for alert readability */
+      #toast-container > div {
+        width: 420px !important;
+        min-width: 420px !important;
+      }
     </style>
     
     <style>
@@ -640,8 +645,8 @@
                         window.showToast('info', 'Notifications initialized');
                     }
                     if (typeof window.showAlertToast === 'function') {
-                        window.showAlertToast('Welcome', 'Custom alert demo', 'info');
-                    }
+                window.showAlertToast('Welcome', 'Custom alert demo', 'OK', 'info');
+            }
                     if (typeof window.showConfirmationToast === 'function') {
                         window.showConfirmationToast('Continue?', 'Confirm demo', 'warning').then(function (result) {
                             if (typeof window.showToast === 'function') {

@@ -33,7 +33,9 @@
     private async Task HandleAlertMessageAsync(object recipient, ShowAlertMessage message)
     {
         await JsInit.WaitReadyAsync();
-        var result = await JSRuntime.InvokeAsync<bool>("showAlertToast", message.Title, message.Message, "OK");
+        var isError = string.Equals(message.Type, "error", StringComparison.OrdinalIgnoreCase);
+        // Pass type to JS; JS will style accordingly
+        var result = await JSRuntime.InvokeAsync<bool>("showAlertToast", message.Title, message.Message, "OK", message.Type);
         message.OnResult?.Invoke(result);
     }
 

@@ -222,9 +222,9 @@ window.showToast = function(arg1, arg2, arg3) {
 
 // Show alert styled via Toastr, returns a Promise<boolean)
 // Removed: legacy implementation. Delegating to Notifications module.
-window.showAlertToast = function(title = 'Alert', message = '', buttonText = 'OK') {
+window.showAlertToast = function(title = 'Alert', message = '', buttonText = 'OK', type) {
     if (window.Notifications && typeof window.Notifications.showAlertToast === 'function') {
-        return window.Notifications.showAlertToast(title, message, buttonText);
+        return window.Notifications.showAlertToast(title, message, buttonText, type);
     }
     console.error('Notifications module not available for showAlertToast');
     return Promise.resolve(false);
@@ -249,8 +249,8 @@ document.addEventListener('DOMContentLoaded', () => {
             closeButton: true,
             progressBar: true,
             preventDuplicates: false,
-            newestOnTop: true,
-            positionClass: 'toast-top-right',
+            newestOnTop: false,
+            positionClass: 'toast-bottom-right',
             showDuration: 300,
             hideDuration: 300,
             timeOut: 5000,
