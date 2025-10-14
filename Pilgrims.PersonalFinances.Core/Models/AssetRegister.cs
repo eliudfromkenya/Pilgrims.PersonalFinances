@@ -51,9 +51,6 @@ namespace Pilgrims.PersonalFinances.Core.Models
         public string? Manufacturer { get; set; }
         public string? Location { get; set; }
         public string? ResponsiblePerson { get; set; }
-
-        public string? CreatedBy { get; set; }
-        public string? UpdatedBy { get; set; }
         public string? Notes { get; set; }
 
         // Navigation Properties

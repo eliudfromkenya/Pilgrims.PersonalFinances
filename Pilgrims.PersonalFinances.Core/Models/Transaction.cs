@@ -21,7 +21,7 @@ public class Transaction : BaseEntity
     private string? _payee;
     private string? _description;
     private string? _notes;
-    private string _tags = string.Empty;
+    private string? _tags = string.Empty;
     private string? _referenceNumber;
     private DateTime? _clearedDate;
     private DateTime? _reconciledDate;
@@ -162,7 +162,7 @@ public class Transaction : BaseEntity
     /// <summary>
     /// Comma-separated tags for searching and filtering
     /// </summary>
-    public string Tags
+    public string? Tags
     {
         get => _tags;
         set => SetProperty(ref _tags, value ?? string.Empty);

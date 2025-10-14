@@ -42,7 +42,6 @@ namespace Pilgrims.PersonalFinances.Core.Services
                 BookStartingBalance = bookStartingBalance,
                 BookEndingBalance = bookEndingBalance,
                 Status = ReconciliationStatus.InProgress,
-                CreatedBy = createdBy ?? "System",
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -210,7 +209,6 @@ namespace Pilgrims.PersonalFinances.Core.Services
 
             item.TransactionId = transactionId;
             item.Status = ReconciliationItemStatus.Matched;
-            item.UpdatedBy = matchedBy;
             item.MarkAsDirty();
 
             await _context.SaveChangesAsync();
@@ -224,7 +222,6 @@ namespace Pilgrims.PersonalFinances.Core.Services
 
             item.TransactionId = null;
             item.Status = ReconciliationItemStatus.Unmatched;
-            item.UpdatedBy = unmatchedBy;
             item.MarkAsDirty();
 
             await _context.SaveChangesAsync();
@@ -292,7 +289,7 @@ namespace Pilgrims.PersonalFinances.Core.Services
 
             session.MarkAsCompleted();
             session.ReconciledBy = completedBy;
-            session.UpdatedBy = completedBy;
+            session.MarkAsDirty();
 
             // Mark all matched transactions as reconciled
             var matchedItems = session.ReconciliationItems.Where(ri => ri.Status == ReconciliationItemStatus.Matched && !string.IsNullOrEmpty(ri.TransactionId));
@@ -328,7 +325,6 @@ namespace Pilgrims.PersonalFinances.Core.Services
 
             session.Status = ReconciliationStatus.Cancelled;
             session.Notes = string.IsNullOrEmpty(reason) ? session.Notes : $"{session.Notes}\nCancelled: {reason}";
-            session.UpdatedBy = cancelledBy;
             session.MarkAsDirty();
 
             await _context.SaveChangesAsync();
@@ -341,7 +337,6 @@ namespace Pilgrims.PersonalFinances.Core.Services
             if (item == null) return false;
 
             item.MarkAsCleared();
-            item.UpdatedBy = clearedBy;
             item.MarkAsDirty();
 
             await _context.SaveChangesAsync();
@@ -596,7 +591,6 @@ namespace Pilgrims.PersonalFinances.Core.Services
             foreach (var item in items)
             {
                 item.MarkAsCleared();
-                item.UpdatedBy = clearedBy;
                 item.MarkAsDirty();
             }
 
@@ -617,7 +611,6 @@ namespace Pilgrims.PersonalFinances.Core.Services
                 {
                     item.TransactionId = transactionId;
                     item.Status = ReconciliationItemStatus.Matched;
-                    item.UpdatedBy = matchedBy;
                     item.MarkAsDirty();
                 }
             }

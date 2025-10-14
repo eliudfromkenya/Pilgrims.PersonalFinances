@@ -59,15 +59,6 @@ namespace Pilgrims.PersonalFinances.Core.Models
         public string? Notes { get; set; }
 
         /// <summary>
-        /// Date when the creditor record was created
-        /// Audit fields - CreatedAt and UpdatedAt are inherited from BaseEntity
-
-        /// <summary>
-        /// Date when the creditor record was last updated
-        /// </summary>
-        // Audit fields - CreatedAt and UpdatedAt are inherited from BaseEntity
-
-        /// <summary>
         /// Collection of debts associated with this creditor
         /// </summary>
         public virtual ICollection<Debt> Debts { get; set; } = new List<Debt>();

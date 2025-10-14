@@ -34,7 +34,7 @@ namespace Pilgrims.PersonalFinances.Core.Models
         public ReconciliationItemType ItemType { get; set; }
 
         public ReconciliationItemStatus Status { get; set; } = ReconciliationItemStatus.Unmatched;
-
+        public string? ClearedBy { get; private set; }
         [StringLength(1000)]
         public string? Notes { get; set; }
 
@@ -47,10 +47,6 @@ namespace Pilgrims.PersonalFinances.Core.Models
 
         // For book transactions that don't appear on statement
         public bool IsBookOnly { get; set; } = false;
-
-        // Audit fields - CreatedAt and UpdatedAt are inherited from BaseEntity
-        public string? CreatedBy { get; set; }
-        public string? UpdatedBy { get; set; }
 
         // Calculated Properties
         [NotMapped]
@@ -122,7 +118,7 @@ namespace Pilgrims.PersonalFinances.Core.Models
             IsCleared = true;
             ClearedDate = DateTime.UtcNow;
             Status = ReconciliationItemStatus.Matched;
-            UpdatedBy = clearedBy;
+            ClearedBy = clearedBy;
         }
 
         public void MarkAsDisputed(string? notes = null)

@@ -10,11 +10,6 @@ namespace Pilgrims.PersonalFinances.Core.Models
     public class TransactionNotification : BaseEntity
     {
         /// <summary>
-        /// Unique identifier for the notification
-        /// </summary>
-        // Removed duplicate Id property - inherited from BaseEntity
-
-        /// <summary>
         /// Reference to the scheduled transaction
         /// </summary>
         [Required]

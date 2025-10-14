@@ -404,12 +404,13 @@ public class TransactionService : ITransactionService
         template.Id = Guid.NewGuid().ToString();
         template.CreatedAt = DateTime.UtcNow;
         template.TouchUpdatedAt();
-        
+
         // In a real implementation, save to database here
         // await _context.TransactionTemplates.AddAsync(template);
         // await _context.SaveChangesAsync();
-        
+
         // Log success
+        //ToDo
         _logger.LogInformation("Transaction template created successfully with name: {TemplateName}", template.Name);
         return template;
     }
@@ -440,8 +441,10 @@ public class TransactionService : ITransactionService
         //     return true;
         // }
         // return false;
-        
+
         // Log success
+
+        //ToDo
         _logger.LogInformation("Transaction template deleted successfully with ID: {TemplateId}", templateId);
         return true;
     }
@@ -562,7 +565,7 @@ public class TransactionService : ITransactionService
                        t.Date >= startDate &&
                        t.Date <= endDate &&
                        (t.Payee == transaction.Payee || 
-                        t.Description.Contains(transaction.Description) ||
+                        t.Description!.Contains(transaction!.Description) ||
                         transaction.Description.Contains(t.Description)))
             .ToListAsync();
     }
@@ -678,7 +681,7 @@ public class TransactionService : ITransactionService
                        t.Date >= startDate &&
                        t.Date <= endDate &&
                        t.Status != TransactionStatus.Cancelled)
-            .GroupBy(t => t.Category.Name)
+            .GroupBy(t => t.Category!.Name)
             .Select(g => new { Category = g.Key, Total = g.Sum(t => Math.Abs(t.Amount)) })
             .ToDictionaryAsync(x => x.Category, x => x.Total);
     }

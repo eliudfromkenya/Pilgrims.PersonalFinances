@@ -13,9 +13,11 @@ namespace Pilgrims.PersonalFinances.Core.Models
         private bool _isDirty;
         private DateTime _createdAt = DateTime.UtcNow;
         private DateTime? _updatedAt;
+        private string? updatedBy;
+        private string? createdBy;
 
         [Key]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public string Id { get; set; } = string.Empty;
 
         public DateTime CreatedAt
         {
@@ -28,6 +30,9 @@ namespace Pilgrims.PersonalFinances.Core.Models
             get => _updatedAt;
             private set => SetProperty(ref _updatedAt, value);
         }
+
+        public string? CreatedBy { get => createdBy; private set => SetProperty(ref createdBy, value); }
+        public string? UpdatedBy { get => updatedBy; private set => SetProperty(ref updatedBy, value); }
 
         /// <summary>
         /// Indicates whether the entity has been modified since creation or last save

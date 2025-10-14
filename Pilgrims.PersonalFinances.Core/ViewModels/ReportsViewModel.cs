@@ -6,7 +6,6 @@ using Pilgrims.PersonalFinances.Core.Services;
 using Pilgrims.PersonalFinances.Core.Services.Interfaces;
 using Pilgrims.PersonalFinances.Core.Models.DTOs;
 using Pilgrims.PersonalFinances.Core.Models.Enums;
-using Pilgrims.PersonalFinances.Core.Models.DTOs;
 
 namespace Pilgrims.PersonalFinances.Core.ViewModels
 {
@@ -265,6 +264,7 @@ namespace Pilgrims.PersonalFinances.Core.ViewModels
         [RelayCommand]
         public async Task AccountClickAsync(string accountId)
         {
+            //ToDo
             ShowInfoToast($"Drilling down into account: {accountId}");
             // Navigate to detailed account view
             Navigate($"/accounts/{accountId}");
@@ -310,6 +310,7 @@ namespace Pilgrims.PersonalFinances.Core.ViewModels
         [RelayCommand]
         private async Task UpdateComparisonMetric(string metric)
         {
+            //ToDo
             if (ComparisonData != null)
             {
                 ShowToastNotification($"Metric changed to: {metric}", ToastType.Info);
@@ -320,7 +321,8 @@ namespace Pilgrims.PersonalFinances.Core.ViewModels
 
         [RelayCommand]
         private async Task UpdateComparisonPeriod(string period)
-        {
+        { 
+            //ToDo
             if (ComparisonData != null)
             {
                 ShowToastNotification($"Period changed to: {period}", ToastType.Info);

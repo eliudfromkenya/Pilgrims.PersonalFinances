@@ -1198,6 +1198,8 @@ public class PersonalFinanceContext : DbContext
                 case EntityState.Added:
                     entry.Entity.CreatedAt = DateTime.UtcNow;
                     ((BaseEntity)entry.Entity).TouchUpdatedAt();
+                    if(entry.Entity is BaseEntity baseEntity && string.IsNullOrWhiteSpace(baseEntity.Id))
+                        baseEntity.Id = GetNextId(entry.Entity.GetType());  
                     break;
                 case EntityState.Modified:
                     ((BaseEntity)entry.Entity).TouchUpdatedAt();

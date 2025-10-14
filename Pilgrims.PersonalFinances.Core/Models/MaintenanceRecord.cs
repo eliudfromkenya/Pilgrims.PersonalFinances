@@ -44,10 +44,5 @@ namespace Pilgrims.PersonalFinances.Core.Models
         public bool IsRecurring { get; set; } = false;
 
         public int? RecurrenceIntervalDays { get; set; }
-
-        // Audit fields - CreatedAt and UpdatedAt are inherited from BaseEntity
-        // Audit fields - CreatedAt and UpdatedAt are inherited from BaseEntity
-        public string? CreatedBy { get; set; }
-        public string? UpdatedBy { get; set; }
     }
 }

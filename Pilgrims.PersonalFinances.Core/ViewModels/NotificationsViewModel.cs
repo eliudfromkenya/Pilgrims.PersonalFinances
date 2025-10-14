@@ -5,7 +5,6 @@ using Pilgrims.PersonalFinances.Core.Services.Interfaces;
 using Pilgrims.PersonalFinances.Core.Models;
 using Pilgrims.PersonalFinances.Core.Models.Enums;
 using System.Collections.ObjectModel;
-using Pilgrims.PersonalFinances.Core.Models;
 
 namespace Pilgrims.PersonalFinances.Core.ViewModels
 {
