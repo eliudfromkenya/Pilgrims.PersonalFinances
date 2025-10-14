@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using Pilgrims.PersonalFinances.Core.Messaging.Interfaces;
 using Pilgrims.PersonalFinances.Core.Models;
 using System;
@@ -18,6 +18,7 @@ namespace Pilgrims.PersonalFinances.Core
         public const string CompanyName = "Pilgrims Systems";
         public const string Website = "https://pilgrimssoft.com";
         public const string SupportEmail = "";
+        public static readonly object SyncRoot = new();
         public static IServiceCollection? CurrentServiceCollection { get; internal set; }
         public static IServiceProvider? CurrentServiceProvider { get; internal set; }
         public static Func<IDbConnection> GetDbConnection { get; set; } = null!;

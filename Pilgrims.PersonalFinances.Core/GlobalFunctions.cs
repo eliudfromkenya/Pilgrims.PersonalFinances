@@ -1,4 +1,4 @@
-﻿using Pilgrims.PersonalFinances.Core.Utilities;
+using Pilgrims.PersonalFinances.Core.Utilities;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
@@ -11,10 +11,7 @@ namespace Pilgrims.PersonalFinances.Core
     {
         public static string StrimLineObjectName(string name)
         {
-            var _name = string.Empty;
-
-            return name.Where(chr => char.IsLetterOrDigit(chr) || chr == ' ' || chr == '_')
-                .Aggregate(_name, (current, chr) => current + chr);
+            return GlobalExtensions.StrimLineObjectName(name ?? string.Empty);
         }
 
         public static void RunOnBackground(Action action)

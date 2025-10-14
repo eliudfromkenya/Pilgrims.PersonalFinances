@@ -1,24 +1,27 @@
-﻿using LiteDB;
 using Pilgrims.PersonalFinances.Core.Utilities;
 using Pilgrims.PersonalFinances.Data;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using System.Xml.Linq;
 
 namespace Pilgrims.PersonalFinances.Services
 {
     internal class IdRefresher
     {
+        private static string SanitizePrefix(string prefix)
+        {
+            if (string.IsNullOrWhiteSpace(prefix))
+                return "";
+            var allowed = prefix.Where(c => char.IsLetterOrDigit(c) || c == '-' || c == '_');
+            return new string(allowed.ToArray());
+        }
         public async Task<Dictionary<string, string>> GetQuerySqls(string prefix)
         {
             try
             {
                 using var db = CurrentServiceProvider!.GetService<PersonalFinanceContext>();
+                var safePrefix = SanitizePrefix(prefix);
                 var ans = await Task.FromResult(db.Model.GetEntityTypes()
                      .Select(x =>
                      {
@@ -29,7 +32,7 @@ namespace Pilgrims.PersonalFinances.Services
                      }).ToDictionary(y => y.Table, x =>
                       string.Format(@"SELECT '{1}' as Name, '{3}' as type, (SELECT MAX({0}) FROM {1}
                                 WHERE {0} LIKE '%{2}%' AND LENGTH({0}) = (SELECT MAX(LENGTH({0})) FROM {1} WHERE {0} LIKE '%{2}%')) as CKey",
-                                     x.Key, x.Table, prefix, x.Type)));
+                                    x.Key, x.Table, safePrefix, x.Type)));
                 return ans;
             }
             catch (Exception)
@@ -44,6 +47,7 @@ namespace Pilgrims.PersonalFinances.Services
             {
 
                 using var db = CurrentServiceProvider!.GetService<PersonalFinanceContext>();
+                var safePrefix = SanitizePrefix(prefix);
                 var sql = string.Join("\r\nUNION DISTINCT ", db!.Model.GetEntityTypes()
                     .Select(x =>
                     {
@@ -55,7 +59,7 @@ namespace Pilgrims.PersonalFinances.Services
                     .Select(x =>
                      string.Format(@"SELECT '{1}' as Name, '{3}' as type, (SELECT MAX({0}) FROM {1}
                                 WHERE {0} LIKE '%{2}%' AND LENGTH({0}) = (SELECT MAX(LENGTH({0})) FROM {1} WHERE {0} LIKE '%{2}%')) as CKey",
-                                    x.Key, x.Table, prefix, x.Type)));
+                                   x.Key, x.Table, safePrefix, x.Type)));
 
                 using var con = GetDbConnection();
                 if (con.State != ConnectionState.Open) con.Open();

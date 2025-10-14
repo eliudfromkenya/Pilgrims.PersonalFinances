@@ -15,6 +15,7 @@ namespace Pilgrims.PersonalFinances.Services
         private static readonly SortedDictionary<string, string> _lastAssignedPrimary = [];
         private static readonly SortedDictionary<string, string> _idsReg = [];
         private static bool _hasRefreshedKeys = false;
+        private static readonly object _idLock = new();
 
         public IdGenerator()
         {
@@ -23,7 +24,7 @@ namespace Pilgrims.PersonalFinances.Services
                 RunOnBackground(async () => await RefreshKeysAsync());
             }
 
-            if (CurrentDeviceNumber == null || CurrentDeviceNumber.Length < 1)
+            if (string.IsNullOrWhiteSpace(CurrentDeviceNumber))
             {
                 CurrentDeviceNumber = LocalCache.Get<string>("DeviceNumber") ?? "AAA";
             }
@@ -40,17 +41,16 @@ namespace Pilgrims.PersonalFinances.Services
                 }
 
                 _hasRefreshedKeys = true;
-                List<TableMetaData> existings = null;
+                List<TableMetaData?>? existings = null;
                 try
                 {
-                    existings = LocalCache.Get<TableMetaData>().Item1.Select(c => c.Object).ToList();
+                    existings = LocalCache.Get<TableMetaData>()?.Item1?.Select(c => c.Object)?.ToList() ?? [];
                 }
                 catch { throw; }
                 existings ??= [];
 
                 try
                 {
-                    CurrentDeviceNumber = CurrentDeviceNumber;
                     if (!string.IsNullOrWhiteSpace(CurrentDeviceNumber))
                         LocalCache.Save("LastUsedPrefix", CurrentDeviceNumber);
                 }
@@ -83,18 +83,18 @@ namespace Pilgrims.PersonalFinances.Services
                     //var mm = obj.TableName?.Replace("tbl_", "")?.Replace("sys_", "")?.Replace("_", "");
                     var olds = existings
                       .Where(c => c.TableName == obj.TableName
-                        && (c.LastAssignedValue.StartsWith(CurrentDeviceNumber)));
+                        && (c.LastAssignedValue?.StartsWith(CurrentDeviceNumber) ?? false));
 
                     var oldValue = olds?.FirstOrDefault();
 
-                    string lastVal = (oldValue?.LastAssignedValue?.Length == obj.LastAssignedValue?.Length) ?
-                       new string[] { oldValue?.LastAssignedValue, obj.LastAssignedValue }.Max() :
+                    string? lastVal = (oldValue?.LastAssignedValue?.Length == obj.LastAssignedValue?.Length) ?
+                       new string?[] { oldValue?.LastAssignedValue, obj.LastAssignedValue }.Max() :
                        (oldValue?.LastAssignedValue?.Length > obj.LastAssignedValue?.Length ? oldValue?.LastAssignedValue : obj.LastAssignedValue);
 
                     if (oldValue == null || (lastVal != oldValue?.LastAssignedValue))
                         obj.LastAssignedValue = lastVal;
 
-                    _lastAssignedPrimary[name] = GetNewId(obj.LastAssignedValue);
+                    _lastAssignedPrimary[name] = GetNewId(obj?.LastAssignedValue);
                     LocalCache.Save(name, obj);
                 }
                 LocalCache.Save("DeviceNumber", CurrentDeviceNumber);
@@ -115,7 +115,7 @@ namespace Pilgrims.PersonalFinances.Services
             if (!type.IsAssignableTo(typeof(BaseEntity)))
                 throw new InvalidCastException("Only models inheriting from 'IBaseModel' are allowed in the database context");
 
-            if ((type.IsInterface) && tt.StartsWith('I'))
+            if (type.IsInterface && tt?.StartsWith('I') == true)
             {
                 tt = tt[1..];
                 if (tt.EndsWith("Model"))
@@ -124,9 +124,9 @@ namespace Pilgrims.PersonalFinances.Services
             return GetNextId(tt);
         }
 
-        public bool SaveNewId<T>(string id) => SaveNewId(id, typeof(T).Name.GetModelName());
+        public bool SaveNewId<T>(string id) => SaveNewId(id, typeof(T).Name.GetModelName()!);
 
-        public string GetNextId(string table)
+        public string GetNextId(string? table)
         {
             if (string.IsNullOrWhiteSpace(table))
                 throw new NullReferenceException("Unable to get table name");
@@ -222,7 +222,7 @@ namespace Pilgrims.PersonalFinances.Services
 
         public string TryNextId(string table)
         {
-            lock (CurrentDeviceNumber)
+            lock (_idLock)
             {
                 if (string.IsNullOrWhiteSpace(table))
                     throw new NullReferenceException("Unable to get table name");
@@ -239,16 +239,26 @@ namespace Pilgrims.PersonalFinances.Services
                     {
                         if (id != null && !id.StartsWith(CurrentDeviceNumber))
                         {
-                            //using var db = CurrentServiceCollection.get DatabaseContext.Create();    
                             if (IdNames.TryGetValue(table, out var value))
                             {
                                 var tblName = value;
-                                var sql = _primaryKeysSqls[tblName];
-                                using var ds = GetDbDataSet(GetDbConnection(), sql);
-                                id = ds.Tables[0].Rows[0]["CKey"].ToString() ?? $"{CurrentDeviceNumber}000";
+                                if (!_primaryKeysSqls.TryGetValue(tblName, out var sql))
+                                {
+                                    // lazily populate SQLs for primary keys based on current prefix
+                                    var q = new IdRefresher().GetQuerySqls(CurrentDeviceNumber).GetAwaiter().GetResult();
+                                    foreach (var kv in q)
+                                        _primaryKeysSqls[kv.Key] = kv.Value;
+                                    _primaryKeysSqls.TryGetValue(tblName, out sql);
+                                }
+                                if (!string.IsNullOrEmpty(sql))
+                                {
+                                    using var ds = GetDbDataSet(GetDbConnection(), sql);
+                                    var row = ds.Tables.Count > 0 && ds.Tables[0].Rows.Count > 0 ? ds.Tables[0].Rows[0] : null;
+                                    id = row == null ? $"{CurrentDeviceNumber}-01" : (row["CKey"].ToString() ?? $"{CurrentDeviceNumber}-01");
+                                }
                             }
                         }
-                        _lastAssignedPrimary.Add(table, id);
+                        _lastAssignedPrimary[table] = id ?? $"{CurrentDeviceNumber}-01";
                     }
                     catch { }
                     return id == null ? $"{CurrentDeviceNumber}-01" : GetNewId(id);
@@ -256,9 +266,11 @@ namespace Pilgrims.PersonalFinances.Services
                 catch (Exception ex)
                 {
                     NotifyError("Getting next id error", $"Getting next id error\r\n{ex.Message}");
+                    return $"{CurrentDeviceNumber}-01";
                 }
             }
-            return null;
+            // Fallback should never hit due to returns in branches, but keep safe
+            return $"{CurrentDeviceNumber}-01";
         }
 
         /// <summary>
@@ -338,16 +350,17 @@ namespace Pilgrims.PersonalFinances.Services
         /// <param name="tableName">The tableName<see cref="string"/>.</param>
         /// <param name="lastId">The lastId<see cref="string"/>.</param>
         /// <returns>The <see cref="string"/>.</returns>
-        public string GetNewId(string lastId)
+        public string GetNewId(string? lastId)
         {
             var id = string.Empty;
             try
             {
-                if ((string.IsNullOrWhiteSpace(CurrentDeviceNumber) || CurrentDeviceNumber == "AAA") &&
-                    !string.IsNullOrWhiteSpace(CurrentDeviceNumber))
-                    CurrentDeviceNumber = CurrentDeviceNumber;
-
-                CurrentDeviceNumber = (CurrentDeviceNumber ?? "AAA")[..3];
+                var dn = CurrentDeviceNumber;
+                if (string.IsNullOrWhiteSpace(dn))
+                    dn = LocalCache.Get<string>("DeviceNumber") ?? "AAA";
+                // normalize to 3 characters
+                dn = dn.PadRight(3, 'A');
+                CurrentDeviceNumber = dn[..3];
 
                 var lastIdObjs = lastId?.Split('-');
 
