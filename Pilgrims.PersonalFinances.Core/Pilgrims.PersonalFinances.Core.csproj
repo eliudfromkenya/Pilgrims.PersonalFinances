@@ -22,6 +22,11 @@
     <PackageReference Update="Stub.System.Data.SQLite.Core.NetStandard" ExcludeAssets="all" />
     <PackageReference Update="SQLitePCLRaw.bundle_e_sqlite3" ExcludeAssets="all" />
     <PackageReference Update="Microsoft.EntityFrameworkCore.Sqlite" ExcludeAssets="all" />
+    <!-- Exclude EF Core migrations from Android compile to avoid missing Relational APIs -->
+    <Compile Remove="Migrations\**\*.cs" />
+    <None Include="Migrations\**\*.cs" />
+    <!-- Add InMemory provider for Android target to satisfy UseInMemoryDatabase calls -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.9" />
   </ItemGroup>
 
   <ItemGroup>

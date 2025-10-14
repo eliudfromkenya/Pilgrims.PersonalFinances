@@ -83,6 +83,7 @@
 
     <ItemGroup>
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="9.0.9" />
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.9" />
         <!-- Removed EF Core Sqlite to avoid inclusion on Android -->
         <!-- Removed SQLitePCLRaw.bundle_e_sqlite3 to avoid inclusion on Android -->

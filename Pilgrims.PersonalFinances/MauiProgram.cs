@@ -15,6 +15,8 @@ using Pilgrims.PersonalFinances.Data;
 using Pilgrims.PersonalFinances.Services;
 using Serilog;
 using System.Reflection.Emit;
+using Pilgrims.PersonalFinances.Core.Services.Interfaces;
+using Pilgrims.PersonalFinances.Core.Services;
 
 namespace Pilgrims.PersonalFinances
 {
@@ -46,6 +48,14 @@ namespace Pilgrims.PersonalFinances
                 GetDbConnection = () => new Microsoft.Data.Sqlite.SqliteConnection(connectionString);
 #endif
             });
+
+            // Register sqlite-net-pcl write services
+            builder.Services.AddSingleton<ISqliteConnectionProvider>(sp =>
+            {
+                var dbPath = Path.Combine(FileSystem.AppDataDirectory, "PersonalFinance.db");
+                return new SqliteConnectionProvider(dbPath);
+            });
+            builder.Services.AddScoped<ISqliteWriteService, SqliteWriteService>();
 
             // Messaging & Logging
             builder.Services.AddSingleton<IMessenger>(WeakReferenceMessenger.Default);

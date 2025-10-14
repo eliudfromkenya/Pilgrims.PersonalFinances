@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.CompilerServices;
+using SQLite;
 
 namespace Pilgrims.PersonalFinances.Core.Models
 {
@@ -17,6 +18,7 @@ namespace Pilgrims.PersonalFinances.Core.Models
         private string? createdBy;
 
         [Key]
+        [PrimaryKey]
         public string Id { get; set; } = string.Empty;
 
         public DateTime CreatedAt
@@ -40,7 +42,7 @@ namespace Pilgrims.PersonalFinances.Core.Models
         public bool IsDirty
         {
             get => _isDirty;
-            private set => SetProperty(ref _isDirty, value);
+            set => SetProperty(ref _isDirty, value);
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

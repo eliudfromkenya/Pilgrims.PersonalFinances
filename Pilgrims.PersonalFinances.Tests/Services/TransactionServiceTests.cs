@@ -1,9 +1,15 @@
 using Microsoft.EntityFrameworkCore;
 using Pilgrims.PersonalFinances.Core.Models.Enums;
 using Pilgrims.PersonalFinances.Core.Services;
+using Pilgrims.PersonalFinances.Core.Services.Interfaces;
 using Moq;
 using Pilgrims.PersonalFinances.Core.Interfaces;
 using Pilgrims.PersonalFinances.Core.Logging;
+using System.IO;
+using Microsoft.Extensions.DependencyInjection;
+using Pilgrims.PersonalFinances.Core;
+using Pilgrims.PersonalFinances.Core.Messaging.Interfaces;
+using Pilgrims.PersonalFinances.Tests.Utilities;
 
 namespace Pilgrims.PersonalFinances.Tests.Services;
 
@@ -15,17 +21,41 @@ public class TransactionServiceTests : IDisposable
 
     public TransactionServiceTests()
     {
+        // Initialize GlobalExtensions with test DI so SaveChanges can generate IDs
+        var services = new ServiceCollection();
+        services.AddSingleton<IMessagingService, TestMessagingService>();
+        services.AddSingleton<IIdGenerator, TestIdGenerator>();
+        GlobalExtensions.InitApp(services);
+
+        var dbPath = Path.Combine(Path.GetTempPath(), $"pf-tests-{Guid.NewGuid()}.db");
         var options = new DbContextOptionsBuilder<PersonalFinanceContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .UseSqlite($"Data Source={dbPath};")
+            .EnableSensitiveDataLogging()
+            .EnableDetailedErrors()
+            .LogTo(Console.WriteLine)
             .Options;
 
         _context = new PersonalFinanceContext(options);
+        _context.Database.EnsureCreated();
         var mockLogger = new Mock<ILoggingService>();
         var mockCurrencyService = new Mock<ICurrencyService>();
         mockCurrencyService.Setup(x => x.FormatAmount(It.IsAny<decimal>(), It.IsAny<string>(), It.IsAny<bool>())).Returns("$0.00");
-        _transactionService = new TransactionService(_context, mockLogger.Object, mockCurrencyService.Object);
+        var provider = new SqliteConnectionProvider(dbPath);
+        var sqliteWrite = new SqliteWriteService(provider);
+        _transactionService = new TransactionService(_context, mockLogger.Object, mockCurrencyService.Object, sqliteWrite);
 
-        // Create a test account
+        // Create a dummy user (in case of implicit FK usage) and a test account
+        var user = new User
+        {
+            Email = "test@example.com",
+            FirstName = "Test",
+            LastName = "User",
+            PasswordHash = "hash",
+            PasswordSalt = "salt",
+        };
+        _context.Users.Add(user);
+        _context.SaveChanges();
+
         _testAccount = new Account
         {
             Name = "Test Account",
@@ -34,6 +64,7 @@ public class TransactionServiceTests : IDisposable
             CurrentBalance = 1000m,
             Currency = "USD"
         };
+        _testAccount.UserId = user.Id;
         
         _context.Accounts.Add(_testAccount);
         _context.SaveChanges();
