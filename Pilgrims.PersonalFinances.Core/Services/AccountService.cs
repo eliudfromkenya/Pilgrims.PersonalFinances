@@ -53,30 +53,36 @@ namespace Pilgrims.PersonalFinances.Core.Services
 
         public async Task<Account> CreateAccountAsync(Account account)
         {
-            // Validate account name uniqueness
-            if (await ValidateAccountNameAsync(account.Name))
-            {
-                throw new InvalidOperationException("An account with this name already exists.");
+            try
+            { // Validate account name uniqueness
+                if (await ValidateAccountNameAsync(account.Name))
+                {
+                    throw new InvalidOperationException("An account with this name already exists.");
+                }
+
+                // Set default currency if not provided
+                if (string.IsNullOrEmpty(account.Currency))
+                {
+                    account.Currency = await _currencyService.GetCurrentCurrencyAsync();
+                }
+
+                // Set initial values
+                account.CreatedAt = DateTime.UtcNow;
+                account.MarkAsDirty();
+                account.CurrentBalance = account.InitialBalance;
+
+                _context.Accounts.Add(account);
+                await _context.SaveChangesAsync().ConfigureAwait(false);
+
+                // Format balance for display
+                account.FormattedBalance = _currencyService.FormatAmount(account.CurrentBalance, account.Currency);
+
+                return account;
             }
-
-            // Set default currency if not provided
-            if (string.IsNullOrEmpty(account.Currency))
+            finally
             {
-                account.Currency = await _currencyService.GetCurrentCurrencyAsync();
+                _context.ChangeTracker.Clear();
             }
-
-            // Set initial values
-            account.CreatedAt = DateTime.UtcNow;
-            account.MarkAsDirty();
-            account.CurrentBalance = account.InitialBalance;
-
-            _context.Accounts.Add(account);
-            await _context.SaveChangesAsync().ConfigureAwait(false);
-
-            // Format balance for display
-            account.FormattedBalance = _currencyService.FormatAmount(account.CurrentBalance, account.Currency);
-
-            return account;
         }
 
         public async Task<Account> UpdateAccountAsync(Account account)

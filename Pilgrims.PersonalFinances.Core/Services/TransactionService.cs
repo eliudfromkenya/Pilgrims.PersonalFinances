@@ -17,12 +17,14 @@ public class TransactionService : ITransactionService
     private readonly PersonalFinanceContext _context;
     private readonly ILoggingService _logger;
     private readonly ICurrencyService _currencyService;
+    private readonly ISqliteWriteService _sqliteWrite;
 
-    public TransactionService(PersonalFinanceContext context, ILoggingService logger, ICurrencyService currencyService)
+    public TransactionService(PersonalFinanceContext context, ILoggingService logger, ICurrencyService currencyService, ISqliteWriteService sqliteWrite)
     {
         _context = context;
         _logger = logger;
         _currencyService = currencyService;
+        _sqliteWrite = sqliteWrite;
     }
 
     #region Basic CRUD Operations
@@ -62,6 +64,10 @@ public class TransactionService : ITransactionService
         // Set creation timestamp
         transaction.CreatedAt = DateTime.UtcNow;
         transaction.TouchUpdatedAt();
+        if (string.IsNullOrWhiteSpace(transaction.Id))
+        {
+            transaction.Id = GlobalExtensions.GetNextId<Transaction>();
+        }
 
         // Check for potential duplicates
         var duplicates = await FindPotentialDuplicatesAsync(transaction);
@@ -71,8 +77,7 @@ public class TransactionService : ITransactionService
             _logger.LogWarning("Potential duplicate transaction detected for transaction: {Description}", transaction.Description);
         }
 
-        _context.Transactions.Add(transaction);
-        await _context.SaveChangesAsync().ConfigureAwait(false);
+        await _sqliteWrite.InsertAsync(transaction).ConfigureAwait(false);
 
         // Log success
         _logger.LogInformation("Transaction Created: {Description} with amount {Amount}", transaction.Description, transaction.Amount);
@@ -96,8 +101,7 @@ public class TransactionService : ITransactionService
         }
 
         transaction.TouchUpdatedAt();
-        _context.Entry(existingTransaction).CurrentValues.SetValues(transaction);
-        await _context.SaveChangesAsync().ConfigureAwait(false);
+        await _sqliteWrite.UpdateAsync(transaction).ConfigureAwait(false);
 
         // Log success
         _logger.LogInformation("Transaction Updated: {Description} with amount {Amount}", transaction.Description, transaction.Amount);
@@ -107,25 +111,14 @@ public class TransactionService : ITransactionService
 
     public async Task<bool> DeleteTransactionAsync(string id)
     {
-        var transaction = await GetTransactionByIdAsync(id);
-        if (transaction == null) return false;
-
-        _context.Transactions.Remove(transaction);
-        return await _context.SaveChangesAsync().ConfigureAwait(false) > 0;
+        var affected = await _sqliteWrite.DeleteByIdAsync<Transaction>(id).ConfigureAwait(false);
+        return affected > 0;
     }
 
     public async Task<bool> DeleteTransactionsAsync(IEnumerable<string> ids)
     {
-        var transactions = await _context.Transactions
-            .Where(t => ids.Contains(t.Id))
-            .ToListAsync();
-
-        if (!transactions.Any()) return false;
-
-        _context.Transactions.RemoveRange(transactions);
-        var result = await _context.SaveChangesAsync().ConfigureAwait(false);
-
-        return result > 0;
+        var affected = await _sqliteWrite.DeleteManyByIdsAsync<Transaction>(ids).ConfigureAwait(false);
+        return affected > 0;
     }
 
     #endregion
@@ -322,9 +315,12 @@ public class TransactionService : ITransactionService
     {
         splitTransaction.CreatedAt = DateTime.UtcNow;
         splitTransaction.TouchUpdatedAt();
+        if (string.IsNullOrWhiteSpace(splitTransaction.Id))
+        {
+            splitTransaction.Id = GlobalExtensions.GetNextId<SplitTransaction>();
+        }
 
-        _context.SplitTransactions.Add(splitTransaction);
-        await _context.SaveChangesAsync().ConfigureAwait(false);
+        await _sqliteWrite.InsertAsync(splitTransaction).ConfigureAwait(false);
 
         return splitTransaction;
     }
@@ -336,19 +332,15 @@ public class TransactionService : ITransactionService
             throw new ArgumentException("Split transaction not found");
 
         splitTransaction.TouchUpdatedAt();
-        _context.Entry(existing).CurrentValues.SetValues(splitTransaction);
-        await _context.SaveChangesAsync().ConfigureAwait(false);
+        await _sqliteWrite.UpdateAsync(splitTransaction).ConfigureAwait(false);
 
         return splitTransaction;
     }
 
     public async Task<bool> DeleteSplitTransactionAsync(string splitTransactionId)
     {
-        var splitTransaction = await _context.SplitTransactions.FindAsync(splitTransactionId);
-        if (splitTransaction == null) return false;
-
-        _context.SplitTransactions.Remove(splitTransaction);
-        return await _context.SaveChangesAsync().ConfigureAwait(false) > 0;
+        var affected = await _sqliteWrite.DeleteByIdAsync<SplitTransaction>(splitTransactionId).ConfigureAwait(false);
+        return affected > 0;
     }
 
     #endregion
@@ -404,12 +396,13 @@ public class TransactionService : ITransactionService
         template.Id = Guid.NewGuid().ToString();
         template.CreatedAt = DateTime.UtcNow;
         template.TouchUpdatedAt();
-        
+
         // In a real implementation, save to database here
         // await _context.TransactionTemplates.AddAsync(template);
         // await _context.SaveChangesAsync();
-        
+
         // Log success
+        //ToDo
         _logger.LogInformation("Transaction template created successfully with name: {TemplateName}", template.Name);
         return template;
     }
@@ -440,8 +433,10 @@ public class TransactionService : ITransactionService
         //     return true;
         // }
         // return false;
-        
+
         // Log success
+
+        //ToDo
         _logger.LogInformation("Transaction template deleted successfully with ID: {TemplateId}", templateId);
         return true;
     }
@@ -503,8 +498,12 @@ public class TransactionService : ITransactionService
             transaction.Status = status;
             transaction.TouchUpdatedAt();
         }
-
-        var result = await _context.SaveChangesAsync().ConfigureAwait(false) > 0;
+        var updated = 0;
+        foreach (var transaction in transactions)
+        {
+            updated += await _sqliteWrite.UpdateAsync(transaction).ConfigureAwait(false);
+        }
+        var result = updated > 0;
 
         if (result)
         {
@@ -528,8 +527,12 @@ public class TransactionService : ITransactionService
             transaction.CategoryId = categoryId;
             transaction.TouchUpdatedAt();
         }
-
-        var result = await _context.SaveChangesAsync().ConfigureAwait(false) > 0;
+        var updated = 0;
+        foreach (var transaction in transactions)
+        {
+            updated += await _sqliteWrite.UpdateAsync(transaction).ConfigureAwait(false);
+        }
+        var result = updated > 0;
 
         if (result)
         {
@@ -562,7 +565,7 @@ public class TransactionService : ITransactionService
                        t.Date >= startDate &&
                        t.Date <= endDate &&
                        (t.Payee == transaction.Payee || 
-                        t.Description.Contains(transaction.Description) ||
+                        t.Description!.Contains(transaction!.Description) ||
                         transaction.Description.Contains(t.Description)))
             .ToListAsync();
     }
@@ -597,8 +600,7 @@ public class TransactionService : ITransactionService
         // In a real implementation, you would save the file to storage here
         // For now, we'll just save the metadata
 
-        _context.TransactionAttachments.Add(attachment);
-        await _context.SaveChangesAsync().ConfigureAwait(false);
+        await _sqliteWrite.InsertAsync(attachment).ConfigureAwait(false);
 
         // Log success
         _logger.LogInformation("Attachment Added: {FileName} for transaction {TransactionId}", attachment.FileName, attachment.TransactionId);
@@ -608,16 +610,13 @@ public class TransactionService : ITransactionService
 
     public async Task<bool> DeleteAttachmentAsync(string attachmentId)
     {
-        var attachment = await _context.TransactionAttachments.FindAsync(attachmentId);
-        if (attachment == null) return false;
-
-        _context.TransactionAttachments.Remove(attachment);
-        var result = await _context.SaveChangesAsync().ConfigureAwait(false) > 0;
+        var affected = await _sqliteWrite.DeleteByIdAsync<TransactionAttachment>(attachmentId).ConfigureAwait(false);
+        var result = affected > 0;
 
         if (result)
         {
             // Log success
-            _logger.LogInformation("Attachment Deleted: {FileName} from transaction {TransactionId}", attachment.FileName, attachment.TransactionId);
+            _logger.LogInformation("Attachment Deleted: {AttachmentId}", attachmentId);
         }
 
         return result;
@@ -678,7 +677,7 @@ public class TransactionService : ITransactionService
                        t.Date >= startDate &&
                        t.Date <= endDate &&
                        t.Status != TransactionStatus.Cancelled)
-            .GroupBy(t => t.Category.Name)
+            .GroupBy(t => t.Category!.Name)
             .Select(g => new { Category = g.Key, Total = g.Sum(t => Math.Abs(t.Amount)) })
             .ToDictionaryAsync(x => x.Category, x => x.Total);
     }

@@ -162,19 +162,6 @@ namespace Pilgrims.PersonalFinances.Core.Models
         public string? Tags { get; set; }
 
         /// <summary>
-        /// User who created this report
-        /// </summary>
-        [Required]
-        [StringLength(100)]
-        public string CreatedBy { get; set; } = string.Empty;
-
-        /// <summary>
-        /// User who last updated this report
-        /// </summary>
-        [StringLength(100)]
-        public string? UpdatedBy { get; set; }
-
-        /// <summary>
         /// When this report expires (for cleanup)
         /// </summary>
         public DateTime? ExpiresAt { get; set; }

@@ -1,19 +1,22 @@
-using Microsoft.Extensions.Logging;
+using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.EntityFrameworkCore;
-using Pilgrims.PersonalFinances.Data;
-using Pilgrims.PersonalFinances.Core.Services.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Pilgrims.PersonalFinances.Core.Interfaces;
 using Pilgrims.PersonalFinances.Core.Localization.Interfaces;
 using Pilgrims.PersonalFinances.Core.Localization.Services;
-using CommunityToolkit.Mvvm.Messaging;
+using Pilgrims.PersonalFinances.Core.Logging;
 using Pilgrims.PersonalFinances.Core.Messaging.Interfaces;
 using Pilgrims.PersonalFinances.Core.Messaging.Services;
-using Pilgrims.PersonalFinances.Core.ViewModels;
-using Pilgrims.PersonalFinances.Core.Logging;
-using Serilog;
-using Pilgrims.PersonalFinances.Core.Interfaces;
 using Pilgrims.PersonalFinances.Core.Services;
-using Microsoft.Extensions.DependencyInjection;
+using Pilgrims.PersonalFinances.Core.Services.Interfaces;
+using Pilgrims.PersonalFinances.Core.ViewModels;
+using Pilgrims.PersonalFinances.Data;
 using Pilgrims.PersonalFinances.Services;
+using Serilog;
+using System.Reflection.Emit;
+using Pilgrims.PersonalFinances.Core.Services.Interfaces;
+using Pilgrims.PersonalFinances.Core.Services;
 
 namespace Pilgrims.PersonalFinances
 {
@@ -37,13 +40,22 @@ namespace Pilgrims.PersonalFinances
             builder.Services.AddDbContext<PersonalFinanceContext>(options =>
             {
                 var dbPath = Path.Combine(FileSystem.AppDataDirectory, "PersonalFinance.db");
-                var connectionString = $"Data Source={dbPath};";
+                var connectionString = $"Data Source={dbPath};";               
 #if ANDROID
                 options.UseInMemoryDatabase("PersonalFinance");
 #else
                 options.UseSqlite(connectionString, b => b.MigrationsAssembly("Pilgrims.PersonalFinances.Core"));
+                GetDbConnection = () => new Microsoft.Data.Sqlite.SqliteConnection(connectionString);
 #endif
             });
+
+            // Register sqlite-net-pcl write services
+            builder.Services.AddSingleton<ISqliteConnectionProvider>(sp =>
+            {
+                var dbPath = Path.Combine(FileSystem.AppDataDirectory, "PersonalFinance.db");
+                return new SqliteConnectionProvider(dbPath);
+            });
+            builder.Services.AddScoped<ISqliteWriteService, SqliteWriteService>();
 
             // Messaging & Logging
             builder.Services.AddSingleton<IMessenger>(WeakReferenceMessenger.Default);
@@ -61,6 +73,7 @@ namespace Pilgrims.PersonalFinances
             builder.Services.AddScoped<ICurrencyService, CurrencyService>();
             builder.Services.AddScoped<ITransactionService, TransactionService>();
             builder.Services.AddScoped<IBudgetService, BudgetService>();
+            builder.Services.AddScoped<IIdGenerator, IdGenerator>();
             builder.Services.AddScoped<IWindowService, WindowService>();
             builder.Services.AddScoped<IScheduledTransactionService, ScheduledTransactionService>();
             builder.Services.AddScoped<INotificationService, NotificationService>();
@@ -89,8 +102,11 @@ namespace Pilgrims.PersonalFinances
             builder.Logging.AddDebug();
 #endif
 
+
+
             // Build app and apply migrations at startup
             var app = builder.Build();
+            InitApp(builder.Services);
 
 #if !ANDROID
             using (var scope = app.Services.CreateScope())

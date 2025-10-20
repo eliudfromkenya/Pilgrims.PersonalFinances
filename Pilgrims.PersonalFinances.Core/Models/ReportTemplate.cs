@@ -93,18 +93,6 @@ namespace Pilgrims.PersonalFinances.Core.Models
         /// </summary>
         public DateTime? LastUsedAt { get; set; }
 
-        /// <summary>
-        /// User who created this template (null for system templates)
-        /// </summary>
-        [StringLength(100)]
-        public string? CreatedBy { get; set; }
-
-        /// <summary>
-        /// User who last updated this template
-        /// </summary>
-        [StringLength(100)]
-        public string? UpdatedBy { get; set; }
-
         // Navigation Properties
         public virtual ICollection<ReportParameter> Parameters { get; set; } = new List<ReportParameter>();
         public virtual ICollection<Report> Reports { get; set; } = new List<Report>();
@@ -135,7 +123,7 @@ namespace Pilgrims.PersonalFinances.Core.Models
         public void UpdateConfiguration(string configuration, string? updatedBy = null)
         {
             Configuration = configuration;
-            UpdatedBy = updatedBy;
+            //UpdatedBy = updatedBy;
             MarkAsDirty();
         }
 
@@ -182,8 +170,7 @@ namespace Pilgrims.PersonalFinances.Core.Models
                 Category = Category,
                 Tags = Tags,
                 Icon = Icon,
-                ColorTheme = ColorTheme,
-                CreatedBy = createdBy
+                ColorTheme = ColorTheme
             };
         }
     }

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using SQLite;
 using Pilgrims.PersonalFinances.Core.Models.Enums;
 
 namespace Pilgrims.PersonalFinances.Core.Models;
@@ -6,6 +7,7 @@ namespace Pilgrims.PersonalFinances.Core.Models;
 /// <summary>
 /// Represents a financial transaction with comprehensive tracking capabilities
 /// </summary>
+[Table("Transactions")]
 public class Transaction : BaseEntity
 {
     private decimal _amount;
@@ -21,7 +23,7 @@ public class Transaction : BaseEntity
     private string? _payee;
     private string? _description;
     private string? _notes;
-    private string _tags = string.Empty;
+    private string? _tags = string.Empty;
     private string? _referenceNumber;
     private DateTime? _clearedDate;
     private DateTime? _reconciledDate;
@@ -87,6 +89,7 @@ public class Transaction : BaseEntity
     /// <summary>
     /// Navigation property to the source account
     /// </summary>
+    [Ignore]
     public Account? Account
     {
         get => _account;
@@ -105,6 +108,7 @@ public class Transaction : BaseEntity
     /// <summary>
     /// Navigation property to the transaction category
     /// </summary>
+    [Ignore]
     public Category? Category
     {
         get => _category;
@@ -123,6 +127,7 @@ public class Transaction : BaseEntity
     /// <summary>
     /// Navigation property to the destination account for transfers
     /// </summary>
+    [Ignore]
     public Account? TransferToAccount
     {
         get => _transferToAccount;
@@ -162,7 +167,7 @@ public class Transaction : BaseEntity
     /// <summary>
     /// Comma-separated tags for searching and filtering
     /// </summary>
-    public string Tags
+    public string? Tags
     {
         get => _tags;
         set => SetProperty(ref _tags, value ?? string.Empty);
@@ -235,6 +240,7 @@ public class Transaction : BaseEntity
     /// <summary>
     /// Navigation property to the parent transaction
     /// </summary>
+    [Ignore]
     public Transaction? ParentTransaction
     {
         get => _parentTransaction;
@@ -244,6 +250,7 @@ public class Transaction : BaseEntity
     /// <summary>
     /// Navigation property to split transaction children
     /// </summary>
+    [Ignore]
     public List<Transaction> SplitTransactions
     {
         get => _splitTransactions;
@@ -253,6 +260,7 @@ public class Transaction : BaseEntity
     /// <summary>
     /// Navigation property to transaction attachments (receipts, etc.)
     /// </summary>
+    [Ignore]
     public List<TransactionAttachment> Attachments
     {
         get => _attachments;
@@ -279,6 +287,7 @@ public class Transaction : BaseEntity
     /// <summary>
     /// Navigation property to the linked budget
     /// </summary>
+    [Ignore]
     public Budget? Budget { get; set; }
 
     /// <summary>
@@ -289,6 +298,7 @@ public class Transaction : BaseEntity
     /// <summary>
     /// Navigation property to the linked debt
     /// </summary>
+    [Ignore]
     public Debt? Debt { get; set; }
 
     /// <summary>
@@ -299,6 +309,7 @@ public class Transaction : BaseEntity
     /// <summary>
     /// Navigation property to the linked asset
     /// </summary>
+    [Ignore]
     public Asset? Asset { get; set; }
 
     /// <summary>
@@ -309,6 +320,7 @@ public class Transaction : BaseEntity
     /// <summary>
     /// Navigation property to the linked goal
     /// </summary>
+    [Ignore]
     public virtual Goal? Goal { get; set; }
 
     /// <summary>

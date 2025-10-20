@@ -107,15 +107,6 @@ namespace Pilgrims.PersonalFinances.Core.Models
         public DateTime? PaidOffDate { get; set; }
 
         /// <summary>
-        /// Date when the debt record was created
-        /// Audit fields - CreatedAt and UpdatedAt are inherited from BaseEntity
-
-        /// <summary>
-        /// Date when the debt record was last updated
-        /// </summary>
-        // Audit fields - CreatedAt and UpdatedAt are inherited from BaseEntity
-
-        /// <summary>
         /// Collection of payments made toward this debt
         /// </summary>
         public virtual ICollection<DebtPayment> Payments { get; set; } = new List<DebtPayment>();

@@ -49,11 +49,6 @@ namespace Pilgrims.PersonalFinances.Core.Models
         [NotMapped]
         public decimal GainLossPercentage => TotalCost != 0 ? (GainLoss / TotalCost) * 100 : 0;
 
-        // Audit fields - CreatedAt and UpdatedAt are inherited from BaseEntity
-        // Audit fields - CreatedAt and UpdatedAt are inherited from BaseEntity
-        public string? CreatedBy { get; set; }
-        public string? UpdatedBy { get; set; }
-
         // Navigation Properties
         public virtual ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
     }

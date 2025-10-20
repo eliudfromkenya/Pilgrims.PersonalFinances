@@ -45,10 +45,10 @@ public class PersonalFinanceContext : DbContext
         {
             optionsBuilder.AddInterceptors(_auditInterceptor);
         }
-        
+        Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarnin
         // Suppress the pending model changes warning
         optionsBuilder.ConfigureWarnings(warnings => 
-            warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+            warnings.Ignore());
     }
 
     // Core Financial Entities
@@ -142,10 +142,10 @@ public class PersonalFinanceContext : DbContext
         {
             foreach (var property in entityType.GetProperties())
             {
-                if (property.ClrType == typeof(string))
-                {
-                    property.SetColumnType("TEXT");
-                }
+                //if (property.ClrType == typeof(string))
+                //{
+                //    property.SetColumnType("TEXT");
+                //}
             }
         }
 
@@ -163,7 +163,7 @@ public class PersonalFinanceContext : DbContext
             entity.Property(e => e.Currency).HasMaxLength(10);
             entity.Property(e => e.BankName).HasMaxLength(100);
 
-            entity.HasIndex(e => e.AccountNumber).IsUnique().HasFilter("[AccountNumber] IS NOT NULL");
+            entity.HasIndex(e => e.AccountNumber).IsUnique();
             entity.HasIndex(e => e.AccountType);
         });
 
@@ -382,8 +382,7 @@ public class PersonalFinanceContext : DbContext
                   .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasIndex(e => new { e.CreditorId, e.AccountNumber })
-                  .IsUnique()
-                  .HasFilter("[AccountNumber] IS NOT NULL");
+                  .IsUnique();
         });
 
         // Configure DebtPayment entity
@@ -427,7 +426,7 @@ public class PersonalFinanceContext : DbContext
                   .HasForeignKey(e => e.PurchaseTransactionId)
                   .OnDelete(DeleteBehavior.SetNull);
 
-            entity.HasIndex(e => e.SerialNumber).IsUnique().HasFilter("[SerialNumber] IS NOT NULL");
+            entity.HasIndex(e => e.SerialNumber).IsUnique();
             entity.HasIndex(e => e.PurchaseDate);
         });
 
@@ -845,7 +844,7 @@ public class PersonalFinanceContext : DbContext
                   .HasForeignKey<AssetRegister>(e => e.AssetId)
                   .OnDelete(DeleteBehavior.Cascade);
 
-            entity.HasIndex(e => e.SerialNumber).IsUnique().HasFilter("[SerialNumber] IS NOT NULL");
+            entity.HasIndex(e => e.SerialNumber).IsUnique();
             entity.HasIndex(e => e.PurchaseDate);
         });
 
@@ -883,7 +882,7 @@ public class PersonalFinanceContext : DbContext
             entity.Property(e => e.EmailVerificationToken).HasMaxLength(500);
             entity.Property(e => e.PasswordResetToken).HasMaxLength(500);
             entity.Property(e => e.ProfilePicturePath).HasMaxLength(500);
-            entity.Property(e => e.Preferences).HasColumnType("TEXT");
+            entity.Property(e => e.Preferences);
 
             entity.HasIndex(e => e.Email).IsUnique();
             entity.HasIndex(e => e.EmailVerificationToken);
@@ -1189,7 +1188,8 @@ public class PersonalFinanceContext : DbContext
 
     private void UpdateTimestamps()
     {
-        var entries = ChangeTracker.Entries<ITimestampedEntity>();
+        // Apply timestamps and IDs to all BaseEntity instances to ensure IDs are generated
+        var entries = ChangeTracker.Entries<BaseEntity>();
 
         foreach (var entry in entries)
         {
@@ -1197,10 +1197,12 @@ public class PersonalFinanceContext : DbContext
             {
                 case EntityState.Added:
                     entry.Entity.CreatedAt = DateTime.UtcNow;
-                    ((BaseEntity)entry.Entity).TouchUpdatedAt();
+                    entry.Entity.TouchUpdatedAt();
+                    if (string.IsNullOrWhiteSpace(entry.Entity.Id))
+                        entry.Entity.Id = GetNextId(entry.Entity.GetType());
                     break;
                 case EntityState.Modified:
-                    ((BaseEntity)entry.Entity).TouchUpdatedAt();
+                    entry.Entity.TouchUpdatedAt();
                     break;
             }
         }
